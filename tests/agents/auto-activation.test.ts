@@ -13,12 +13,11 @@
  * @version 1.0.0
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { join } from 'path';
-import { ProactiveAgentOrchestrator } from '../../src/orchestration/proactive-agent-orchestrator.js';
-import { SubAgentSelector } from '../../src/agents/core/sub-agent-selector.js';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ActivationTracker, getActivationTracker, resetActivationTracker } from '../../src/agents/activation-tracker.js';
 import { AgentActivationContext } from '../../src/agents/core/base-agent.js';
+import { ProactiveAgentOrchestrator } from '../../src/orchestration/proactive-agent-orchestrator.js';
 
 describe('Auto-Activation Test Suite', () => {
   let orchestrator: ProactiveAgentOrchestrator;
@@ -542,6 +541,22 @@ describe('Auto-Activation Test Suite', () => {
 
   describe('Validation Report', () => {
     it('should generate comprehensive activation report', () => {
+      // Populate with some dummy data since beforeEach clears the tracker
+      tracker.trackActivation({
+        agentId: 'maria-qa',
+        trigger: { type: 'file_pattern', pattern: '*.test.ts' },
+        latency: 100,
+        accuracy: 'correct',
+        confidence: 95
+      });
+      tracker.trackActivation({
+        agentId: 'dana-database',
+        trigger: { type: 'file_pattern', pattern: '*.sql' },
+        latency: 150,
+        accuracy: 'correct',
+        confidence: 98
+      });
+
       const report = tracker.generateReport();
 
       expect(report.overallAccuracy).toBeGreaterThanOrEqual(90);

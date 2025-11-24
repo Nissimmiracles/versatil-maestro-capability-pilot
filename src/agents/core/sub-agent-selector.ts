@@ -9,7 +9,6 @@
  */
 
 import { TechStackDetector, TechStackResult } from './tech-stack-detector.js';
-import { BaseAgent } from './base-agent.js';
 
 export interface SubAgentSelection {
   subAgentId: string;
@@ -208,6 +207,17 @@ export class SubAgentSelector {
 
     // Frontend extensions
     if (['tsx', 'jsx'].includes(ext || '')) {
+      // Check for Next.js directories
+      if (filePath.includes('/app/') || filePath.includes('/pages/')) {
+        return {
+          subAgentId: 'james-nextjs',
+          baseAgentId: 'james-frontend',
+          confidence: 0.6,
+          reason: 'Fallback: Next.js route detected',
+          fallback: true
+        };
+      }
+
       return {
         subAgentId: 'james-react',
         baseAgentId: 'james-frontend',
@@ -351,7 +361,7 @@ export class SubAgentSelector {
       };
     }
 
-    if (content.includes('from \'svelte\'') || filePath.endsWith('.svelte')) {
+    if (content.includes('from \'svelte\'') || content.includes('svelte/') || filePath.endsWith('.svelte')) {
       return {
         subAgentId: 'james-svelte',
         baseAgentId: 'james-frontend',

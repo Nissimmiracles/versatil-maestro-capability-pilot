@@ -15,20 +15,15 @@
 
 // Jest globals (describe, it, expect, beforeEach, afterEach) are available globally
 import * as fs from 'fs/promises';
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
 import {
-  ContractTracker,
-  getGlobalContractTracker,
-  ContractEvent,
-  ContractPerformance,
-  ContractStatistics
-} from '../../../src/agents/contracts/contract-tracker.js';
-import {
-  AgentHandoffContract,
   ContractBuilder
 } from '../../../src/agents/contracts/agent-handoff-contract.js';
-import { ValidationResult } from '../../../src/agents/contracts/contract-validator.js';
+import {
+  ContractTracker,
+  getGlobalContractTracker
+} from '../../../src/agents/contracts/contract-tracker.js';
 
 describe('ContractTracker', () => {
   let tracker;
@@ -494,8 +489,8 @@ describe('ContractTracker', () => {
       const report = await tracker.generateReport();
 
       expect(report).toContain('Contract Tracking Report');
-      expect(report).toContain('Total Contracts: 1');
-      expect(report).toContain('Average Quality Score: 95');
+      expect(report).toContain('**Total Contracts**: 1');
+      expect(report).toContain('**Average Quality Score**: 95');
       expect(report).toContain('alex-ba');
       expect(report).toContain('marcus-backend');
     });
@@ -504,7 +499,7 @@ describe('ContractTracker', () => {
       const report = await tracker.generateReport();
 
       expect(report).toContain('Contract Tracking Report');
-      expect(report).toContain('Total Contracts: 0');
+      expect(report).toContain('**Total Contracts**: 0');
     });
 
     it('should include recent events in report', async () => {

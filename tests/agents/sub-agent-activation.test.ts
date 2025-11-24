@@ -16,11 +16,10 @@
  * @version 1.0.0
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { join } from 'path';
-import { SubAgentSelector, SubAgentSelection } from '../../src/agents/core/sub-agent-selector.js';
-import { TechStackDetector } from '../../src/agents/core/tech-stack-detector.js';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ActivationTracker, getActivationTracker, resetActivationTracker } from '../../src/agents/activation-tracker.js';
+import { SubAgentSelector } from '../../src/agents/core/sub-agent-selector.js';
 
 describe('Sub-Agent Activation Test Suite', () => {
   let tracker: ActivationTracker;
@@ -621,6 +620,22 @@ describe('Sub-Agent Activation Test Suite', () => {
 
   describe('Sub-Agent Validation Report', () => {
     it('should generate sub-agent activation report', () => {
+      // Populate with some dummy data since beforeEach clears the tracker
+      tracker.trackActivation({
+        agentId: 'marcus-node',
+        trigger: { type: 'code_content', filePath: 'server.ts', content: 'express' },
+        latency: 100,
+        accuracy: 'correct',
+        confidence: 95
+      });
+      tracker.trackActivation({
+        agentId: 'james-react',
+        trigger: { type: 'file_pattern', pattern: '*.tsx' },
+        latency: 150,
+        accuracy: 'correct',
+        confidence: 98
+      });
+
       const report = tracker.generateReport();
 
       expect(report.overallAccuracy).toBeGreaterThanOrEqual(85);

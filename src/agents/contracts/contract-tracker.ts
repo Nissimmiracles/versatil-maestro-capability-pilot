@@ -12,16 +12,16 @@
  */
 
 import * as fs from 'fs/promises';
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
+import { AgentId } from '../../memory/memory-tool-config.js';
 import {
   AgentHandoffContract,
-  HandoffType,
+  HandoffPriority,
   HandoffStatus,
-  HandoffPriority
+  HandoffType
 } from './agent-handoff-contract.js';
 import { ValidationResult } from './contract-validator.js';
-import { AgentId } from '../../memory/memory-tool-config.js';
 
 /**
  * Contract event (creation, status change, completion)
@@ -386,35 +386,35 @@ export class ContractTracker {
 ## Contracts by Status
 
 ${Object.entries(stats.byStatus)
-  .map(([status, count]) => `- **${status}**: ${count}`)
-  .join('\n')}
+        .map(([status, count]) => `- **${status}**: ${count}`)
+        .join('\n')}
 
 ## Contracts by Type
 
 ${Object.entries(stats.byType)
-  .map(([type, count]) => `- **${type}**: ${count}`)
-  .join('\n')}
+        .map(([type, count]) => `- **${type}**: ${count}`)
+        .join('\n')}
 
 ## Contracts by Sender
 
 ${Object.entries(stats.bySender)
-  .sort((a, b) => b[1] - a[1])
-  .map(([sender, count]) => `- **${sender}**: ${count}`)
-  .join('\n')}
+        .sort((a, b) => b[1] - a[1])
+        .map(([sender, count]) => `- **${sender}**: ${count}`)
+        .join('\n')}
 
 ## Contracts by Receiver
 
 ${Object.entries(stats.byReceiver)
-  .sort((a, b) => b[1] - a[1])
-  .map(([receiver, count]) => `- **${receiver}**: ${count}`)
-  .join('\n')}
+        .sort((a, b) => b[1] - a[1])
+        .map(([receiver, count]) => `- **${receiver}**: ${count}`)
+        .join('\n')}
 
 ## Recent Events (Last 5)
 
 ${this.events
-  .slice(-5)
-  .reverse()
-  .map(event => `
+        .slice(-5)
+        .reverse()
+        .map(event => `
 ### ${event.timestamp.toISOString()} - ${event.eventType}
 - Contract: ${event.contractId}
 - Sender: ${event.sender}
@@ -460,22 +460,30 @@ ${event.validationScore ? `- Validation Score: ${event.validationScore}/100` : '
   // Private helper methods
 
   private async persistEvents(): Promise<void> {
-    const filePath = path.join(this.statsDir, 'contract-events.json');
-    await fs.writeFile(
-      filePath,
-      JSON.stringify(this.events, null, 2),
-      'utf-8'
-    );
+    try {
+      const filePath = path.join(this.statsDir, 'contract-events.json');
+      await fs.writeFile(
+        filePath,
+        JSON.stringify(this.events, null, 2),
+        'utf-8'
+      );
+    } catch (error) {
+      console.warn('Failed to persist contract events:', error);
+    }
   }
 
   private async persistPerformances(): Promise<void> {
-    const filePath = path.join(this.statsDir, 'contract-performances.json');
-    const perfArray = Array.from(this.performances.values());
-    await fs.writeFile(
-      filePath,
-      JSON.stringify(perfArray, null, 2),
-      'utf-8'
-    );
+    try {
+      const filePath = path.join(this.statsDir, 'contract-performances.json');
+      const perfArray = Array.from(this.performances.values());
+      await fs.writeFile(
+        filePath,
+        JSON.stringify(perfArray, null, 2),
+        'utf-8'
+      );
+    } catch (error) {
+      console.warn('Failed to persist contract performances:', error);
+    }
   }
 
   private calculateEstimatedEffort(contract: AgentHandoffContract): number | undefined {

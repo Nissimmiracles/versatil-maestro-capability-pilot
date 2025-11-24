@@ -1,12 +1,12 @@
 ---
-id: "Marcus-Backend-low-1763283346737"
-created: "2025-11-16T08:55:46.736Z"
+id: "Marcus-Backend-low-1763314429901"
+created: "2025-11-16T17:33:49.901Z"
 type: "guardian-combined"
 assigned_agent: "Marcus-Backend"
 priority: "low"
-issue_count: 1
-avg_confidence: 100
-auto_apply_count: 1
+issue_count: 2
+avg_confidence: 98
+auto_apply_count: 2
 manual_review_count: 0
 grouping_strategy: "agent"
 verified_by: "Victor-Verifier (Guardian Health Check)"
@@ -14,21 +14,37 @@ verified_by: "Victor-Verifier (Guardian Health Check)"
 
 # 🛡️ Guardian Health Check - Marcus-Backend
 
-**Combined TODO**: 1 related issue detected
+**Combined TODO**: 2 related issues detected
 
 ## Summary
 
 - **Assigned Agent**: **Marcus-Backend**
 - **Priority**: **LOW**
-- **Total Issues**: 1
-- **Average Confidence**: 100%
-- **Auto-Apply Eligible**: 1
+- **Total Issues**: 2
+- **Average Confidence**: 98%
+- **Auto-Apply Eligible**: 2
 - **Manual Review Required**: 0
-- **Detection Layer**: 📦 Project
+- **Detection Layer**: 🏗️ Framework
 
 ## Issues Detected
 
-### 1. dependencies
+### 1. typescript
+
+**Issue**: 1 TypeScript error(s)
+
+**Details**:
+- **Priority**: low
+- **Confidence**: 95%
+- **Auto-Apply**: YES ✅
+- **Layer**: 🏗️ framework
+
+**Evidence Summary**: ✓ TypeScript error in codebase (95%)
+
+**Recommended Fix**: Issue verified but no clear fix available
+
+---
+
+### 2. dependencies
 
 **Issue**: 46 outdated dependencies
 
@@ -46,23 +62,24 @@ verified_by: "Victor-Verifier (Guardian Health Check)"
 
 ## 🎯 Recommended Actions (Priority Order)
 
-1. Update 46 outdated dependencies with `npm update`
+1. Issue verified but no clear fix available
+2. Update 46 outdated dependencies with `npm update`
 
 ## 📊 Execution Strategy
 
 **Suggested Approach**:
 
-1. **Auto-Apply (1 issues)**: Guardian can automatically remediate these high-confidence issues
+1. **Auto-Apply (2 issues)**: Guardian can automatically remediate these high-confidence issues
    - Review auto-fix logs after execution
    - Verify changes before committing
 
 
-**Estimated Effort**: 15-30 minutes (depending on complexity)
+**Estimated Effort**: 30-60 minutes (depending on complexity)
 
 ## 🧠 Learning Opportunity
 
 After resolving these issues:
-1. Run `/learn "Resolved 1 low issues in project layer"`
+1. Run `/learn "Resolved 2 low issues in framework layer"`
 2. Guardian will store fix patterns in RAG
 3. Similar issues will be auto-remediable in the future (compounding engineering)
 
@@ -82,3 +99,8 @@ All issues verified using Chain-of-Verification (CoVe) methodology:
 **Verification Pipeline**: Health Check → Layer Classification → Ground Truth Verification → TODO Grouping
 **Anti-Hallucination**: Chain-of-Verification (CoVe) methodology
 **Grouping Strategy**: agent (configurable via GUARDIAN_GROUP_BY env var)
+
+
+---
+**Archived**: 2025-11-24T09:52:05.612Z
+**Reason**: Stale (184.3h old, max 72h)

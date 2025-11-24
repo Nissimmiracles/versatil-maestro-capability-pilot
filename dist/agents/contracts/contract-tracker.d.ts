@@ -10,9 +10,9 @@
  * - Quality gate pass rates
  * - Effort estimation accuracy
  */
-import { AgentHandoffContract, HandoffType, HandoffStatus, HandoffPriority } from './agent-handoff-contract.js';
-import { ValidationResult } from './contract-validator.js';
 import { AgentId } from '../../memory/memory-tool-config.js';
+import { AgentHandoffContract, HandoffPriority, HandoffStatus, HandoffType } from './agent-handoff-contract.js';
+import { ValidationResult } from './contract-validator.js';
 /**
  * Contract event (creation, status change, completion)
  */

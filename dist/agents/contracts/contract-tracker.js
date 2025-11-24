@@ -11,8 +11,8 @@
  * - Effort estimation accuracy
  */
 import * as fs from 'fs/promises';
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
 /**
  * Contract Tracker
  */
@@ -305,13 +305,23 @@ ${event.validationScore ? `- Validation Score: ${event.validationScore}/100` : '
     }
     // Private helper methods
     async persistEvents() {
-        const filePath = path.join(this.statsDir, 'contract-events.json');
-        await fs.writeFile(filePath, JSON.stringify(this.events, null, 2), 'utf-8');
+        try {
+            const filePath = path.join(this.statsDir, 'contract-events.json');
+            await fs.writeFile(filePath, JSON.stringify(this.events, null, 2), 'utf-8');
+        }
+        catch (error) {
+            console.warn('Failed to persist contract events:', error);
+        }
     }
     async persistPerformances() {
-        const filePath = path.join(this.statsDir, 'contract-performances.json');
-        const perfArray = Array.from(this.performances.values());
-        await fs.writeFile(filePath, JSON.stringify(perfArray, null, 2), 'utf-8');
+        try {
+            const filePath = path.join(this.statsDir, 'contract-performances.json');
+            const perfArray = Array.from(this.performances.values());
+            await fs.writeFile(filePath, JSON.stringify(perfArray, null, 2), 'utf-8');
+        }
+        catch (error) {
+            console.warn('Failed to persist contract performances:', error);
+        }
     }
     calculateEstimatedEffort(contract) {
         const total = contract.workItems.reduce((sum, item) => {

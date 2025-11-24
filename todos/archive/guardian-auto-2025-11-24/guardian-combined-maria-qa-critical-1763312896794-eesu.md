@@ -101,3 +101,8 @@ All issues verified using Chain-of-Verification (CoVe) methodology:
 **Verification Pipeline**: Health Check → Layer Classification → Ground Truth Verification → TODO Grouping
 **Anti-Hallucination**: Chain-of-Verification (CoVe) methodology
 **Grouping Strategy**: agent (configurable via GUARDIAN_GROUP_BY env var)
+
+
+---
+**Archived**: 2025-11-24T09:52:05.612Z
+**Reason**: Stale (184.7h old, max 72h)

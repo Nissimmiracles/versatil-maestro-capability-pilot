@@ -1,85 +1,68 @@
 ---
-id: "Dr.AI-ML-high-1763283346746"
-created: "2025-11-16T08:55:46.746Z"
+id: "Marcus-Backend-low-1763283346737"
+created: "2025-11-16T08:55:46.736Z"
 type: "guardian-combined"
-assigned_agent: "Dr.AI-ML"
-priority: "high"
-issue_count: 2
-avg_confidence: 90
-auto_apply_count: 2
+assigned_agent: "Marcus-Backend"
+priority: "low"
+issue_count: 1
+avg_confidence: 100
+auto_apply_count: 1
 manual_review_count: 0
 grouping_strategy: "agent"
 verified_by: "Victor-Verifier (Guardian Health Check)"
 ---
 
-# 🛡️ Guardian Health Check - Dr.AI-ML
+# 🛡️ Guardian Health Check - Marcus-Backend
 
-**Combined TODO**: 2 related issues detected
+**Combined TODO**: 1 related issue detected
 
 ## Summary
 
-- **Assigned Agent**: **Dr.AI-ML**
-- **Priority**: **HIGH**
-- **Total Issues**: 2
-- **Average Confidence**: 90%
-- **Auto-Apply Eligible**: 2
+- **Assigned Agent**: **Marcus-Backend**
+- **Priority**: **LOW**
+- **Total Issues**: 1
+- **Average Confidence**: 100%
+- **Auto-Apply Eligible**: 1
 - **Manual Review Required**: 0
-- **Detection Layer**: 🏗️ Framework
+- **Detection Layer**: 📦 Project
 
 ## Issues Detected
 
-### 1. rag_system
+### 1. dependencies
 
-**Issue**: GraphRAG query timeout (8223ms)
-
-**Details**:
-- **Priority**: high
-- **Confidence**: 90%
-- **Auto-Apply**: YES ✅
-- **Layer**: 🏗️ framework
-
-**Evidence Summary**: ✓ RAG system available (90%)
-
-**Recommended Fix**: Issue verified but no clear fix available
-
----
-
-### 2. rag_system
-
-**Issue**: RAG Router malfunction
+**Issue**: 46 outdated dependencies
 
 **Details**:
-- **Priority**: high
-- **Confidence**: 90%
+- **Priority**: low
+- **Confidence**: 100%
 - **Auto-Apply**: YES ✅
-- **Layer**: 🏗️ framework
+- **Layer**: 📦 project
 
-**Evidence Summary**: ✓ RAG system available (90%)
+**Evidence Summary**: ✓ Outdated dependencies present (100%)
 
-**Recommended Fix**: Issue verified but no clear fix available
+**Recommended Fix**: Update 46 outdated dependencies with `npm update`
 
 ---
 
 ## 🎯 Recommended Actions (Priority Order)
 
-1. Issue verified but no clear fix available
-2. Issue verified but no clear fix available
+1. Update 46 outdated dependencies with `npm update`
 
 ## 📊 Execution Strategy
 
 **Suggested Approach**:
 
-1. **Auto-Apply (2 issues)**: Guardian can automatically remediate these high-confidence issues
+1. **Auto-Apply (1 issues)**: Guardian can automatically remediate these high-confidence issues
    - Review auto-fix logs after execution
    - Verify changes before committing
 
 
-**Estimated Effort**: 30-60 minutes (depending on complexity)
+**Estimated Effort**: 15-30 minutes (depending on complexity)
 
 ## 🧠 Learning Opportunity
 
 After resolving these issues:
-1. Run `/learn "Resolved 2 high issues in framework layer"`
+1. Run `/learn "Resolved 1 low issues in project layer"`
 2. Guardian will store fix patterns in RAG
 3. Similar issues will be auto-remediable in the future (compounding engineering)
 
@@ -99,3 +82,8 @@ All issues verified using Chain-of-Verification (CoVe) methodology:
 **Verification Pipeline**: Health Check → Layer Classification → Ground Truth Verification → TODO Grouping
 **Anti-Hallucination**: Chain-of-Verification (CoVe) methodology
 **Grouping Strategy**: agent (configurable via GUARDIAN_GROUP_BY env var)
+
+
+---
+**Archived**: 2025-11-24T09:52:05.612Z
+**Reason**: Stale (192.9h old, max 72h)

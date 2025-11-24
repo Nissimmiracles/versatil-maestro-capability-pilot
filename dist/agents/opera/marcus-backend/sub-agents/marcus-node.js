@@ -20,7 +20,7 @@ export class MarcusNode extends EnhancedMarcus {
         this.systemPrompt = `You are Marcus-Node, a specialized Node.js backend expert with deep knowledge of:
 - Node.js 18+ features (native fetch, test runner, watch mode)
 - Express.js and Fastify framework best practices
-- Async/await patterns and error handling
+- async/await patterns and error handling
 - NPM package management and security
 - CommonJS vs ESM module systems
 - Event loop optimization
@@ -46,6 +46,9 @@ export class MarcusNode extends EnhancedMarcus {
     /**
      * Analyze Node.js-specific patterns
      */
+    async analyzeNodePatterns(context) {
+        return this.analyzeNodeJSPatterns(context);
+    }
     async analyzeNodeJSPatterns(context) {
         const content = context.content || '';
         const suggestions = [];
@@ -107,7 +110,7 @@ export class MarcusNode extends EnhancedMarcus {
             bestPractices.errorHandling.push('Implement centralized error middleware');
         }
         // Check for environment variable handling
-        if (!this.hasProperEnvHandling(content)) {
+        if (content.includes('process.env') && !this.hasProperEnvHandling(content)) {
             score -= 5;
             suggestions.push({
                 type: 'configuration',
@@ -190,10 +193,12 @@ export class MarcusNode extends EnhancedMarcus {
      * Detect unhandled promises
      */
     hasUnhandledPromises(content) {
-        // Check for promises without .catch() or try/catch
+        // Check for promises without .catch() or try/catch in function context
         const hasPromises = content.includes('.then(') || content.includes('await ');
         const hasCatch = content.includes('.catch(') || content.includes('try {');
-        return hasPromises && !hasCatch;
+        const inFunction = /async\s+function|async\s*\(/.test(content) || /function.*\{[\s\S]*await/.test(content);
+        // Only penalize if we're in a function context and missing error handling
+        return hasPromises && !hasCatch && inFunction;
     }
     /**
      * Detect blocking operations
@@ -308,6 +313,64 @@ export class MarcusNode extends EnhancedMarcus {
         if (content.includes('hapi'))
             return 'Hapi';
         return 'Node.js (no framework)';
+    }
+    // Security Pattern Detection Methods
+    detectSQLInjection(content) {
+        const hasQuery = /\.query\(/.test(content) || /\.execute\(/.test(content);
+        const hasStringConcat = /\+\s*req\.|`\$\{req\./.test(content);
+        return hasQuery && hasStringConcat;
+    }
+    detectMissingValidation(content) {
+        const hasReqBody = /req\.body/.test(content);
+        const hasValidation = /express-validator|joi|yup|zod/.test(content);
+        return hasReqBody && !hasValidation;
+    }
+    detectExposedSecrets(content) {
+        const patterns = [
+            /API_KEY\s*=\s*["'][^"']+["']/,
+            /PASSWORD\s*=\s*["'][^"']+["']/,
+            /sk_live_[\w]+/,
+            /ghp_[\w]+/
+        ];
+        return patterns.some(pattern => pattern.test(content));
+    }
+    detectMissingAuth(content) {
+        const isDeleteRoute = /app\.(delete|put)\(/.test(content) || /router\.(delete|put)\(/.test(content);
+        const hasAuth = /authenticate|requireAuth|isAuth/.test(content);
+        return isDeleteRoute && !hasAuth;
+    }
+    detectMissingErrorHandling(content) {
+        const hasAsync = /async\s+\(/.test(content);
+        const hasTryCatch = /try\s*\{/.test(content);
+        const hasNext = /next\(/.test(content);
+        return hasAsync && !hasTryCatch && !hasNext;
+    }
+    detectNPlusOne(content) {
+        const hasLoop = /forEach|map/.test(content);
+        const hasAsyncCall = /await\s+\w*[Gg]et|await\s+\w*[Ff]ind|await\s+\w*[Ff]etch|await\s+\.\w+/.test(content);
+        return hasLoop && hasAsyncCall;
+    }
+    detectBlockingOperations(content) {
+        return this.hasBlockingOperations(content);
+    }
+    detectMissingSecurityMiddleware(content) {
+        const hasExpress = content.includes('express()');
+        const hasHelmet = /helmet\(|use\s*\(\s*helmet/.test(content);
+        const hasCors = /cors\(|use\s*\(\s*cors/.test(content);
+        return hasExpress && (!hasHelmet || !hasCors);
+    }
+    detectMissingEnvValidation(content) {
+        const usesEnv = /process\.env\./.test(content);
+        const hasValidation = /dotenv-safe|envalid|joi\.validate/.test(content);
+        return usesEnv && !hasValidation;
+    }
+    detectMissingConnectionPooling(content) {
+        const hasNewClient = /new\s+Client\s*\(/.test(content);
+        const hasPool = /Pool|pool/.test(content);
+        return hasNewClient && !hasPool;
+    }
+    hasGlobalErrorHandler(content) {
+        return this.hasErrorMiddleware(content);
     }
 }
 //# sourceMappingURL=marcus-node.js.map

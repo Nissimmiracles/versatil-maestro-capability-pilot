@@ -1,69 +1,69 @@
 ---
-id: "Marcus-Backend-low-1763314429901"
-created: "2025-11-16T17:33:49.901Z"
+id: "Dr.AI-ML-high-1763283346746"
+created: "2025-11-16T08:55:46.746Z"
 type: "guardian-combined"
-assigned_agent: "Marcus-Backend"
-priority: "low"
+assigned_agent: "Dr.AI-ML"
+priority: "high"
 issue_count: 2
-avg_confidence: 98
+avg_confidence: 90
 auto_apply_count: 2
 manual_review_count: 0
 grouping_strategy: "agent"
 verified_by: "Victor-Verifier (Guardian Health Check)"
 ---
 
-# 🛡️ Guardian Health Check - Marcus-Backend
+# 🛡️ Guardian Health Check - Dr.AI-ML
 
 **Combined TODO**: 2 related issues detected
 
 ## Summary
 
-- **Assigned Agent**: **Marcus-Backend**
-- **Priority**: **LOW**
+- **Assigned Agent**: **Dr.AI-ML**
+- **Priority**: **HIGH**
 - **Total Issues**: 2
-- **Average Confidence**: 98%
+- **Average Confidence**: 90%
 - **Auto-Apply Eligible**: 2
 - **Manual Review Required**: 0
 - **Detection Layer**: 🏗️ Framework
 
 ## Issues Detected
 
-### 1. typescript
+### 1. rag_system
 
-**Issue**: 1 TypeScript error(s)
+**Issue**: GraphRAG query timeout (8223ms)
 
 **Details**:
-- **Priority**: low
-- **Confidence**: 95%
+- **Priority**: high
+- **Confidence**: 90%
 - **Auto-Apply**: YES ✅
 - **Layer**: 🏗️ framework
 
-**Evidence Summary**: ✓ TypeScript error in codebase (95%)
+**Evidence Summary**: ✓ RAG system available (90%)
 
 **Recommended Fix**: Issue verified but no clear fix available
 
 ---
 
-### 2. dependencies
+### 2. rag_system
 
-**Issue**: 46 outdated dependencies
+**Issue**: RAG Router malfunction
 
 **Details**:
-- **Priority**: low
-- **Confidence**: 100%
+- **Priority**: high
+- **Confidence**: 90%
 - **Auto-Apply**: YES ✅
-- **Layer**: 📦 project
+- **Layer**: 🏗️ framework
 
-**Evidence Summary**: ✓ Outdated dependencies present (100%)
+**Evidence Summary**: ✓ RAG system available (90%)
 
-**Recommended Fix**: Update 46 outdated dependencies with `npm update`
+**Recommended Fix**: Issue verified but no clear fix available
 
 ---
 
 ## 🎯 Recommended Actions (Priority Order)
 
 1. Issue verified but no clear fix available
-2. Update 46 outdated dependencies with `npm update`
+2. Issue verified but no clear fix available
 
 ## 📊 Execution Strategy
 
@@ -79,7 +79,7 @@ verified_by: "Victor-Verifier (Guardian Health Check)"
 ## 🧠 Learning Opportunity
 
 After resolving these issues:
-1. Run `/learn "Resolved 2 low issues in framework layer"`
+1. Run `/learn "Resolved 2 high issues in framework layer"`
 2. Guardian will store fix patterns in RAG
 3. Similar issues will be auto-remediable in the future (compounding engineering)
 
@@ -99,3 +99,8 @@ All issues verified using Chain-of-Verification (CoVe) methodology:
 **Verification Pipeline**: Health Check → Layer Classification → Ground Truth Verification → TODO Grouping
 **Anti-Hallucination**: Chain-of-Verification (CoVe) methodology
 **Grouping Strategy**: agent (configurable via GUARDIAN_GROUP_BY env var)
+
+
+---
+**Archived**: 2025-11-24T09:52:05.612Z
+**Reason**: Stale (192.9h old, max 72h)

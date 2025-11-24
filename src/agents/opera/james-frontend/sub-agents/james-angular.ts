@@ -28,8 +28,8 @@ export class JamesAngular extends EnhancedJames {
   id = 'james-angular';
   specialization = 'Angular 17+ Frontend Specialist';
   systemPrompt = `You are James-Angular, a specialized Angular 17+ expert with deep knowledge of:
-- Standalone Components (no NgModule required)
-- Signals API for reactive state management
+- standalone components (no NgModule required)
+- signals API for reactive state management
 - RxJS for asynchronous operations
 - Dependency Injection with inject() function
 - OnPush Change Detection strategy
@@ -66,7 +66,7 @@ export class JamesAngular extends EnhancedJames {
   /**
    * Analyze Angular-specific patterns
    */
-  private async analyzeAngularPatterns(context: AgentActivationContext): Promise<{
+  public async analyzeAngularPatterns(context: AgentActivationContext): Promise<{
     score: number;
     suggestions: Array<{ type: string; message: string; priority: string }>;
     bestPractices: AngularBestPractices;
@@ -252,6 +252,118 @@ export class JamesAngular extends EnhancedJames {
     };
   }
 
+  // Component Patterns
+  public hasStandaloneComponent(content: string): boolean {
+    return /standalone:\s*true/.test(content);
+  }
+
+  public hasModuleBasedComponent(content: string): boolean {
+    // Module-based components don't have standalone: true
+    return content.includes('@Component') && !content.includes('standalone: true');
+  }
+
+  // Signals API
+  public hasSignal(content: string): boolean {
+    return /signal\s*\(/.test(content);
+  }
+
+  public hasComputedSignal(content: string): boolean {
+    return /computed\s*\(/.test(content);
+  }
+
+  public hasEffect(content: string): boolean {
+    return /effect\s*\(/.test(content);
+  }
+
+  // Dependency Injection
+  public hasInjectFunction(content: string): boolean {
+    return /inject\s*\(/.test(content);
+  }
+
+  public hasConstructorInjection(content: string): boolean {
+    return this.usesConstructorInjection(content);
+  }
+
+  // RxJS Patterns
+  public hasObservableSubscription(content: string): boolean {
+    return /\.subscribe\s*\(/.test(content);
+  }
+
+  public hasMissingUnsubscribe(content: string): boolean {
+    return this.hasUnsubscribedObservables(content);
+  }
+
+  public hasAsyncPipe(content: string): boolean {
+    return /\|\s*async/.test(content);
+  }
+
+  public hasTakeUntil(content: string): boolean {
+    return /takeUntil\s*\(/.test(content) || /takeUntilDestroyed\s*\(/.test(content);
+  }
+
+  // NgRx
+  public hasNgRxStore(content: string): boolean {
+    return /Store</.test(content) || content.includes('this.store');
+  }
+
+  public hasNgRxAction(content: string): boolean {
+    return /createAction\s*\(/.test(content) || /props</.test(content);
+  }
+
+  public hasNgRxEffect(content: string): boolean {
+    return /@Effect\(\)/.test(content) || /createEffect\s*\(/.test(content);
+  }
+
+  public hasNgRxSelector(content: string): boolean {
+    return /createSelector\s*\(/.test(content) || /createFeatureSelector/.test(content);
+  }
+
+  // Performance
+  public hasOnPushChangeDetection(content: string): boolean {
+    return /ChangeDetectionStrategy\.OnPush/.test(content);
+  }
+
+  public hasTrackBy(content: string): boolean {
+    return /trackBy/.test(content);
+  }
+
+  public hasMissingTrackBy(content: string): boolean {
+    return this.detectMissingTrackBy(content);
+  }
+
+  private detectMissingTrackBy(content: string): boolean {
+    const hasNgFor = /\*ngFor/.test(content);
+    const hasTrackBy = this.hasTrackBy(content);
+    return hasNgFor && !hasTrackBy;
+  }
+
+  // Directives and Templates
+  public hasStructuralDirective(content: string): boolean {
+    return /\*ng(If|For|Switch)/.test(content);
+  }
+
+  public hasNewControlFlow(content: string): boolean {
+    return /@(if|for|switch)\s*\(/.test(content);
+  }
+
+  public hasTemplateReference(content: string): boolean {
+    return /#\w+/.test(content);
+  }
+
+  // Lifecycle Hooks
+  public hasLifecycleHook(content: string, hookName: string): boolean {
+    return new RegExp(`${hookName}\\s*\\(`).test(content) || new RegExp(`implements\\s+[^{]*${hookName.replace('ng', '')}`).test(content);
+  }
+
+  // Testing
+  public hasTestBed(content: string): boolean {
+    return /TestBed\./.test(content);
+  }
+
+  public hasComponentFixture(content: string): boolean {
+    return /ComponentFixture<|TestBed\.createComponent|fixture\s*=/.test(content);
+  }
+
   /**
    * Check for NgModule usage
    */
@@ -313,14 +425,6 @@ export class JamesAngular extends EnhancedJames {
     return content.includes('ngModel') || content.includes('FormsModule');
   }
 
-  /**
-   * Check for missing trackBy
-   */
-  private hasMissingTrackBy(content: string): boolean {
-    const hasNgFor = content.includes('*ngFor');
-    const hasTrackBy = content.includes('trackBy');
-    return hasNgFor && !hasTrackBy;
-  }
 
   /**
    * Check if component is a container

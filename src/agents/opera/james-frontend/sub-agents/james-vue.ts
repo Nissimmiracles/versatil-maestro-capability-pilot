@@ -29,7 +29,7 @@ export class JamesVue extends EnhancedJames {
   specialization = 'Vue 3 Frontend Specialist';
   systemPrompt = `You are James-Vue, a specialized Vue 3 frontend expert with deep knowledge of:
 - Vue 3 Composition API (setup, ref, reactive, computed, watch)
-- Reactivity system (ref, reactive, toRefs, unref)
+- reactivity system (ref, reactive, toRefs, unref)
 - Component lifecycle (onMounted, onUnmounted, watchEffect)
 - Pinia for state management
 - VeeValidate for form validation
@@ -66,10 +66,20 @@ export class JamesVue extends EnhancedJames {
   /**
    * Analyze Vue-specific patterns
    */
-  private async analyzeVuePatterns(context: AgentActivationContext): Promise<{
+  public async analyzeVuePatterns(context: AgentActivationContext): Promise<{
     score: number;
     suggestions: Array<{ type: string; message: string; priority: string }>;
     bestPractices: VueBestPractices;
+    recommendations?: string[];
+  }> {
+    return this.internalAnalyzeVuePatterns(context);
+  }
+
+  private async internalAnalyzeVuePatterns(context: AgentActivationContext): Promise<{
+    score: number;
+    suggestions: Array<{ type: string; message: string; priority: string }>;
+    bestPractices: VueBestPractices;
+    recommendations?: string[];
   }> {
     const content = context.content || '';
     const suggestions: Array<{ type: string; message: string; priority: string }> = [];
@@ -262,11 +272,118 @@ export class JamesVue extends EnhancedJames {
       bestPractices.testingStrategies.push('Write tests using Vue Test Utils and Vitest');
     }
 
+    // Generate recommendations based on best practices
+    const recommendations: string[] = [];
+    if (bestPractices.compositionAPIPatterns.length > 0) {
+      recommendations.push(...bestPractices.compositionAPIPatterns);
+    }
+    if (bestPractices.reactivityPatterns.length > 0) {
+      recommendations.push(...bestPractices.reactivityPatterns);
+    }
+
     return {
       score: Math.max(score, 0),
       suggestions,
-      bestPractices
+      bestPractices,
+      recommendations: recommendations.length > 0 ? recommendations : undefined
     };
+  }
+
+  // API Pattern Detection Methods
+  public hasOptionsAPI(content: string): boolean {
+    return this.usesOptionsAPI(content);
+  }
+
+  public hasCompositionAPI(content: string): boolean {
+    return /setup\s*\(/.test(content) || /<script\s+setup/.test(content);
+  }
+
+  public hasScriptSetup(content: string): boolean {
+    return this.usesScriptSetup(content);
+  }
+
+  // Reactivity System Methods
+  public hasRefUsage(content: string): boolean {
+    return /ref\s*\(/.test(content);
+  }
+
+  public hasReactiveUsage(content: string): boolean {
+    return /reactive\s*\(/.test(content);
+  }
+
+  public hasComputedUsage(content: string): boolean {
+    return /computed\s*\(/.test(content);
+  }
+
+  public hasMissingValueAccess(content: string): boolean {
+    const hasRef = this.hasRefUsage(content);
+    const scriptSection = content.match(/<script[^>]*>([\s\S]*?)<\/script>/);
+    if (scriptSection && hasRef) {
+      const script = scriptSection[1];
+      return /const\s+\w+\s*=\s*ref\(/.test(script) && !script.includes('.value');
+    }
+    return false;
+  }
+
+  public hasReactiveDestructuring(content: string): boolean {
+    return /const\s*\{[^}]+\}\s*=\s*reactive\s*\(/.test(content);
+  }
+
+  // Lifecycle Hooks
+  public hasLifecycleHook(content: string, hookName: string): boolean {
+    return new RegExp(`${hookName}\\s*\\(`).test(content);
+  }
+
+  public hasWatchEffect(content: string): boolean {
+    return /watchEffect\s*\(/.test(content);
+  }
+
+  public hasWatch(content: string): boolean {
+    return /watch\s*\(/.test(content);
+  }
+
+  // Component Best Practices
+  public hasDefineProps(content: string): boolean {
+    return /defineProps/.test(content);
+  }
+
+  public hasDefineEmits(content: string): boolean {
+    return /defineEmits/.test(content);
+  }
+
+  public hasMissingVForKey(content: string): boolean {
+    return this.hasMissingVForKeys(content);
+  }
+
+  // Composables
+  public hasComposableUsage(content: string): boolean {
+    return /use[A-Z]\w+\s*\(/.test(content);
+  }
+
+  public hasProperComposableNaming(content: string): boolean {
+    return /function\s+use[A-Z]\w+/.test(content);
+  }
+
+  // Template Patterns
+  public hasVIf(content: string): boolean {
+    return /v-if/.test(content);
+  }
+
+  public hasVModel(content: string): boolean {
+    return /v-model/.test(content);
+  }
+
+  public hasSlot(content: string): boolean {
+    return /<slot/.test(content);
+  }
+
+  public hasScopedSlot(content: string): boolean {
+    return /<slot\s+[^>]*:[\w]+/.test(content) || /#[\w]+="/.test(content);
+  }
+
+  // Performance
+  public hasUnnecessaryReactive(content: string): boolean {
+    return /reactive\s*\(\s*\{[^}]*API_URL|CONFIG|CONST/.test(content);
   }
 
   /**

@@ -34,7 +34,7 @@ Collect the following information and create a debug report:
 
 ### 4. Recent Logs (if available)
 - Last 50 lines of any framework logs
-- Recent npm install/run output (if relevant)
+- Recent pnpm install/run output (if relevant)
 - Error messages (if any)
 
 ### 5. Test Suite Status
@@ -118,6 +118,6 @@ cat VERSATIL_DEBUG_REPORT.md
 ```
 
 **Support**: If issues persist after reviewing this report, please:
-1. Run `npm run recover` to attempt auto-fix
+1. Run `pnpm recover` to attempt auto-fix
 2. Share `versatil-debug-report.json` on GitHub issues
 3. Include the Markdown summary for context

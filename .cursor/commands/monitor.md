@@ -19,7 +19,7 @@ The user can specify different monitoring modes:
 ```
 
 **What to do:**
-- Run: `npm run monitor`
+- Run: `pnpm monitor`
 - This performs a comprehensive health check:
   - ✅ All 7 OPERA agents (Dana, Maria, James, Marcus, Sarah, Alex, Dr.AI-ML)
   - ✅ Proactive agent system status
@@ -43,7 +43,7 @@ The user can specify different monitoring modes:
 ```
 
 **What to do:**
-- Run: `npm run dashboard` (launches v3 by default)
+- Run: `pnpm dashboard` (launches v3 by default)
 - This opens an **interactive terminal dashboard** with:
   - Real-time workflow visualization
   - Live agent progress tracking
@@ -74,7 +74,7 @@ r         - Refresh
 ```
 
 **What to do:**
-- Run: `npm run monitor -- --watch`
+- Run: `pnpm monitor --watch`
 - This performs **continuous health checks** every 60 seconds
 - Shows live updates of:
   - Agent activation counts
@@ -85,7 +85,7 @@ r         - Refresh
 
 **Interval customization:**
 ```bash
-npm run monitor -- --watch --interval=30000  # Every 30 seconds
+pnpm monitor --watch --interval=30000  # Every 30 seconds
 ```
 
 ---
@@ -124,7 +124,7 @@ npm run monitor -- --watch --interval=30000  # Every 30 seconds
 ```
 
 **What to do:**
-- Run: `npm run show-agents`
+- Run: `pnpm show-agents`
 - This displays **all 7 OPERA agents** with:
   - Agent name and role
   - Status (active/idle/processing)
@@ -153,7 +153,7 @@ npm run monitor -- --watch --interval=30000  # Every 30 seconds
 ```
 
 **What to do:**
-- Run: `npm run monitor -- --stress`
+- Run: `pnpm monitor --stress`
 - This performs **comprehensive stress tests**:
   - CLAUDE.md size check (< 20k)
   - All 7 agent configurations present
@@ -196,7 +196,7 @@ npm run monitor -- --watch --interval=30000  # Every 30 seconds
 
 **Start background monitoring:**
 ```bash
-npm run dashboard:background
+pnpm dashboard:background
 ```
 - Runs monitoring in background
 - Logs to `.versatil/logs/background-monitor.log`
@@ -204,14 +204,14 @@ npm run dashboard:background
 
 **Stop background monitoring:**
 ```bash
-npm run dashboard:stop
+pnpm dashboard:stop
 ```
 - Stops background monitor process
 - Shows: "Background monitor stopped"
 
 **View background logs:**
 ```bash
-npm run dashboard:logs
+pnpm dashboard:logs
 ```
 - Displays live log stream
 - Press Ctrl+C to stop viewing
@@ -228,12 +228,12 @@ npm run dashboard:logs
 ### For Production
 1. Run `/monitor stress` before deployments
 2. Enable background monitoring: `/monitor background start`
-3. Schedule daily health checks: `cron 0 2 * * * npm run monitor`
+3. Schedule daily health checks: `cron 0 2 * * * pnpm monitor`
 
 ### For Troubleshooting
 1. Generate debug report: `/monitor report`
 2. Check recent logs: `/monitor logs`
-3. Validate isolation: `npm run validate:isolation`
+3. Validate isolation: `pnpm validate:isolation`
 4. Run doctor: `/doctor --fix`
 
 ---
@@ -274,8 +274,8 @@ npm run dashboard:logs
 **Fix:**
 1. Run `/doctor --fix` for auto-repair
 2. Check missing files in health report
-3. Validate isolation: `npm run validate:isolation`
-4. Reinstall if needed: `npm install`
+3. Validate isolation: `pnpm validate:isolation`
+4. Reinstall if needed: `pnpm install`
 
 ### Issue: Agent not showing in dashboard
 **Fix:**
@@ -293,7 +293,7 @@ npm run dashboard:logs
 **Fix:**
 1. Ensure framework is running (not just installed)
 2. Check status file exists: `ls -la /tmp/versatil-sync-status-*.json`
-3. Try different dashboard version: `npm run dashboard:v1` or `npm run dashboard:v2`
+3. Try different dashboard version: `pnpm dashboard:v1` or `pnpm dashboard:v2`
 
 ---
 
@@ -354,9 +354,9 @@ console.log(stats.totalRAGRetrievals); // Total RAG retrievals
 - `/doctor` - Diagnose and auto-fix framework issues
 - `/framework:validate` - Validate isolation and quality
 - `/framework:debug` - Generate comprehensive debug report
-- `npm run monitor` - CLI health check
-- `npm run dashboard` - Interactive TUI dashboard
-- `npm run show-agents` - Show all agent configurations
+- `pnpm monitor` - CLI health check
+- `pnpm dashboard` - Interactive TUI dashboard
+- `pnpm show-agents` - Show all agent configurations
 
 ---
 

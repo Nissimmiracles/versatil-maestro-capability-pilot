@@ -54,13 +54,13 @@ Before planning, ensure the environment is ready for implementation. Check frame
 **Quality Gates Check:**
 
 Run `/assess` command to validate readiness:
-- [ ] Framework health ≥ 80% (npm run monitor)
+- [ ] Framework health ≥ 80% (pnpm monitor)
 - [ ] Git working tree clean (no uncommitted changes blocking)
-- [ ] Dependencies installed (node_modules exists, npm audit clean)
+- [ ] Dependencies installed (node_modules exists, pnpm audit clean)
 - [ ] Database connected (Supabase or local PostgreSQL)
 - [ ] Environment variables set (.env file valid)
-- [ ] Build passing (npm run build succeeds)
-- [ ] Tests passing (npm test succeeds)
+- [ ] Build passing (pnpm build succeeds)
+- [ ] Tests passing (pnpm test succeeds)
 
 **Readiness Thresholds:**
 - ✅ **90-100%**: GO - Ready to proceed with planning

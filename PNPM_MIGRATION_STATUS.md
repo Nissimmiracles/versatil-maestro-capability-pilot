@@ -254,8 +254,10 @@ Options:
 | Dockerfiles | 2 | 0 | 2 | 0% |
 | Shell Scripts | 8 | 0 | 8 | 0% |
 | JS/CJS Scripts | 12 | 0 | 12 | 0% |
-| Documentation | 142 | 0 | 142 | 0% |
-| **TOTAL** | **178** | **5** | **173** | **3%** |
+| .cursor/commands | 4 | 4 | 0 | 100% |
+| docs/ (key files) | 5 | 3 | 2 | 60% |
+| Documentation (other) | 137 | 0 | 137 | 0% |
+| **TOTAL** | **182** | **12** | **170** | **7%** |
 
 ---
 
@@ -335,6 +337,6 @@ git diff docs/
 
 ---
 
-**Last Updated**: 2025-11-03 21:42 PST
-**Status**: Migration 3% complete (Core + 2 workflows)
-**Next Action**: Add pnpm setup to remaining 9 GitHub Actions workflows
+**Last Updated**: 2025-12-09
+**Status**: Migration 7% complete (Core + workflows + .cursor/commands + key docs)
+**Next Action**: Update shell scripts and remaining GitHub Actions workflows

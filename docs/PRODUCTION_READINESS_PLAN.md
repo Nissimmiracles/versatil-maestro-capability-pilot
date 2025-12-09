@@ -253,22 +253,24 @@ Week 4: Publication
 ## Commands Reference
 
 ```bash
-# Development
-pnpm install          # Install deps
-pnpm run build        # Build TypeScript
-pnpm run typecheck    # Type checking only
-pnpm run lint         # Lint code
-pnpm run test         # Run tests
-pnpm run test:coverage # With coverage
+# Development (using pnpm - required)
+pnpm install            # Install deps
+pnpm build              # Build TypeScript
+pnpm typecheck          # Type checking only
+pnpm lint               # Lint code
+pnpm test               # Run tests
+pnpm test:coverage      # With coverage
 
 # Verification
 node bin/versatil.js doctor   # Health check
 node bin/versatil.js agents   # List agents
 
 # Release
-pnpm run build:release  # Full build + test
-npm publish --dry-run   # Verify package
+pnpm build:release      # Full build + test
+npm publish --dry-run   # Verify package (npm for publishing)
 ```
+
+> **Note**: This project uses pnpm 10.17.0. Do not use npm or yarn for development.
 
 ---
 

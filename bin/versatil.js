@@ -18,9 +18,52 @@ async function main() {
 
   switch (command) {
     case 'init': {
-      console.log('🚀 Starting VERSATIL Framework Setup...\n');
-      const { runOnboardingWizard } = await import('../dist/onboarding-wizard.js');
-      await runOnboardingWizard();
+      const initArgs = process.argv.slice(3);
+      const nonInteractive = initArgs.includes('--yes') || initArgs.includes('-y') || initArgs.includes('--defaults');
+
+      if (nonInteractive) {
+        console.log('🚀 Starting VERSATIL Framework Setup (non-interactive mode)...\n');
+        const { runNonInteractiveSetup } = await import('../dist/onboarding-wizard.js');
+        if (typeof runNonInteractiveSetup === 'function') {
+          await runNonInteractiveSetup();
+        } else {
+          // Fallback: create default configuration
+          const fs = await import('fs/promises');
+          const path = await import('path');
+
+          const versatilDir = '.versatil';
+          await fs.mkdir(versatilDir, { recursive: true });
+          await fs.mkdir(path.join(versatilDir, 'agents'), { recursive: true });
+
+          const defaultConfig = {
+            projectType: 'fullstack',
+            teamSize: 'small',
+            experience: 'intermediate',
+            technologies: [],
+            priorities: ['Quality', 'Speed'],
+            mcpPreferences: ['github_mcp'],
+            createdAt: new Date().toISOString(),
+            nonInteractive: true
+          };
+
+          await fs.writeFile(
+            path.join(versatilDir, 'config.json'),
+            JSON.stringify(defaultConfig, null, 2)
+          );
+
+          console.log('✅ Default configuration created at .versatil/config.json');
+          console.log('');
+          console.log('📁 Created:');
+          console.log('   .versatil/config.json - Default configuration');
+          console.log('');
+          console.log('💡 To customize, run: versatil init (without --yes)');
+          console.log('   Or edit .versatil/config.json directly');
+        }
+      } else {
+        console.log('🚀 Starting VERSATIL Framework Setup...\n');
+        const { runOnboardingWizard } = await import('../dist/onboarding-wizard.js');
+        await runOnboardingWizard();
+      }
       break;
     }
 
@@ -41,12 +84,37 @@ async function main() {
     }
 
     case 'agents': {
-      console.log('🤖 Available agent templates:');
+      console.log('🤖 VERSATIL Agent System\n');
+
+      // Core OPERA Agents (always available)
+      console.log('📋 Core OPERA Agents (13 agents):');
+      console.log('   Development Team:');
+      console.log('   • Alex-BA        - Business Analyst: Requirements, user stories');
+      console.log('   • Sarah-PM       - Project Manager: Coordination, planning');
+      console.log('   • James-Frontend - UI/UX Lead: React/Vue, accessibility');
+      console.log('   • Marcus-Backend - API Lead: REST/GraphQL, security');
+      console.log('   • Dana-Database  - Database Lead: Schema, optimization');
+      console.log('   • Maria-QA       - Quality Guardian: Testing, coverage');
+      console.log('   • Dr.AI-ML       - ML Engineer: RAG, embeddings');
+      console.log('');
+      console.log('   Infrastructure:');
+      console.log('   • Oliver-MCP     - MCP Orchestration: Server routing');
+      console.log('   • Iris-Guardian  - Health Monitoring: Auto-remediation');
+      console.log('   • Victor-Verifier- Verification: Hallucination detection');
+      console.log('   • Feedback-Codifier - Learning: Pattern codification');
+      console.log('   • Inventory-Manager - Resources: Stock tracking');
+      console.log('   • Explore/Plan   - Codebase Analysis: Fast exploration');
+      console.log('');
+
+      // Adaptive Templates (suggested based on project)
+      console.log('🔧 Adaptive Agent Templates (auto-suggested):');
       const { adaptiveAgentCreator } = await import('../dist/adaptive-agent-creator.js');
       const templates = adaptiveAgentCreator.getAvailableTemplates();
       templates.forEach(template => {
-        console.log(`   • ${template.name} - ${template.specialization}`);
+        console.log(`   • ${template.name.padEnd(14)} - ${template.specialization}`);
       });
+      console.log('');
+      console.log('💡 Tip: Run "versatil analyze" to see which templates are recommended for your project.');
       break;
     }
 
@@ -193,7 +261,8 @@ USAGE:
   versatil <command> [options]
 
 COMMANDS:
-  init             Interactive setup wizard with OPERA agent customization
+  init [--yes]     Interactive setup wizard with OPERA agent customization
+                   Use --yes/-y/--defaults for non-interactive mode (CI/CD friendly)
   setup            Setup wizard (credentials: configure API keys)
   analyze          Analyze project and suggest additional agents
   agents           List available agent templates
@@ -212,6 +281,7 @@ COMMANDS:
 
 EXAMPLES:
   versatil init                         # Start interactive onboarding
+  versatil init --yes                   # Non-interactive setup with defaults (CI/CD)
   versatil setup credentials            # Configure API keys for services
   versatil credentials setup            # Same as above
   versatil credentials list             # Show configured services

@@ -137,6 +137,16 @@ Each feature teaches the framework, making the next feature **40% faster**:
 | **Inventory-Manager** | Resource Management | Stock tracking, supply chain |
 | **Explore/Plan** | Codebase Analysis | Fast exploration, planning |
 
+**4 Adaptive Agent Templates** (auto-suggested based on project patterns):
+| Template | Specialization | Created When |
+|----------|---------------|--------------|
+| **DevOps-Dan** | CI/CD, Docker, K8s | Dockerfile/K8s patterns detected |
+| **Security-Sam** | Security auditing | Auth/security patterns detected |
+| **Data-Diana** | ETL, data pipelines | Data processing patterns detected |
+| **Mobile-Mike** | iOS/Android | React Native/Flutter detected |
+
+> **Note**: Core agents are always available. Adaptive templates are suggested via `versatil agents` when your project patterns match their specialization.
+
 **[→ See All Agents](docs/agents/README.md)**
 
 ---

@@ -141,6 +141,24 @@ const checks = [
     }
   },
   {
+    name: '.cursorrules file present (optional)',
+    check: async () => {
+      const cwd = process.cwd();
+      const cursorrulesPath = path.join(cwd, '.cursorrules');
+      return fs.existsSync(cursorrulesPath);
+    },
+    optional: true
+  },
+  {
+    name: 'CLAUDE.md file present (optional)',
+    check: async () => {
+      const cwd = process.cwd();
+      const claudeMdPath = path.join(cwd, 'CLAUDE.md');
+      return fs.existsSync(claudeMdPath);
+    },
+    optional: true
+  },
+  {
     name: 'Git is available (optional)',
     check: async () => {
       try {

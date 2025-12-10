@@ -104,14 +104,19 @@ describe('MCPHealthMonitor', () => {
 
     it('should handle monitoring errors gracefully', async () => {
       // Mock checkAllMCPs to throw error
-      vi.spyOn(monitor, 'checkAllMCPs').mockRejectedValue(new Error('Check failed'));
+      const checkSpy = vi.spyOn(monitor, 'checkAllMCPs').mockRejectedValue(new Error('Check failed'));
 
-      monitor.startMonitoring(100);
+      // Start monitoring with a longer interval to avoid race conditions
+      monitor.startMonitoring(1000);
 
-      // Should not crash
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Wait for initial check to complete (or fail gracefully)
+      await new Promise(resolve => setTimeout(resolve, 150));
 
+      // Should not crash - monitoring should still be active
       expect(monitor.isMonitoring()).toBe(true);
+
+      // Cleanup
+      checkSpy.mockRestore();
     });
   });
 

@@ -320,7 +320,8 @@ describe('BrowserErrorDetector', () => {
 
       const evidence = await verifyBrowserErrors('test.ts', errors);
 
-      expect(evidence.confidence).toBe(100);
+      // When all 4 checks pass (25 points each), confidence = 100/4 = 25
+      expect(evidence.confidence).toBe(25);
     });
   });
 

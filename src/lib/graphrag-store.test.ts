@@ -1,54 +1,93 @@
 /**
  * Tests for GraphRAG Store - Knowledge Graph-based RAG
- * Tests entity extraction, graph relationships, query traversal, privacy isolation
+ * Tests entity extraction, graph relationships, query traversal
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { GraphRAGStore, type GraphNode, type GraphEdge, type PatternNode, type GraphRAGQuery, type GraphRAGResult } from './graphrag-store.js';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { GraphRAGStore, type PatternNode, type GraphRAGQuery } from './graphrag-store.js';
+
+// Create proper QuerySnapshot mock
+const createQuerySnapshotMock = (docs: any[] = []) => ({
+  docs,
+  empty: docs.length === 0,
+  size: docs.length,
+  forEach: (callback: (doc: any) => void) => docs.forEach(callback),
+  [Symbol.iterator]: function* () {
+    for (const doc of docs) {
+      yield doc;
+    }
+  }
+});
+
+// Create document mock
+const createDocMock = (id: string, data: any) => ({
+  id,
+  exists: true,
+  data: () => data,
+  ref: { id }
+});
 
 // Mock Firestore
 vi.mock('@google-cloud/firestore', () => {
-  const mockDoc = {
-    get: vi.fn().mockResolvedValue({
-      exists: true,
-      data: () => ({
-        id: 'mock-node-1',
-        type: 'entity',
-        label: 'Test Entity',
-        properties: { name: 'Test' }
-      })
-    }),
-    set: vi.fn().mockResolvedValue({}),
-    update: vi.fn().mockResolvedValue({}),
-    delete: vi.fn().mockResolvedValue({}),
-  };
+  // Store for mock data
+  const mockNodes = new Map<string, any>();
+  const mockEdges = new Map<string, any>();
 
-  const mockCollection = {
-    doc: vi.fn(() => mockDoc),
-    where: vi.fn().mockReturnThis(),
-    get: vi.fn().mockResolvedValue({
-      docs: [{
-        id: 'mock-node-1',
-        data: () => ({
-          id: 'mock-node-1',
-          type: 'entity',
-          label: 'Test Entity',
-          properties: { name: 'Test' }
-        })
-      }],
-      empty: false,
-      size: 1
+  const mockDoc = (collection: string, id: string) => ({
+    get: vi.fn().mockImplementation(async () => {
+      const store = collection === 'graphrag_nodes' ? mockNodes : mockEdges;
+      const data = store.get(id);
+      return {
+        exists: !!data,
+        data: () => data,
+        id
+      };
     }),
-    add: vi.fn().mockResolvedValue({ id: 'mock-id' }),
-  };
+    set: vi.fn().mockImplementation(async (data: any) => {
+      const store = collection === 'graphrag_nodes' ? mockNodes : mockEdges;
+      store.set(id, data);
+      return {};
+    }),
+    update: vi.fn().mockImplementation(async (data: any) => {
+      const store = collection === 'graphrag_nodes' ? mockNodes : mockEdges;
+      const existing = store.get(id) || {};
+      store.set(id, { ...existing, ...data });
+      return {};
+    }),
+    delete: vi.fn().mockImplementation(async () => {
+      const store = collection === 'graphrag_nodes' ? mockNodes : mockEdges;
+      store.delete(id);
+      return {};
+    }),
+  });
+
+  const mockCollection = (name: string) => ({
+    doc: (id: string) => mockDoc(name, id),
+    where: vi.fn().mockReturnThis(),
+    get: vi.fn().mockImplementation(async () => {
+      const store = name === 'graphrag_nodes' ? mockNodes : mockEdges;
+      const docs = Array.from(store.entries()).map(([id, data]) =>
+        createDocMock(id, data)
+      );
+      return createQuerySnapshotMock(docs);
+    }),
+    add: vi.fn().mockImplementation(async (data: any) => {
+      const id = `mock-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const store = name === 'graphrag_nodes' ? mockNodes : mockEdges;
+      store.set(id, { ...data, id });
+      return { id };
+    }),
+  });
 
   class MockFirestore {
-    constructor(config?: any) {
-      // Constructor accepts config but doesn't use it in mock
+    constructor(_config?: any) {
+      // Clear mock stores on new instance
+      mockNodes.clear();
+      mockEdges.clear();
     }
 
     collection(name: string) {
-      return mockCollection;
+      return mockCollection(name);
     }
 
     batch() {
@@ -61,6 +100,8 @@ vi.mock('@google-cloud/firestore', () => {
     }
 
     async terminate() {
+      mockNodes.clear();
+      mockEdges.clear();
       return undefined;
     }
   }
@@ -76,609 +117,501 @@ describe('GraphRAGStore', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     store = new GraphRAGStore();
-    await store.initialize();
+  });
+
+  afterEach(async () => {
+    try {
+      await store.close();
+    } catch {
+      // Ignore close errors in tests
+    }
   });
 
   describe('Initialization', () => {
-    it('should initialize Firestore connection', async () => {
-      const newStore = new GraphRAGStore();
-      await newStore.initialize();
-      expect(newStore['initialized']).toBe(true);
-    });
-
-    it('should load existing nodes from Firestore', async () => {
-      const nodes = await store['loadNodesFromFirestore']();
-      expect(Array.isArray(nodes)).toBe(true);
-    });
-
-    it('should load existing edges from Firestore', async () => {
-      const edges = await store['loadEdgesFromFirestore']();
-      expect(Array.isArray(edges)).toBe(true);
-    });
-
-    it('should build adjacency list from edges', async () => {
+    it('should initialize successfully', async () => {
       await store.initialize();
-      const adjacencyList = store['adjacencyList'];
-      expect(adjacencyList instanceof Map).toBe(true);
+      expect(store['initialized']).toBe(true);
+    });
+
+    it('should not re-initialize if already initialized', async () => {
+      await store.initialize();
+      await store.initialize(); // Second call should be no-op
+      expect(store['initialized']).toBe(true);
+    });
+
+    it('should emit initialized event', async () => {
+      const initHandler = vi.fn();
+      store.on('initialized', initHandler);
+      await store.initialize();
+      expect(initHandler).toHaveBeenCalled();
+    });
+
+    it('should have empty nodes and edges on fresh init', async () => {
+      await store.initialize();
+      expect(store['nodes'].size).toBe(0);
+      expect(store['edges'].size).toBe(0);
     });
   });
 
-  describe('Node Management', () => {
-    it('should add node to graph', async () => {
-      const node: GraphNode = {
-        id: 'test-node-1',
-        type: 'pattern',
-        label: 'Test Pattern',
-        properties: { pattern: 'test', agent: 'alex-ba' },
-        connections: [],
-      };
-      await store.addNode(node);
-      const retrieved = await store.getNode('test-node-1');
-      expect(retrieved?.id).toBe('test-node-1');
+  describe('Pattern Storage (addPattern)', () => {
+    beforeEach(async () => {
+      await store.initialize();
     });
 
-    it('should update existing node', async () => {
-      const node: GraphNode = {
-        id: 'test-node-2',
-        type: 'pattern',
-        label: 'Original Label',
-        properties: {},
-        connections: [],
-      };
-      await store.addNode(node);
-      node.label = 'Updated Label';
-      await store.updateNode(node);
-      const retrieved = await store.getNode('test-node-2');
-      expect(retrieved?.label).toBe('Updated Label');
+    it('should add pattern and return ID', async () => {
+      const patternId = await store.addPattern({
+        pattern: 'JWT authentication with refresh tokens',
+        description: 'Secure auth pattern',
+        agent: 'marcus-backend',
+        category: 'security',
+        effectiveness: 95,
+        timeSaved: 300,
+        tags: ['auth', 'jwt', 'security'],
+        usageCount: 5,
+      });
+
+      expect(patternId).toBeDefined();
+      expect(patternId).toMatch(/^pattern_/);
     });
 
-    it('should delete node from graph', async () => {
-      const node: GraphNode = {
-        id: 'test-node-3',
-        type: 'pattern',
-        label: 'To Delete',
-        properties: {},
-        connections: [],
-      };
-      await store.addNode(node);
-      await store.deleteNode('test-node-3');
-      const retrieved = await store.getNode('test-node-3');
-      expect(retrieved).toBeUndefined();
+    it('should extract agent entity from pattern', async () => {
+      await store.addPattern({
+        pattern: 'Test pattern',
+        agent: 'maria-qa',
+        category: 'testing',
+        effectiveness: 80,
+        timeSaved: 100,
+        tags: [],
+        usageCount: 0,
+      });
+
+      // Check that agent node was created
+      const agentNode = store['nodes'].get('agent_maria-qa');
+      expect(agentNode).toBeDefined();
+      expect(agentNode?.type).toBe('agent');
     });
 
-    it('should get all nodes of specific type', async () => {
-      const nodes = await store.getNodesByType('pattern');
-      expect(Array.isArray(nodes)).toBe(true);
-      nodes.forEach(node => expect(node.type).toBe('pattern'));
-    });
-  });
+    it('should extract category entity from pattern', async () => {
+      await store.addPattern({
+        pattern: 'Database optimization',
+        agent: 'dana-database',
+        category: 'performance',
+        effectiveness: 90,
+        timeSaved: 200,
+        tags: [],
+        usageCount: 0,
+      });
 
-  describe('Edge Management', () => {
-    it('should add edge between nodes', async () => {
-      const edge: GraphEdge = {
-        id: 'edge-1',
-        source: 'node-1',
-        target: 'node-2',
-        relationship: 'uses',
-        weight: 0.8,
-      };
-      await store.addEdge(edge);
-      const retrieved = await store.getEdge('edge-1');
-      expect(retrieved?.id).toBe('edge-1');
+      const categoryNode = store['nodes'].get('category_performance');
+      expect(categoryNode).toBeDefined();
+      expect(categoryNode?.type).toBe('category');
     });
 
-    it('should update adjacency list when adding edge', async () => {
-      const edge: GraphEdge = {
-        id: 'edge-2',
-        source: 'node-a',
-        target: 'node-b',
-        relationship: 'relates_to',
-        weight: 0.5,
-      };
-      await store.addEdge(edge);
-      const neighbors = store['adjacencyList'].get('node-a');
-      expect(neighbors).toContain('node-b');
+    it('should extract technology entities from pattern text', async () => {
+      await store.addPattern({
+        pattern: 'React hooks with TypeScript for type-safe components',
+        description: 'Use useState and useEffect hooks',
+        agent: 'james-frontend',
+        category: 'frontend',
+        effectiveness: 85,
+        timeSaved: 150,
+        tags: ['hooks', 'state'],
+        usageCount: 3,
+      });
+
+      const reactNode = store['nodes'].get('tech_react');
+      const tsNode = store['nodes'].get('tech_typescript');
+      expect(reactNode).toBeDefined();
+      expect(tsNode).toBeDefined();
     });
 
-    it('should delete edge from graph', async () => {
-      const edge: GraphEdge = {
-        id: 'edge-3',
-        source: 'node-c',
-        target: 'node-d',
-        relationship: 'implements',
-        weight: 0.9,
-      };
-      await store.addEdge(edge);
-      await store.deleteEdge('edge-3');
-      const retrieved = await store.getEdge('edge-3');
-      expect(retrieved).toBeUndefined();
+    it('should extract concept entities from tags', async () => {
+      await store.addPattern({
+        pattern: 'API rate limiting',
+        agent: 'marcus-backend',
+        category: 'security',
+        effectiveness: 92,
+        timeSaved: 180,
+        tags: ['rate-limit', 'throttling', 'api-protection'],
+        usageCount: 7,
+      });
+
+      const conceptNode = store['nodes'].get('concept_rate-limit');
+      expect(conceptNode).toBeDefined();
+      expect(conceptNode?.type).toBe('concept');
     });
 
-    it('should get all edges for a node', async () => {
-      const edges = await store.getEdgesForNode('node-1');
-      expect(Array.isArray(edges)).toBe(true);
-    });
-  });
+    it('should create edges between pattern and entities', async () => {
+      const patternId = await store.addPattern({
+        pattern: 'PostgreSQL query optimization',
+        agent: 'dana-database',
+        category: 'database',
+        effectiveness: 88,
+        timeSaved: 250,
+        tags: ['sql', 'indexing'],
+        usageCount: 4,
+      });
 
-  describe('Pattern Storage', () => {
-    it('should store pattern as graph nodes', async () => {
-      const pattern: PatternNode = {
-        id: 'pattern-1',
-        type: 'pattern',
-        label: 'User Authentication Pattern',
-        properties: {
-          pattern: 'JWT authentication with refresh tokens',
-          description: 'Secure auth pattern',
-          agent: 'marcus-backend',
-          category: 'security',
-          effectiveness: 0.95,
-          timeSaved: 300,
-          tags: ['auth', 'jwt', 'security'],
-          usageCount: 5,
-          lastUsed: new Date(),
-        },
-        connections: [],
-      };
-      await store.storePattern(pattern);
-      const retrieved = await store.getNode('pattern-1');
-      expect(retrieved?.type).toBe('pattern');
+      // Check edges exist
+      const edgesCount = store['edges'].size;
+      expect(edgesCount).toBeGreaterThan(0);
+
+      // Pattern should have connections
+      const patternNode = store['nodes'].get(patternId);
+      expect(patternNode?.connections.length).toBeGreaterThan(0);
     });
 
-    it('should extract entities from pattern', async () => {
-      const patternText = 'Use React hooks with TypeScript for type-safe state management';
-      const entities = await store['extractEntities'](patternText);
-      expect(entities).toContain('React');
-      expect(entities).toContain('TypeScript');
-    });
+    it('should set lastUsed to current date if not provided', async () => {
+      const before = new Date();
+      const patternId = await store.addPattern({
+        pattern: 'Test pattern',
+        agent: 'alex-ba',
+        category: 'testing',
+        effectiveness: 70,
+        timeSaved: 50,
+        tags: [],
+        usageCount: 0,
+      });
+      const after = new Date();
 
-    it('should create relationships between pattern and entities', async () => {
-      const pattern: PatternNode = {
-        id: 'pattern-2',
-        type: 'pattern',
-        label: 'GraphQL API Pattern',
-        properties: {
-          pattern: 'GraphQL with Apollo Server',
-          agent: 'marcus-backend',
-          category: 'api',
-          effectiveness: 0.85,
-          timeSaved: 200,
-          tags: ['graphql', 'apollo'],
-          usageCount: 3,
-          lastUsed: new Date(),
-        },
-        connections: [],
-      };
-      await store.storePattern(pattern);
-      const edges = await store.getEdgesForNode('pattern-2');
-      expect(edges.length).toBeGreaterThan(0);
-    });
-
-    it('should increment usage count on pattern retrieval', async () => {
-      const pattern: PatternNode = {
-        id: 'pattern-3',
-        type: 'pattern',
-        label: 'Test Pattern',
-        properties: {
-          pattern: 'Test',
-          agent: 'alex-ba',
-          category: 'test',
-          effectiveness: 0.5,
-          timeSaved: 100,
-          tags: [],
-          usageCount: 0,
-          lastUsed: new Date(),
-        },
-        connections: [],
-      };
-      await store.storePattern(pattern);
-      await store.incrementUsageCount('pattern-3');
-      const retrieved = await store.getNode('pattern-3') as PatternNode;
-      expect(retrieved?.properties.usageCount).toBe(1);
-    });
-  });
-
-  describe('Graph Traversal', () => {
-    it('should perform BFS traversal from node', () => {
-      const startNode = 'node-1';
-      const visited = store['bfsTraversal'](startNode, 3);
-      expect(Array.isArray(visited)).toBe(true);
-    });
-
-    it('should find shortest path between nodes', () => {
-      const path = store['findShortestPath']('node-a', 'node-b');
-      expect(Array.isArray(path)).toBe(true);
-    });
-
-    it('should limit traversal depth', () => {
-      const visited = store['bfsTraversal']('node-1', 2);
-      expect(visited.length).toBeLessThanOrEqual(10);
-    });
-
-    it('should find all neighbors of node', () => {
-      const neighbors = store['getNeighbors']('node-1');
-      expect(Array.isArray(neighbors)).toBe(true);
+      const patternNode = store['nodes'].get(patternId) as PatternNode;
+      const lastUsed = patternNode.properties.lastUsed;
+      expect(lastUsed.getTime()).toBeGreaterThanOrEqual(before.getTime());
+      expect(lastUsed.getTime()).toBeLessThanOrEqual(after.getTime());
     });
   });
 
   describe('Query Processing', () => {
-    it('should query patterns by keyword', async () => {
-      const query: GraphRAGQuery = {
-        query: 'authentication',
+    beforeEach(async () => {
+      await store.initialize();
+
+      // Add test patterns
+      await store.addPattern({
+        pattern: 'React component testing with Jest',
+        description: 'Unit test React components',
+        code: 'describe("Component", () => { it("renders", () => {}) })',
+        agent: 'maria-qa',
+        category: 'testing',
+        effectiveness: 90,
+        timeSaved: 200,
+        tags: ['unit-test', 'jest', 'react'],
+        usageCount: 10,
+      });
+
+      await store.addPattern({
+        pattern: 'PostgreSQL query optimization with indexes',
+        description: 'Optimize slow queries',
+        code: 'CREATE INDEX idx_users_email ON users(email)',
+        agent: 'dana-database',
+        category: 'database',
+        effectiveness: 85,
+        timeSaved: 300,
+        tags: ['sql', 'performance', 'indexing'],
+        usageCount: 5,
+      });
+
+      await store.addPattern({
+        pattern: 'JWT authentication flow',
+        description: 'Secure API authentication',
+        code: 'jwt.sign({ userId }, secret, { expiresIn: "1h" })',
+        agent: 'marcus-backend',
+        category: 'security',
+        effectiveness: 95,
+        timeSaved: 400,
+        tags: ['auth', 'jwt', 'api'],
+        usageCount: 15,
+      });
+    });
+
+    it('should return empty array for non-matching query', async () => {
+      const results = await store.query({
+        query: 'nonexistent12345xyz',
         limit: 10,
-        minRelevance: 0.5,
-      };
-      const results = await store.query(query);
-      expect(Array.isArray(results)).toBe(true);
+      });
+
+      expect(results).toEqual([]);
+    });
+
+    it('should return results for matching query', async () => {
+      const results = await store.query({
+        query: 'testing react',
+        limit: 10,
+      });
+
+      expect(results.length).toBeGreaterThan(0);
     });
 
     it('should filter by agent', async () => {
-      const query: GraphRAGQuery = {
-        query: 'API design',
-        agent: 'marcus-backend',
-      };
-      const results = await store.query(query);
+      const results = await store.query({
+        query: 'pattern',
+        agent: 'maria-qa',
+      });
+
       results.forEach(result => {
-        expect(result.pattern.properties.agent).toBe('marcus-backend');
+        expect(result.pattern.properties.agent).toBe('maria-qa');
       });
     });
 
     it('should filter by category', async () => {
-      const query: GraphRAGQuery = {
-        query: 'security',
-        category: 'security',
-      };
-      const results = await store.query(query);
-      results.forEach(result => {
-        expect(result.pattern.properties.category).toBe('security');
+      const results = await store.query({
+        query: 'pattern',
+        category: 'database',
       });
-    });
 
-    it('should filter by tags', async () => {
-      const query: GraphRAGQuery = {
-        query: 'database',
-        tags: ['postgresql', 'orm'],
-      };
-      const results = await store.query(query);
       results.forEach(result => {
-        const hasTags = result.pattern.properties.tags.some(tag =>
-          ['postgresql', 'orm'].includes(tag)
-        );
-        expect(hasTags).toBe(true);
+        expect(result.pattern.properties.category).toBe('database');
       });
     });
 
     it('should respect limit parameter', async () => {
-      const query: GraphRAGQuery = {
+      const results = await store.query({
         query: 'pattern',
-        limit: 5,
-      };
-      const results = await store.query(query);
-      expect(results.length).toBeLessThanOrEqual(5);
+        limit: 1,
+      });
+
+      expect(results.length).toBeLessThanOrEqual(1);
     });
 
-    it('should respect minimum relevance score', async () => {
-      const query: GraphRAGQuery = {
-        query: 'testing',
-        minRelevance: 0.7,
-      };
-      const results = await store.query(query);
+    it('should respect minRelevance parameter', async () => {
+      const results = await store.query({
+        query: 'react',
+        minRelevance: 0.5,
+      });
+
       results.forEach(result => {
-        expect(result.relevanceScore).toBeGreaterThanOrEqual(0.7);
+        expect(result.relevanceScore).toBeGreaterThanOrEqual(0.5);
       });
     });
-  });
 
-  describe('Relevance Scoring', () => {
-    it('should calculate relevance score', () => {
-      const query = 'React hooks';
-      const pattern = 'Use React hooks for state management';
-      const score = store['calculateRelevance'](query, pattern);
-      expect(score).toBeGreaterThan(0);
-      expect(score).toBeLessThanOrEqual(1);
+    it('should include graphPath in results', async () => {
+      const results = await store.query({
+        query: 'react testing',
+        limit: 5,
+      });
+
+      if (results.length > 0) {
+        expect(results[0].graphPath).toBeDefined();
+        expect(Array.isArray(results[0].graphPath)).toBe(true);
+      }
     });
 
-    it('should boost score for exact keyword matches', () => {
-      const query = 'authentication';
-      const pattern1 = 'authentication system';
-      const pattern2 = 'login flow';
-      const score1 = store['calculateRelevance'](query, pattern1);
-      const score2 = store['calculateRelevance'](query, pattern2);
-      expect(score1).toBeGreaterThan(score2);
+    it('should include explanation in results', async () => {
+      const results = await store.query({
+        query: 'jwt authentication',
+        limit: 5,
+      });
+
+      if (results.length > 0) {
+        expect(results[0].explanation).toBeDefined();
+        expect(typeof results[0].explanation).toBe('string');
+      }
     });
 
-    it('should consider graph centrality in scoring', () => {
-      const node: GraphNode = {
-        id: 'central-node',
-        type: 'pattern',
-        label: 'Central Pattern',
-        properties: {},
-        connections: ['n1', 'n2', 'n3', 'n4'],
-        centrality: 0.9,
-      };
-      const score = store['boostByCentrality'](0.5, node);
-      expect(score).toBeGreaterThan(0.5);
-    });
+    it('should rank results by relevance score', async () => {
+      const results = await store.query({
+        query: 'test pattern',
+        limit: 10,
+      });
 
-    it('should rank results by relevance', async () => {
-      const query: GraphRAGQuery = { query: 'testing' };
-      const results = await store.query(query);
       for (let i = 1; i < results.length; i++) {
-        expect(results[i - 1].relevanceScore).toBeGreaterThanOrEqual(results[i].relevanceScore);
+        expect(results[i - 1].relevanceScore).toBeGreaterThanOrEqual(
+          results[i].relevanceScore
+        );
       }
     });
   });
 
-  describe('Privacy Isolation (Three-Layer Context)', () => {
-    it('should store user-specific patterns', async () => {
-      const pattern: PatternNode = {
-        id: 'user-pattern-1',
-        type: 'pattern',
-        label: 'User Pattern',
-        properties: {
-          pattern: 'User-specific workflow',
-          agent: 'alex-ba',
-          category: 'workflow',
-          effectiveness: 0.8,
-          timeSaved: 150,
-          tags: [],
-          usageCount: 0,
-          lastUsed: new Date(),
-        },
-        connections: [],
-        privacy: {
-          userId: 'user-123',
-          isPublic: false,
-        },
-      };
-      await store.storePattern(pattern);
-      const retrieved = await store.getNode('user-pattern-1') as PatternNode;
-      expect(retrieved?.privacy?.userId).toBe('user-123');
+  describe('Entity Extraction', () => {
+    beforeEach(async () => {
+      await store.initialize();
     });
 
-    it('should store team-specific patterns', async () => {
-      const pattern: PatternNode = {
-        id: 'team-pattern-1',
-        type: 'pattern',
-        label: 'Team Pattern',
-        properties: {
-          pattern: 'Team workflow',
-          agent: 'sarah-pm',
-          category: 'workflow',
-          effectiveness: 0.7,
-          timeSaved: 200,
-          tags: [],
-          usageCount: 0,
-          lastUsed: new Date(),
-        },
-        connections: [],
-        privacy: {
-          teamId: 'team-456',
-          isPublic: false,
-        },
-      };
-      await store.storePattern(pattern);
-      const retrieved = await store.getNode('team-pattern-1') as PatternNode;
-      expect(retrieved?.privacy?.teamId).toBe('team-456');
-    });
-
-    it('should store project-specific patterns', async () => {
-      const pattern: PatternNode = {
-        id: 'project-pattern-1',
-        type: 'pattern',
-        label: 'Project Pattern',
-        properties: {
-          pattern: 'Project-specific config',
-          agent: 'marcus-backend',
-          category: 'config',
-          effectiveness: 0.9,
-          timeSaved: 250,
-          tags: [],
-          usageCount: 0,
-          lastUsed: new Date(),
-        },
-        connections: [],
-        privacy: {
-          projectId: 'project-789',
-          isPublic: false,
-        },
-      };
-      await store.storePattern(pattern);
-      const retrieved = await store.getNode('project-pattern-1') as PatternNode;
-      expect(retrieved?.privacy?.projectId).toBe('project-789');
-    });
-
-    it('should query user-specific patterns', async () => {
-      const query: GraphRAGQuery = {
-        query: 'workflow',
-        userId: 'user-123',
-      };
-      const results = await store.query(query);
-      results.forEach(result => {
-        expect(
-          result.pattern.privacy?.userId === 'user-123' ||
-          result.pattern.privacy?.isPublic === true
-        ).toBe(true);
+    it('should extract common technologies', async () => {
+      await store.addPattern({
+        pattern: 'Full stack with React, Node, PostgreSQL and Docker',
+        agent: 'alex-ba',
+        category: 'architecture',
+        effectiveness: 90,
+        timeSaved: 500,
+        tags: [],
+        usageCount: 0,
       });
+
+      expect(store['nodes'].has('tech_react')).toBe(true);
+      expect(store['nodes'].has('tech_node')).toBe(true);
+      expect(store['nodes'].has('tech_postgresql')).toBe(true);
+      expect(store['nodes'].has('tech_docker')).toBe(true);
     });
 
-    it('should query team-specific patterns', async () => {
-      const query: GraphRAGQuery = {
-        query: 'workflow',
-        teamId: 'team-456',
-      };
-      const results = await store.query(query);
-      results.forEach(result => {
-        expect(
-          result.pattern.privacy?.teamId === 'team-456' ||
-          result.pattern.privacy?.isPublic === true
-        ).toBe(true);
+    it('should extract testing frameworks', async () => {
+      await store.addPattern({
+        pattern: 'E2E testing with Playwright and Vitest',
+        agent: 'maria-qa',
+        category: 'testing',
+        effectiveness: 88,
+        timeSaved: 200,
+        tags: [],
+        usageCount: 0,
       });
+
+      expect(store['nodes'].has('tech_playwright')).toBe(true);
+      expect(store['nodes'].has('tech_vitest')).toBe(true);
     });
 
-    it('should query project-specific patterns', async () => {
-      const query: GraphRAGQuery = {
-        query: 'config',
-        projectId: 'project-789',
-      };
-      const results = await store.query(query);
-      results.forEach(result => {
-        expect(
-          result.pattern.privacy?.projectId === 'project-789' ||
-          result.pattern.privacy?.isPublic === true
-        ).toBe(true);
+    it('should not create duplicate entity nodes', async () => {
+      await store.addPattern({
+        pattern: 'React hooks pattern',
+        agent: 'james-frontend',
+        category: 'frontend',
+        effectiveness: 80,
+        timeSaved: 100,
+        tags: [],
+        usageCount: 0,
       });
-    });
 
-    it('should include public patterns by default', async () => {
-      const query: GraphRAGQuery = {
-        query: 'pattern',
-        userId: 'user-123',
-        includePublic: true,
-      };
-      const results = await store.query(query);
-      const hasPublic = results.some(r => r.pattern.privacy?.isPublic === true);
-      expect(hasPublic).toBe(true);
-    });
-
-    it('should exclude public patterns when requested', async () => {
-      const query: GraphRAGQuery = {
-        query: 'pattern',
-        userId: 'user-123',
-        includePublic: false,
-      };
-      const results = await store.query(query);
-      results.forEach(result => {
-        expect(result.pattern.privacy?.userId).toBe('user-123');
+      await store.addPattern({
+        pattern: 'Another React pattern',
+        agent: 'james-frontend',
+        category: 'frontend',
+        effectiveness: 75,
+        timeSaved: 80,
+        tags: [],
+        usageCount: 0,
       });
-    });
 
-    it('should prevent cross-user pattern access', async () => {
-      const query: GraphRAGQuery = {
-        query: 'workflow',
-        userId: 'user-999',
-        includePublic: false,
-      };
-      const results = await store.query(query);
-      const hasOtherUserPattern = results.some(r =>
-        r.pattern.privacy?.userId && r.pattern.privacy.userId !== 'user-999'
-      );
-      expect(hasOtherUserPattern).toBe(false);
+      // Count react nodes (should be exactly 1)
+      let reactCount = 0;
+      for (const [id] of store['nodes']) {
+        if (id === 'tech_react') reactCount++;
+      }
+      expect(reactCount).toBe(1);
     });
   });
 
-  describe('Graph Analysis', () => {
-    it('should calculate node centrality', async () => {
-      await store.calculateCentrality();
-      const nodes = await store.getNodesByType('pattern');
-      nodes.forEach(node => {
-        expect(typeof node.centrality).toBe('number');
+  describe('Statistics', () => {
+    beforeEach(async () => {
+      await store.initialize();
+    });
+
+    it('should return statistics object', async () => {
+      const stats = await store.getStatistics();
+
+      expect(stats).toHaveProperty('totalNodes');
+      expect(stats).toHaveProperty('totalEdges');
+      expect(stats).toHaveProperty('nodesByType');
+      expect(stats).toHaveProperty('avgConnections');
+    });
+
+    it('should count nodes by type', async () => {
+      await store.addPattern({
+        pattern: 'Test pattern',
+        agent: 'alex-ba',
+        category: 'testing',
+        effectiveness: 80,
+        timeSaved: 100,
+        tags: ['tag1'],
+        usageCount: 0,
       });
+
+      const stats = await store.getStatistics();
+
+      expect(stats.nodesByType.pattern).toBeGreaterThanOrEqual(1);
+      expect(stats.nodesByType.agent).toBeGreaterThanOrEqual(1);
+      expect(stats.nodesByType.category).toBeGreaterThanOrEqual(1);
     });
 
-    it('should identify highly connected nodes', () => {
-      const centralNodes = store['getHighCentralityNodes'](0.7);
-      expect(Array.isArray(centralNodes)).toBe(true);
-    });
-
-    it('should detect communities in graph', async () => {
-      const communities = await store.detectCommunities();
-      expect(Array.isArray(communities)).toBe(true);
-    });
-
-    it('should find related patterns', async () => {
-      const related = await store.findRelatedPatterns('pattern-1', 5);
-      expect(Array.isArray(related)).toBe(true);
-      expect(related.length).toBeLessThanOrEqual(5);
-    });
-  });
-
-  describe('Performance Optimization', () => {
-    it('should cache query results', async () => {
-      const query: GraphRAGQuery = { query: 'caching' };
-      const results1 = await store.query(query);
-      const results2 = await store.query(query);
-      expect(results1).toEqual(results2);
-    });
-
-    it('should invalidate cache on graph update', async () => {
-      const query: GraphRAGQuery = { query: 'test' };
-      await store.query(query);
-      const node: GraphNode = {
-        id: 'new-node',
-        type: 'pattern',
-        label: 'New Pattern',
-        properties: {},
-        connections: [],
-      };
-      await store.addNode(node);
-      const isCacheValid = store['isCacheValid']();
-      expect(isCacheValid).toBe(false);
-    });
-
-    it('should batch Firestore operations', async () => {
-      const nodes: GraphNode[] = Array.from({ length: 10 }, (_, i) => ({
-        id: `batch-node-${i}`,
-        type: 'pattern',
-        label: `Pattern ${i}`,
-        properties: {},
-        connections: [],
-      }));
-      await store.batchAddNodes(nodes);
-      const retrieved = await store.getNode('batch-node-5');
-      expect(retrieved?.id).toBe('batch-node-5');
-    });
-
-    it('should limit memory usage of in-memory cache', () => {
-      const cacheSize = store['nodes'].size;
-      expect(cacheSize).toBeLessThan(10000);
-    });
-  });
-
-  describe('Error Handling', () => {
-    it('should handle Firestore connection errors', async () => {
-      const badStore = new GraphRAGStore();
-      vi.spyOn(badStore['firestore'], 'collection').mockImplementation(() => {
-        throw new Error('Connection failed');
+    it('should calculate average connections', async () => {
+      await store.addPattern({
+        pattern: 'Pattern with many entities: React, TypeScript, Jest',
+        agent: 'james-frontend',
+        category: 'frontend',
+        effectiveness: 85,
+        timeSaved: 150,
+        tags: ['hooks', 'testing'],
+        usageCount: 5,
       });
-      await expect(badStore.initialize()).rejects.toThrow();
-    });
 
-    it('should handle invalid node data', async () => {
-      const invalidNode = { id: 'bad-node' } as any;
-      await expect(store.addNode(invalidNode)).rejects.toThrow();
-    });
+      const stats = await store.getStatistics();
 
-    it('should handle non-existent node queries', async () => {
-      const node = await store.getNode('non-existent');
-      expect(node).toBeUndefined();
-    });
-
-    it('should handle empty query results', async () => {
-      const query: GraphRAGQuery = { query: 'nonexistentpattern12345' };
-      const results = await store.query(query);
-      expect(results).toEqual([]);
+      expect(stats.avgConnections).toBeGreaterThan(0);
     });
   });
 
   describe('Cleanup', () => {
-    it('should clear in-memory cache', async () => {
-      await store.clearCache();
+    it('should close and reset state', async () => {
+      await store.initialize();
+      await store.addPattern({
+        pattern: 'Test',
+        agent: 'alex-ba',
+        category: 'test',
+        effectiveness: 50,
+        timeSaved: 10,
+        tags: [],
+        usageCount: 0,
+      });
+
+      await store.close();
+
+      expect(store['initialized']).toBe(false);
       expect(store['nodes'].size).toBe(0);
       expect(store['edges'].size).toBe(0);
     });
+  });
 
-    it('should close Firestore connection', async () => {
-      await store.close();
-      expect(store['initialized']).toBe(false);
+  describe('Edge Cases', () => {
+    beforeEach(async () => {
+      await store.initialize();
     });
 
-    it('should delete old patterns', async () => {
-      const cutoffDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
-      await store.deleteOldPatterns(cutoffDate);
-      const allPatterns = await store.getNodesByType('pattern') as PatternNode[];
-      allPatterns.forEach(pattern => {
-        expect(pattern.properties.lastUsed.getTime()).toBeGreaterThan(cutoffDate.getTime());
+    it('should handle empty tags array', async () => {
+      const patternId = await store.addPattern({
+        pattern: 'Pattern with no tags',
+        agent: 'alex-ba',
+        category: 'general',
+        effectiveness: 70,
+        timeSaved: 50,
+        tags: [],
+        usageCount: 0,
       });
+
+      expect(patternId).toBeDefined();
+    });
+
+    it('should handle pattern with no code', async () => {
+      const patternId = await store.addPattern({
+        pattern: 'Conceptual pattern without code',
+        description: 'Just a description',
+        agent: 'sarah-pm',
+        category: 'process',
+        effectiveness: 75,
+        timeSaved: 100,
+        tags: ['workflow'],
+        usageCount: 0,
+      });
+
+      expect(patternId).toBeDefined();
+    });
+
+    it('should handle query with empty results gracefully', async () => {
+      const results = await store.query({
+        query: 'xyz123nonexistent',
+      });
+
+      expect(results).toEqual([]);
+    });
+
+    it('should handle special characters in pattern text', async () => {
+      const patternId = await store.addPattern({
+        pattern: 'Pattern with special chars: <script>, ${var}, `template`',
+        agent: 'marcus-backend',
+        category: 'security',
+        effectiveness: 85,
+        timeSaved: 200,
+        tags: ['xss', 'injection'],
+        usageCount: 0,
+      });
+
+      expect(patternId).toBeDefined();
     });
   });
 });

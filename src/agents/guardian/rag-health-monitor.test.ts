@@ -309,7 +309,8 @@ describe('RAGHealthMonitor', () => {
 
       expect(typeof result.success).toBe('boolean');
       expect(result.component).toBe('vector');
-      expect(result.duration_ms).toBeGreaterThan(0);
+      // duration_ms can be 0 in fast mocked tests
+      expect(result.duration_ms).toBeGreaterThanOrEqual(0);
     });
 
     it('should handle vector store connection loss', async () => {
@@ -404,7 +405,8 @@ describe('RAGHealthMonitor', () => {
 
       const result = await monitor.remediateIssue(mockIssue);
 
-      expect(result.duration_ms).toBeGreaterThan(0);
+      // duration_ms can be 0 in fast mocked tests
+      expect(result.duration_ms).toBeGreaterThanOrEqual(0);
       expect(result.duration_ms).toBeLessThan(10000); // Should complete within 10 seconds
     });
   });

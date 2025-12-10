@@ -127,7 +127,22 @@ const checks = [
     check: async () => {
       const cwd = process.cwd();
 
-      // Check for forbidden directories in project
+      // Skip check if running from within the framework project itself
+      // (detected by presence of package.json with @versatil/sdlc-framework name)
+      const packageJsonPath = path.join(cwd, 'package.json');
+      if (fs.existsSync(packageJsonPath)) {
+        try {
+          const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+          if (pkg.name === '@versatil/sdlc-framework') {
+            // This IS the framework project - pollution check doesn't apply
+            return true;
+          }
+        } catch {
+          // Ignore parse errors
+        }
+      }
+
+      // Check for forbidden directories in user projects
       const forbidden = ['.versatil', 'versatil', 'supabase', '.versatil-memory', '.versatil-logs'];
 
       for (const dir of forbidden) {

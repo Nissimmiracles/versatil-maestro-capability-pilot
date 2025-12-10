@@ -309,5 +309,5 @@ main().catch(error => {
   console.error(`Installation error: ${error.message}`);
   console.log('\n⚠️  Installation completed with warnings');
   console.log('You can complete setup later by running: versatil config wizard\n');
-  process.exit(0); // Don't fail npm install
+  process.exit(0); // Don't fail pnpm install
 });

@@ -13,6 +13,20 @@ import { homedir } from 'os';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Handle --version flag before anything else
+if (process.argv.includes('--version') || process.argv.includes('-v')) {
+  // Read version from package.json
+  import('../package.json', { assert: { type: 'json' } })
+    .then(pkg => {
+      console.log(`versatil-mcp ${pkg.default.version}`);
+      process.exit(0);
+    })
+    .catch(() => {
+      console.log('versatil-mcp 7.16.2');
+      process.exit(0);
+    });
+} else {
+
 // MCP Server Log File (for debugging without interfering with stdio)
 const VERSATIL_HOME = process.env.VERSATIL_HOME || join(homedir(), '.versatil');
 const LOG_FILE = join(VERSATIL_HOME, 'mcp-server.log');
@@ -134,3 +148,5 @@ main()
     console.error('❌ Fatal error:', error.message);
     process.exit(1);
   });
+
+} // End of else block for --version check

@@ -12,7 +12,7 @@
  * - Performance (< 200ms for 95th percentile)
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { EnhancedVectorMemoryStore, RAGQuery, RAGResult } from '../../src/rag/enhanced-vector-memory-store.js';
 
 describe('RAG Pattern Retrieval Tests', () => {

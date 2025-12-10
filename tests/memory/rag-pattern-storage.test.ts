@@ -12,7 +12,7 @@
  * - Performance benchmarks
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { EnhancedVectorMemoryStore, MemoryDocument, RAGQuery } from '../../src/rag/enhanced-vector-memory-store.js';
 import { createClient } from '@supabase/supabase-js';
 import * as fs from 'fs/promises';

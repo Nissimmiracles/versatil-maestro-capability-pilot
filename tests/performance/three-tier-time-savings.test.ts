@@ -16,7 +16,7 @@
  * Coverage Target: Performance validation
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { DanaSDKAgent } from '../../src/agents/opera/dana-database/dana-sdk-agent.js';
 import { EnhancedMarcus } from '../../src/agents/opera/marcus-backend/enhanced-marcus.js';
 import { EnhancedJames } from '../../src/agents/opera/james-frontend/enhanced-james.js';

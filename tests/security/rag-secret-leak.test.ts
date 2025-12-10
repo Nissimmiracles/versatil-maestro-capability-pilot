@@ -12,7 +12,7 @@
  * 5. Workflow file patterns classified as credentials
  */
 
-import { describe, test, expect, beforeEach } from '@jest/globals';
+import { describe, test, expect, beforeEach } from 'vitest';
 import { getPatternSanitizer } from '../../src/rag/pattern-sanitizer.js';
 import { getSanitizationPolicy, PatternClassification } from '../../src/rag/sanitization-policy.js';
 import { StorageDestination } from '../../src/rag/rag-router.js';

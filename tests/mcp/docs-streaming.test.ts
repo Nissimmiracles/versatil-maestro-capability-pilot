@@ -2,7 +2,7 @@
  * Unit tests for Documentation Streaming
  */
 
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from 'vitest';
 import {
   ResultStream,
   StreamManager,

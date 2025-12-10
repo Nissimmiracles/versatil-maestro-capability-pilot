@@ -16,7 +16,7 @@
  * @duration 75min
  */
 
-import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, test, expect, beforeAll, afterAll } from 'vitest';
 import { ChainOfVerification, type CoVeResult } from '../../src/agents/verification/chain-of-verification.js';
 import { AntiHallucinationDetector, type HallucinationRisk, FRAMEWORK_KNOWLEDGE_BASE } from '../../src/agents/mcp/anti-hallucination-detector.js';
 import { writeFileSync, mkdirSync, existsSync, readFileSync, rmSync } from 'fs';

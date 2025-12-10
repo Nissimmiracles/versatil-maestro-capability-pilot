@@ -2,7 +2,7 @@
  * Tests for Comprehensive Audit Trail (Phase 4.4)
  */
 
-import { jest } from '@jest/globals';
+import { jest } from 'vitest';
 import {
   AuditTrail,
   AuditEventType,

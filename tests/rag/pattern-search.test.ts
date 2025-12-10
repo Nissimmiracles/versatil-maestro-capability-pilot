@@ -2,7 +2,7 @@
  * Pattern Search Service - Integration Tests
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { PatternSearchService, PatternSearchQuery } from '../../src/rag/pattern-search.js';
 
 describe('PatternSearchService', () => {

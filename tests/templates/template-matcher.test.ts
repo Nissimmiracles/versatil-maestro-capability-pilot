@@ -2,7 +2,7 @@
  * Template Matcher Service - Integration Tests
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { TemplateMatcher } from '../../src/templates/template-matcher.js';
 
 describe('TemplateMatcher', () => {

@@ -14,7 +14,7 @@
  * @phase Phase-2-Week-4
  */
 
-import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { getAgentMemoryAPI } from '../../src/memory/agent-memory-manager.js';
 import { getGlobalContextTracker } from '../../src/memory/context-stats-tracker.js';
 

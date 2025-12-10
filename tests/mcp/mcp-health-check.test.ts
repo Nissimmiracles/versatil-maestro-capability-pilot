@@ -21,7 +21,7 @@
  * - Error handling
  */
 
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { spawn, ChildProcess } from 'child_process';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';

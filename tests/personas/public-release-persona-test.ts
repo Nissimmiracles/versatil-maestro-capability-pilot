@@ -14,7 +14,7 @@
  * - Tech Lead: Needs full team integration
  */
 
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { execSync } from 'child_process';

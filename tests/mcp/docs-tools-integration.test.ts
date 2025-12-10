@@ -3,7 +3,7 @@
  * Tests the complete flow from MCP server to documentation tools
  */
 
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { VERSATILMCPServerV2 } from '../../src/mcp/versatil-mcp-server-v2.js';
 import { AgentRegistry } from '../../src/agents/core/agent-registry.js';
 import { SDLCOrchestrator } from '../../src/flywheel/sdlc-orchestrator.js';

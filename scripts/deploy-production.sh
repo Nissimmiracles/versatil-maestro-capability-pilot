@@ -10,7 +10,7 @@ echo "🚀 Starting VERSATIL Production Deployment..."
 # Check if Supabase CLI is installed
 if ! command -v supabase &> /dev/null; then
     echo "❌ Supabase CLI not found. Installing..."
-    npm install -g supabase
+    pnpm add -g supabase
 fi
 
 # Check environment variables

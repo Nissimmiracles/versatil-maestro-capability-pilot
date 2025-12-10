@@ -108,18 +108,19 @@ check_prerequisites() {
   fi
   echo -e "${GREEN}✓ Node.js $(node --version)${NC}"
 
-  # Check npm
-  if ! command -v npm &> /dev/null; then
-    echo -e "${RED}✗ npm not found${NC}"
+  # Check pnpm
+  if ! command -v pnpm &> /dev/null; then
+    echo -e "${RED}✗ pnpm not found${NC}"
+    echo "Install pnpm: npm install -g pnpm@10.17.0"
     exit 1
   fi
-  echo -e "${GREEN}✓ npm $(npm --version)${NC}"
+  echo -e "${GREEN}✓ pnpm $(pnpm --version)${NC}"
 
   # Check if node_modules exists
   if [ ! -d "${PROJECT_ROOT}/node_modules" ]; then
     echo -e "${YELLOW}⚠ node_modules not found, installing dependencies...${NC}"
     cd "${PROJECT_ROOT}"
-    npm install
+    pnpm install
   fi
   echo -e "${GREEN}✓ Dependencies installed${NC}"
 

@@ -301,7 +301,7 @@ module.exports = defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev',
+    command: 'pnpm dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
   },
@@ -431,7 +431,7 @@ james-frontend() {
     echo "🎨 James-Frontend: $1"
     case $1 in
         "lint") eslint src/ --fix ;;
-        "build") npm run build ;;
+        "build") pnpm build ;;
         "optimize") echo "Running frontend optimizations..." ;;
         *) echo "Usage: james-frontend [lint|build|optimize]" ;;
     esac
@@ -478,13 +478,13 @@ echo "🤖 Maria-QA: Running pre-commit quality checks..."
 # Run linting
 if command -v eslint &> /dev/null; then
     echo "Running ESLint..."
-    npm run lint 2>/dev/null || echo "ESLint check completed"
+    pnpm lint 2>/dev/null || echo "ESLint check completed"
 fi
 
 # Run unit tests
 if [[ -f "package.json" ]] && grep -q '"test"' package.json; then
     echo "Running unit tests..."
-    npm test 2>/dev/null || echo "Tests completed"
+    pnpm test 2>/dev/null || echo "Tests completed"
 fi
 
 # Security audit
@@ -570,13 +570,13 @@ Your project has been configured with the VERSATIL SDLC Framework!
 
 \`\`\`bash
 # Test everything
-npm run versatil:test
+pnpm versatil:test
 
 # Validate setup
-npm run versatil:validate
+pnpm versatil:validate
 
 # Configure agents
-npm run versatil:agents
+pnpm versatil:agents
 
 # Individual agent commands
 maria-qa test
@@ -649,11 +649,11 @@ show_success() {
     echo -e "${BLUE}Next Steps:${NC}"
     echo "1. 📖 Read the getting started guide: docs/VERSATIL-GETTING-STARTED.md"
     echo "2. 🤖 Open your project in Cursor IDE for auto-agent activation"
-    echo "3. ✅ Run validation: npm run versatil:validate"
+    echo "3. ✅ Run validation: pnpm versatil:validate"
     echo "4. 🧪 Test the setup: maria-qa test"
     echo ""
     echo -e "${BLUE}Quick Commands:${NC}"
-    echo "• npm run versatil:test     - Run all tests"
+    echo "• pnpm versatil:test        - Run all tests"
     echo "• maria-qa test            - Quality testing"
     echo "• james-frontend lint      - Frontend linting"
     echo "• marcus-backend security  - Security audit"

@@ -13,7 +13,7 @@
  * @phase Phase-2-Week-2
  */
 
-import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { ContextSentinel } from '../../src/agents/monitoring/context-sentinel.js';
 import { ContextBudgetManager } from '../../src/tracking/context-budget-manager.js';
 import { getGlobalContextTracker } from '../../src/memory/context-stats-tracker.js';

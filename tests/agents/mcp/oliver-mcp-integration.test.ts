@@ -10,7 +10,7 @@
  * Gap Analysis Task 1.1 - Critical Gap Remediation
  */
 
-import { describe, test, expect, beforeEach } from '@jest/globals';
+import { describe, test, expect, beforeEach } from 'vitest';
 import { OliverMCPAgent, MCPRoutingRequest, MCPRoutingResult } from '../../../src/agents/mcp/oliver-mcp-orchestrator.js';
 import { VERSATILLogger } from '../../../src/utils/logger.js';
 

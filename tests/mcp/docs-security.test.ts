@@ -3,7 +3,7 @@
  * Tests path traversal protection, file size limits, and access controls
  */
 
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { DocsSearchEngine } from '../../src/mcp/docs-search-engine.js';
 import { DocsSearchError, DocsErrorCodes } from '../../src/mcp/docs-errors.js';
 import path from 'path';

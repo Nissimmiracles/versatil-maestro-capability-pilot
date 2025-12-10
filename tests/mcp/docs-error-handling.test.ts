@@ -3,7 +3,7 @@
  * Tests malformed markdown, edge cases, and error recovery
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 import { DocsFormatter } from '../../src/mcp/docs-formatter.js';
 
 describe('DocsFormatter - Error Handling', () => {

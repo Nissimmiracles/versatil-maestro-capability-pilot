@@ -2,7 +2,7 @@
  * Unit tests for DocsMemoryTracker
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { DocsMemoryTracker, MemoryUsage, MemoryWarning } from '../../src/mcp/docs-memory-tracker.js';
 
 describe('DocsMemoryTracker', () => {

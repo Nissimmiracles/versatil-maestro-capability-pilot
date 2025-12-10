@@ -4,7 +4,7 @@
  * Tests MCP selection logic, anti-hallucination detection, and routing
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { OliverMCPAgent } from '../../../src/agents/mcp/oliver-mcp-orchestrator.js';
 import { VERSATILLogger } from '../../../src/utils/logger.js';
 

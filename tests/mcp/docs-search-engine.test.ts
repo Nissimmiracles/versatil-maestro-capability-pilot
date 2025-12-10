@@ -2,7 +2,7 @@
  * Unit tests for DocsSearchEngine
  */
 
-import { describe, it, expect, beforeAll } from '@jest/globals';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { DocsSearchEngine, DocCategory } from '../../src/mcp/docs-search-engine.js';
 import path from 'path';
 

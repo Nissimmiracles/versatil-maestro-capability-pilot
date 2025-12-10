@@ -3,7 +3,7 @@
  * Tests index building, rebuilding, TTL, and concurrent access
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { DocsSearchEngine } from '../../src/mcp/docs-search-engine.js';
 import path from 'path';
 

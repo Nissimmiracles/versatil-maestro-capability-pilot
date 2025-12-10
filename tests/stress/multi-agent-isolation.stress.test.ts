@@ -14,7 +14,7 @@
  * @phase Phase-2-Week-3
  */
 
-import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { ContextBudgetManager } from '../../src/tracking/context-budget-manager.js';
 import { getAgentMemoryAPI } from '../../src/memory/agent-memory-manager.js';
 import { getAllAgentIds } from '../../src/memory/memory-tool-config.js';

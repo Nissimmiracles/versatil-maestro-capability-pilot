@@ -11,7 +11,7 @@
  * @module tests/workflows/velocity-workflow-orchestrator
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import VelocityWorkflowOrchestrator from '../../src/workflows/velocity-workflow-orchestrator.js';
 import { EVERYWorkflowStateMachine } from '../../src/workflows/every-workflow-state-machine.js';
 import { EVERYPhaseTransitions } from '../../src/workflows/every-phase-transitions.js';

@@ -2,7 +2,7 @@
  * Unit tests for DocsProgressTracker
  */
 
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from 'vitest';
 import { DocsProgressTracker, ProgressEvent, ProgressCallback } from '../../src/mcp/docs-progress-tracker.js';
 
 describe('DocsProgressTracker', () => {

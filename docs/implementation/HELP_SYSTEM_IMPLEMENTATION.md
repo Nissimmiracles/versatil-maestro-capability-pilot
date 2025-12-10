@@ -190,10 +190,10 @@ AI-Native Development with OPERA Agents & Compounding Engineering
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **Quick Start** (5 Minutes):
-1. pnpm run monitor        → Health check
-2. pnpm run doctor         → Auto-fix issues
-3. pnpm run test:coverage  → Run tests
-4. pnpm run dashboard      → Interactive monitoring
+1. ppnpm monitor        → Health check
+2. ppnpm doctor         → Auto-fix issues
+3. pppnpm test:coverage  → Run tests
+4. ppnpm dashboard      → Interactive monitoring
 
 **Help Topics**:
 • /help quick-start       → 5-minute getting started
@@ -229,7 +229,7 @@ Maria-QA - Quality Guardian
 **Examples**:
   /maria review test coverage
   /maria generate tests src/api/users.ts
-  pnpm run test:coverage
+  pppnpm test:coverage
 
 **Related Topics**:
   /help rule-2
@@ -321,7 +321,7 @@ All performance targets achieved:
 /help maria-qa
 
 # 5. Starts using framework
-pnpm run monitor
+ppnpm monitor
 ```
 
 ### Developer Workflow
@@ -342,16 +342,16 @@ versatil-help examples maria-qa
 ### Troubleshooting Workflow
 ```bash
 # 1. Framework health low
-pnpm run monitor  # Shows health: 65%
+ppnpm monitor  # Shows health: 65%
 
 # 2. Context-aware help suggests troubleshooting
 /help troubleshooting
 
 # 3. Fixes issue
-pnpm run doctor --fix
+ppnpm doctor --fix
 
 # 4. Validates fix
-pnpm run monitor  # Shows health: 94%
+ppnpm monitor  # Shows health: 94%
 ```
 
 ---

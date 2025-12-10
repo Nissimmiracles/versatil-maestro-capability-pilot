@@ -21,10 +21,10 @@ cd versatil-sdlc-framework
 git checkout v6.4.0
 
 # Install dependencies
-npm install
+pnpm install
 
 # Build the framework
-pnpm run build
+ppnpm build
 
 # Link globally (optional)
 npm link
@@ -34,14 +34,14 @@ versatil --version
 # Should show: 6.4.0
 ```
 
-### Method 2: Install from GitHub (npm install)
+### Method 2: Install from GitHub (pnpm install)
 
 ```bash
 # Install directly from GitHub with tag
-npm install github:Nissimmiracles/versatil-sdlc-framework#v6.4.0
+pnpm install github:Nissimmiracles/versatil-sdlc-framework#v6.4.0
 
 # Or install globally
-npm install -g github:Nissimmiracles/versatil-sdlc-framework#v6.4.0
+pnpm add -g github:Nissimmiracles/versatil-sdlc-framework#v6.4.0
 
 # Verify
 npx versatil --version
@@ -60,11 +60,11 @@ git pull origin main
 git checkout v6.4.0
 
 # Rebuild
-npm install
-pnpm run build
+pnpm install
+ppnpm build
 
 # Verify
-pnpm run build && node -e "console.log(require('./package.json').version)"
+ppnpm build && node -e "console.log(require('./package.json').version)"
 # Should show: 6.4.0
 ```
 
@@ -82,8 +82,8 @@ tar -xzf versatil-v6.4.0.tar.gz
 cd versatil-sdlc-framework-6.4.0
 
 # Install and build
-npm install
-pnpm run build
+pnpm install
+ppnpm build
 npm link
 ```
 
@@ -133,7 +133,7 @@ gen.generateRoadmap().then(r => {
 # Initialize in a test project
 cd /tmp/test-project
 npm init -y
-npm install react
+pnpm install react
 
 # Initialize VERSATIL with roadmap generation
 versatil init
@@ -202,7 +202,7 @@ ls -la /path/to/versatil/docs/CURSOR_INSTALLATION_UPDATE_V6.4.0.md
 cd /path/to/versatil-sdlc-framework
 
 # Rebuild
-pnpm run build
+ppnpm build
 
 # Verify build
 ls -la dist/roadmap-generator.js
@@ -221,8 +221,8 @@ npm unlink -g @versatil/claude-opera
 # Clean and rebuild
 cd /path/to/versatil-sdlc-framework
 rm -rf node_modules dist
-npm install
-pnpm run build
+pnpm install
+ppnpm build
 
 # Link new version
 npm link
@@ -247,7 +247,7 @@ grep -n "generateProjectRoadmap" /path/to/versatil/dist/onboarding-wizard.js
 # Should find the method
 
 # If not found, rebuild
-pnpm run build
+ppnpm build
 
 # Test manually
 node -e "
@@ -281,7 +281,7 @@ You can now install v6.4.0 from GitHub using any of the 4 methods above.
 
 **Recommended for Most Users**: Method 1 (clone + build + link)
 
-**Quickest**: Method 2 (npm install from GitHub)
+**Quickest**: Method 2 (pnpm install from GitHub)
 
 **For Updates**: Method 3 (git pull + rebuild)
 

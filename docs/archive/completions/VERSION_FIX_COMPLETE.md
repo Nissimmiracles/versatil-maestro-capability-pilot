@@ -24,7 +24,7 @@
    - Verification checklist
 
 3. **`package.json`** - Added `rag:migrate` script
-   - Enables `pnpm run rag:migrate` command
+   - Enables `ppnpm rag:migrate` command
 
 ---
 
@@ -50,9 +50,9 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ[your-key]
 ### 3. Run Setup (18 min)
 
 ```bash
-pnpm run rag:setup    # 5 min - Create tables
-pnpm run rag:migrate  # 10 min - Migrate 20 patterns
-pnpm run rag:test     # 3 min - Test vector search
+ppnpm rag:setup    # 5 min - Create tables
+ppnpm rag:migrate  # 10 min - Migrate 20 patterns
+ppnpm rag:test     # 3 min - Test vector search
 ```
 
 **Total**: ~30 minutes

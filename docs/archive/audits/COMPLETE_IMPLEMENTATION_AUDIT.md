@@ -181,7 +181,7 @@ $ ls -lh ~/.versatil/hooks/*.sh
 | `/plan` command | Command name includes "plan" | Plan | 0.95 | ✅ |
 | `cursor-plan` | Cursor Plan Mode detection | Plan | 0.95 | ✅ |
 | File edit (active workflow) | Code file edited | Work | 0.85 | ✅ |
-| `pnpm run build` | Build command | Assess | 0.9 | ✅ |
+| `ppnpm build` | Build command | Assess | 0.9 | ✅ |
 | Session end (stop hook) | Hook: `stop` | Codify | 0.95 | ✅ |
 | Manual | Explicitly specified | Any | 1.0 | ✅ |
 
@@ -369,8 +369,8 @@ if (cmd.includes('plan') || cmd.includes('cursor-plan')) {
 3. ✅ Dependencies installed (`node_modules` check)
 4. ✅ Database connection (Supabase check if configured)
 5. ✅ Environment variables set (`.env` check)
-6. ✅ Build verification (`pnpm run build` quick check)
-7. ✅ Tests passing (`pnpm test` quick check)
+6. ✅ Build verification (`ppnpm build` quick check)
+7. ✅ Tests passing (`ppnpm test` quick check)
 
 ### ✅ State Management
 
@@ -590,7 +590,7 @@ The VELOCITY workflow system is ready for production use with the following conf
 
 ```bash
 # 1. Install dependencies (if not already done)
-npm install
+pnpm install
 
 # 2. Verify binaries are linked
 npm link
@@ -680,7 +680,7 @@ The VELOCITY workflow system has:
 - Backward compatibility maintained
 
 **Deployment Steps**:
-1. Run `pnpm run build` to ensure latest compilation
+1. Run `ppnpm build` to ensure latest compilation
 2. Run `./scripts/test-velocity-workflow.sh` to verify
 3. Use `/plan` command to start first workflow
 4. Monitor logs in `~/.versatil/logs/hooks.log`

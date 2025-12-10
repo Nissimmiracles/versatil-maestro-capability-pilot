@@ -138,7 +138,7 @@ async provideFeedback(taskId, feedback)
 
 ### Build Performance
 ```bash
-$ pnpm run build
+$ ppnpm build
 ✅ Build completed successfully
 Duration: ~3 seconds
 ```
@@ -217,28 +217,28 @@ Instead of running the full 849-test suite, focus on categories with known issue
 **Phase 1: Core Infrastructure** (Est. 4-6 hours)
 ```bash
 # Test MCP modules (already fixed in Wave 3)
-pnpm test src/mcp/mcp-health-monitor.test.ts --pool=forks --poolOptions.forks.singleFork
-pnpm test src/mcp/mcp-task-executor.test.ts --pool=forks --poolOptions.forks.singleFork
-pnpm test src/mcp/mcp-client.test.ts --pool=forks --poolOptions.forks.singleFork
+ppnpm test src/mcp/mcp-health-monitor.test.ts --pool=forks --poolOptions.forks.singleFork
+ppnpm test src/mcp/mcp-task-executor.test.ts --pool=forks --poolOptions.forks.singleFork
+ppnpm test src/mcp/mcp-client.test.ts --pool=forks --poolOptions.forks.singleFork
 ```
 
 **Phase 2: Sub-Agent Validation** (Est. 2-3 hours)
 ```bash
 # Test each sub-agent individually
 for agent in marcus-{go,java,node,python,rails}; do
-  pnpm test "src/agents/opera/marcus-backend/sub-agents/$agent.test.ts" --pool=forks --poolOptions.forks.singleFork
+  ppnpm test "src/agents/opera/marcus-backend/sub-agents/$agent.test.ts" --pool=forks --poolOptions.forks.singleFork
 done
 
 for agent in james-{angular,nextjs,react,svelte,vue}; do
-  pnpm test "src/agents/opera/james-frontend/sub-agents/$agent.test.ts" --pool=forks --poolOptions.forks.singleFork
+  ppnpm test "src/agents/opera/james-frontend/sub-agents/$agent.test.ts" --pool=forks --poolOptions.forks.singleFork
 done
 ```
 
 **Phase 3: Integration Tests** (Est. 8-10 hours)
 ```bash
 # Run integration tests in small batches
-pnpm test tests/integration/cross-agent-context.test.ts --pool=forks --poolOptions.forks.singleFork
-pnpm test tests/integration/rag-integration.test.ts --pool=forks --poolOptions.forks.singleFork
+ppnpm test tests/integration/cross-agent-context.test.ts --pool=forks --poolOptions.forks.singleFork
+ppnpm test tests/integration/rag-integration.test.ts --pool=forks --poolOptions.forks.singleFork
 # ... continue with other integration tests
 ```
 
@@ -256,7 +256,7 @@ jobs:
   test-mcp:
     runs-on: ubuntu-latest
     steps:
-      - run: pnpm test src/mcp/
+      - run: ppnpm test src/mcp/
 
   test-sub-agents:
     runs-on: ubuntu-latest
@@ -264,7 +264,7 @@ jobs:
       matrix:
         agent: [marcus-go, marcus-java, ...]
     steps:
-      - run: pnpm test src/agents/opera/**/sub-agents/${{ matrix.agent }}.test.ts
+      - run: ppnpm test src/agents/opera/**/sub-agents/${{ matrix.agent }}.test.ts
 ```
 
 ### Option 3: Test Configuration Optimization

@@ -164,9 +164,9 @@ Created comprehensive health checks and integration tests for all 11 MCPs config
 
 **Usage**:
 ```bash
-pnpm run mcp:health              # Run health check
-pnpm run mcp:health:verbose      # Verbose output
-pnpm run mcp:health:watch        # Watch mode (every 60s)
+ppnpm mcp:health              # Run health check
+ppnpm mcp:health:verbose      # Verbose output
+ppnpm mcp:health:watch        # Watch mode (every 60s)
 ```
 
 **Features**:
@@ -237,13 +237,13 @@ Summary: 9/11 healthy, 1 slow, 1 down
 
 ✅ **Tests run in CI/CD pipeline**
 - Jest integration test suite
-- Can be run via `pnpm run test:integration`
+- Can be run via `pppnpm test:integration`
 - Supports `--passWithNoTests` flag for CI environments
 
 ✅ **CLI tool for manual health checks**
-- `pnpm run mcp:health` - Quick health check
-- `pnpm run mcp:health:verbose` - Detailed output
-- `pnpm run mcp:health:watch` - Continuous monitoring
+- `ppnpm mcp:health` - Quick health check
+- `ppnpm mcp:health:verbose` - Detailed output
+- `ppnpm mcp:health:watch` - Continuous monitoring
 
 ✅ **Integration tests for top 3 MCPs**
 1. **Playwright**: 23 tests (browser automation, accessibility, Maria-QA integration)
@@ -269,34 +269,34 @@ Summary: 9/11 healthy, 1 slow, 1 down
 
 ### Run All MCP Tests
 ```bash
-pnpm run test:integration -- tests/mcp/
+pppnpm test:integration -- tests/mcp/
 ```
 
 ### Run Individual Test Suites
 ```bash
 # Health check tests
-pnpm run test:integration -- tests/mcp/mcp-health-check.test.ts
+pppnpm test:integration -- tests/mcp/mcp-health-check.test.ts
 
 # Playwright integration
-pnpm run test:integration -- tests/mcp/playwright-integration.test.ts
+pppnpm test:integration -- tests/mcp/playwright-integration.test.ts
 
 # GitHub integration
-pnpm run test:integration -- tests/mcp/github-integration.test.ts
+pppnpm test:integration -- tests/mcp/github-integration.test.ts
 
 # GitMCP integration
-pnpm run test:integration -- tests/mcp/gitmcp-integration.test.ts
+pppnpm test:integration -- tests/mcp/gitmcp-integration.test.ts
 ```
 
 ### Manual Health Check (CLI)
 ```bash
 # Quick check
-pnpm run mcp:health
+ppnpm mcp:health
 
 # Verbose output
-pnpm run mcp:health:verbose
+ppnpm mcp:health:verbose
 
 # Watch mode (continuous monitoring)
-pnpm run mcp:health:watch
+ppnpm mcp:health:watch
 ```
 
 ---

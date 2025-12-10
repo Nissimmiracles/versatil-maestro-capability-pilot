@@ -37,7 +37,7 @@ Guardian runs automatically every 5 minutes, or trigger manually:
 
 ```bash
 # Manual trigger (framework development context)
-pnpm run guardian:health-check
+ppnpm guardian:health-check
 
 # Or via slash command
 /guardian health-check
@@ -237,9 +237,9 @@ verified_by: "Victor-Verifier (Guardian Health Check)"
 - **Auto-Apply**: NO (manual review required)
 - **Layer**: 📦 project
 
-**Evidence Summary**: ✓ pnpm audit found vulnerabilities (90%), ✓ Package versions verified (90%)
+**Evidence Summary**: ✓ ppnpm audit found vulnerabilities (90%), ✓ Package versions verified (90%)
 
-**Recommended Fix**: Run `pnpm audit fix` and review breaking changes
+**Recommended Fix**: Run `ppnpm audit fix` and review breaking changes
 
 ---
 
@@ -247,7 +247,7 @@ verified_by: "Victor-Verifier (Guardian Health Check)"
 
 1. Add unit tests for uncovered modules: src/auth.ts, src/utils.ts
 2. Run `npx tsc --noEmit` and fix type errors
-3. Run `pnpm audit fix` and review breaking changes
+3. Run `ppnpm audit fix` and review breaking changes
 
 ## 📊 Execution Strategy
 
@@ -435,7 +435,7 @@ Trigger Guardian health check manually:
 
 ```bash
 # Framework development context
-pnpm run guardian:health-check
+ppnpm guardian:health-check
 
 # Or via slash command
 /guardian health-check

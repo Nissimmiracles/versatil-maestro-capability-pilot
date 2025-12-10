@@ -53,7 +53,7 @@ Successfully implemented **Phase 4: HMR Integration** - the final phase of the a
 **Lines:** 160
 **Permissions:** Executable
 
-**Purpose:** CLI wrapper for pnpm run integration
+**Purpose:** CLI wrapper for ppnpm integration
 
 **Features:**
 - Command-line argument parsing (--verbose, --silent, --errors-only, --help)
@@ -87,7 +87,7 @@ Successfully implemented **Phase 4: HMR Integration** - the final phase of the a
 **Scripts Added:**
 ```json
 "validate:watch": "node scripts/architectural-watcher.cjs",
-"dev:validated": "concurrently -n \"BUILD,WATCH\" -c \"bgBlue.bold,bgGreen.bold\" \"pnpm run dev\" \"pnpm run validate:watch\""
+"dev:validated": "concurrently -n \"BUILD,WATCH\" -c \"bgBlue.bold,bgGreen.bold\" \"ppnpm dev\" \"ppnpm validate:watch\""
 ```
 
 ### docs/IMPLEMENTATION_COMPLETE.md
@@ -106,7 +106,7 @@ Successfully implemented **Phase 4: HMR Integration** - the final phase of the a
 ### Option 1: Concurrent Development Mode (Recommended)
 
 ```bash
-pnpm run dev:validated
+ppnpm dev:validated
 ```
 
 **What Happens:**
@@ -125,22 +125,22 @@ pnpm run dev:validated
 ### Option 2: Standalone Watcher
 
 ```bash
-pnpm run validate:watch
+ppnpm validate:watch
 ```
 
 **Modes:**
 ```bash
-pnpm run validate:watch              # Normal mode
-pnpm run validate:watch -- --verbose # Show all validations
-pnpm run validate:watch -- --silent  # Errors only
-pnpm run validate:watch -- --errors-only  # Suppress warnings
-pnpm run validate:watch -- --help    # Show help
+ppnpm validate:watch              # Normal mode
+ppnpm validate:watch -- --verbose # Show all validations
+ppnpm validate:watch -- --silent  # Errors only
+ppnpm validate:watch -- --errors-only  # Suppress warnings
+ppnpm validate:watch -- --help    # Show help
 ```
 
 ### Option 3: Normal Development (No Validation)
 
 ```bash
-pnpm run dev
+ppnpm dev
 ```
 
 Uses TypeScript compiler only, no real-time architectural validation.
@@ -169,7 +169,7 @@ Developer Workflow (WITHOUT HMR Integration):
 ```
 Developer Workflow (WITH HMR Integration):
 ──────────────────────────────────────────────
-1. Start: pnpm run dev:validated
+1. Start: ppnpm dev:validated
 2. Create DealFlow.tsx page and save           [1 minute]
    → 🔍 Validating (added): DealFlow.tsx
    → ❌ ARCHITECTURAL ISSUE DETECTED:
@@ -273,7 +273,7 @@ const colors = {
 
 ```bash
 # 1. Start watcher
-pnpm run dev:validated
+ppnpm dev:validated
 
 # 2. Create orphaned page
 echo "export default function Test() { return <div>Test</div>; }" > src/pages/Test.tsx
@@ -347,7 +347,7 @@ echo "export default function Test() { return <div>Test</div>; }" > src/pages/Te
 
 ### Testing (Next Steps)
 
-- [ ] Run `pnpm run dev:validated` in real project
+- [ ] Run `ppnpm dev:validated` in real project
 - [ ] Test orphaned page detection
 - [ ] Test broken navigation detection
 - [ ] Test debouncing behavior

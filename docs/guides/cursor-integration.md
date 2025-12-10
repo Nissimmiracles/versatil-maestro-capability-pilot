@@ -15,7 +15,7 @@ This guide provides everything you need to use VERSATIL with Cursor IDE, includi
 
 ### Prerequisites
 - Cursor IDE installed ([download](https://cursor.sh))
-- VERSATIL SDLC Framework installed globally (`npm install -g @versatil/sdlc-framework`)
+- VERSATIL SDLC Framework installed globally (`pnpm add -g @versatil/sdlc-framework`)
 - Node.js >= 18.0.0
 
 ### Initial Setup
@@ -302,8 +302,8 @@ allowed-tools: ["Bash", "Read", "Edit"]
 
 Please run the project linter and fix all issues:
 
-1. Run `pnpm run lint` to check for issues
-2. Run `pnpm run lint:fix` to auto-fix
+1. Run `ppnpm lint` to check for issues
+2. Run `ppnpm lint:fix` to auto-fix
 3. Report any remaining issues that need manual fixes
 ```
 
@@ -1201,7 +1201,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install VERSATIL
-        run: npm install -g @versatil/sdlc-framework
+        run: pnpm add -g @versatil/sdlc-framework
 
       - name: Run Quality Gate
         run: |

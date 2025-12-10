@@ -24,7 +24,7 @@ This guide helps you diagnose and resolve common issues with the VERSATIL SDLC F
 
 ## Installation Issues
 
-### Issue: `npm install` fails with dependency errors
+### Issue: `pnpm install` fails with dependency errors
 
 **Symptoms**:
 ```
@@ -38,7 +38,7 @@ npm ERR! ERESOLVE unable to resolve dependency tree
 ```bash
 npm cache clean --force
 rm -rf node_modules package-lock.json
-npm install
+pnpm install
 ```
 
 2. **Use compatible Node.js version**:
@@ -49,12 +49,12 @@ node --version
 # Install Node 18 LTS (recommended)
 nvm install 18
 nvm use 18
-npm install
+pnpm install
 ```
 
 3. **Force install** (last resort):
 ```bash
-npm install --legacy-peer-deps
+pnpm install --legacy-peer-deps
 ```
 
 ### Issue: TypeScript compilation errors during build
@@ -69,13 +69,13 @@ src/mcp/versatil-mcp-server-v2.ts(42,7): error TS2345
 1. **Verify TypeScript version**:
 ```bash
 npx tsc --version  # Should be >= 5.0.0
-npm install -D typescript@latest
+pnpm install -D typescript@latest
 ```
 
 2. **Clean build**:
 ```bash
 rm -rf dist/
-pnpm run build
+ppnpm build
 ```
 
 3. **Check for syntax errors**:
@@ -125,7 +125,7 @@ Error: Cannot find module '@modelcontextprotocol/sdk/server/mcp.js'
 
 1. **Reinstall MCP SDK**:
 ```bash
-npm install @modelcontextprotocol/sdk@latest
+pnpm install @modelcontextprotocol/sdk@latest
 ```
 
 2. **Check module resolution**:

@@ -96,7 +96,7 @@ Lines of Code: ~45,000
 
 ```bash
 # Install as dev dependency (doesn't modify code)
-npm install --save-dev @versatil/sdlc-framework
+pnpm add -D @versatil/sdlc-framework
 
 # Add to package.json scripts
 {
@@ -108,7 +108,7 @@ npm install --save-dev @versatil/sdlc-framework
 }
 
 # Initialize (will ask questions)
-pnpm run versatil:init
+ppnpm versatil:init
 ```
 
 **What This Does**:
@@ -155,7 +155,7 @@ Interactive setup will ask:
 
 Next steps:
   1. Review .versatil-project.json
-  2. Test: pnpm run versatil -- agents --status
+  2. Test: ppnpm versatil -- agents --status
   3. When ready: Enable auto-activation in .cursorrules
 ```
 
@@ -165,13 +165,13 @@ Next steps:
 
 ```bash
 # Test that VERSATIL works
-pnpm run versatil -- --version
+ppnpm versatil -- --version
 
 # Check agent status (none active yet)
-pnpm run versatil -- agents --status
+ppnpm versatil -- agents --status
 
 # Test activation detection (dry-run, no changes)
-pnpm run versatil -- test-activation --dry-run
+ppnpm versatil -- test-activation --dry-run
 ```
 
 **At this point**:
@@ -212,7 +212,7 @@ agents:
 
 ```bash
 # Manually activate Maria-QA
-pnpm run versatil -- agents maria --review-coverage
+ppnpm versatil -- agents maria --review-coverage
 
 # Expected output:
 # 🤖 Maria-QA Analysis
@@ -306,7 +306,7 @@ agents:
 
 ```bash
 # Manually review API security
-pnpm run versatil -- agents marcus --review-security src/api/auth/login.ts
+ppnpm versatil -- agents marcus --review-security src/api/auth/login.ts
 
 # If suggestions are good, enable auto-activation
 ```
@@ -334,7 +334,7 @@ quality_gates:
 Install hooks:
 
 ```bash
-pnpm run versatil -- quality-gate:setup --warn-only
+ppnpm versatil -- quality-gate:setup --warn-only
 ```
 
 #### Step 2: Test Warn-Only Mode
@@ -440,8 +440,8 @@ Existing Coverage: 72%
 
 ```bash
 # Day 1: Install VERSATIL
-npm install --save-dev @versatil/sdlc-framework
-pnpm run versatil:init
+pnpm add -D @versatil/sdlc-framework
+ppnpm versatil:init
 
 # Day 2-3: Create configuration
 # Created files:
@@ -450,7 +450,7 @@ pnpm run versatil:init
 #   - .cursor/settings.json
 
 # Day 4-5: Test Maria-QA manually
-pnpm run versatil -- agents maria --review-coverage
+ppnpm versatil -- agents maria --review-coverage
 # Result: Found 23 missing test cases
 ```
 
@@ -533,7 +533,7 @@ proactive:
 
 ```bash
 # Disable Git hooks
-pnpm run versatil -- quality-gate:disable
+ppnpm versatil -- quality-gate:disable
 
 # Or remove hooks manually
 rm .git/hooks/pre-commit .git/hooks/pre-push
@@ -607,8 +607,8 @@ If auto-activation doesn't work:
   /james check accessibility
 
 ## Troubleshooting
-  pnpm run versatil -- test-activation
-  pnpm run versatil -- agents --status
+  ppnpm versatil -- test-activation
+  ppnpm versatil -- agents --status
 
 ## Documentation
   docs/CURSOR_INTEGRATION.md
@@ -644,12 +644,12 @@ jobs:
   existing-tests:
     runs-on: ubuntu-latest
     steps:
-      - run: pnpm test  # Your existing tests
+      - run: ppnpm test  # Your existing tests
 
   versatil-quality:
     runs-on: ubuntu-latest
     steps:
-      - run: npm install -g @versatil/sdlc-framework
+      - run: pnpm add -g @versatil/sdlc-framework
       - run: versatil quality-gate pre-deploy
 ```
 
@@ -680,11 +680,11 @@ VERSATIL works alongside Jest:
 - [ ] Create rollback plan
 
 ### Phase 1: Setup (Week 1)
-- [ ] Install VERSATIL: `npm install --save-dev @versatil/sdlc-framework`
-- [ ] Initialize: `pnpm run versatil:init --no-git-hooks`
+- [ ] Install VERSATIL: `pnpm add -D @versatil/sdlc-framework`
+- [ ] Initialize: `ppnpm versatil:init --no-git-hooks`
 - [ ] Review `.versatil-project.json`
 - [ ] Customize `.cursorrules`
-- [ ] Test: `pnpm run versatil -- test-activation`
+- [ ] Test: `ppnpm versatil -- test-activation`
 
 ### Phase 2: Agent Integration (Weeks 2-4)
 - [ ] Week 2: Enable Maria-QA (manual activation)

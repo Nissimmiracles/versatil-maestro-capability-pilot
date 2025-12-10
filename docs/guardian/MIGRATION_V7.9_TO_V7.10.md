@@ -282,12 +282,12 @@ Keeps v7.10.0 but reverts Guardian behavior to v7.9.0 style.
 
 ```bash
 # Via npm
-npm install @versatil/sdlc-framework@7.9.0
+pnpm install @versatil/sdlc-framework@7.9.0
 
 # Or via git (if installed from source)
 cd ~/.versatil
 git checkout v7.9.0
-pnpm run build
+ppnpm build
 ```
 
 ---

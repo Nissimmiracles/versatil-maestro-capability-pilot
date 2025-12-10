@@ -209,7 +209,7 @@ GitHub automatically renders Mermaid in `README.md` files, so image conversion i
 
 ```bash
 # Install mermaid-cli
-npm install -g @mermaid-js/mermaid-cli
+pnpm add -g @mermaid-js/mermaid-cli
 
 # Convert .mmd to .png
 mmdc -i docs/diagrams/every-flywheel.mmd -o docs/screenshots/every-flywheel.png

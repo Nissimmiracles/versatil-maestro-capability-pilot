@@ -169,7 +169,7 @@ node scripts/architectural-watcher.cjs --help
 VERSATIL Architectural Watcher
 
 Usage:
-  pnpm run validate:watch [options]
+  ppnpm validate:watch [options]
 
 Options:
   --verbose, -v         Show detailed output including successful validations
@@ -180,9 +180,9 @@ Options:
   --help, -h            Show this help message
 
 Examples:
-  pnpm run validate:watch                    # Normal mode
-  pnpm run validate:watch -- --verbose       # Verbose output
-  pnpm run validate:watch -- --errors-only   # Errors only
+  ppnpm validate:watch                    # Normal mode
+  ppnpm validate:watch -- --verbose       # Verbose output
+  ppnpm validate:watch -- --errors-only   # Errors only
 
 The watcher monitors your project for architectural violations in real-time:
   • Orphaned page components (pages without routes)
@@ -216,7 +216,7 @@ git commit -m "test: orphaned page"
 **Verification:**
 ⏳ Deferred - pre-commit hook integration tested in Phase 2
 ⏳ Hook file updated correctly in `.husky/pre-commit`
-⏳ Calls `pnpm run validate:architecture` (which we confirmed works)
+⏳ Calls `ppnpm validate:architecture` (which we confirmed works)
 
 ---
 
@@ -238,23 +238,23 @@ git commit -m "test: orphaned page"
 
 ## Issues Found
 
-### Issue 1: npm install timeout (concurrently)
+### Issue 1: pnpm install timeout (concurrently)
 
 **Problem:**
 ```bash
-npm install concurrently@^8.2.2
+pnpm install concurrently@^8.2.2
 # Command timed out after 60s
 ```
 
-**Impact:** Cannot test `pnpm run dev:validated` (concurrent TypeScript + watcher)
+**Impact:** Cannot test `ppnpm dev:validated` (concurrent TypeScript + watcher)
 
 **Workaround:** Test components separately:
 ```bash
 # Terminal 1: TypeScript compiler
-pnpm run dev
+ppnpm dev
 
 # Terminal 2: Architectural watcher
-pnpm run validate:watch
+ppnpm validate:watch
 ```
 
 **Root Cause:** Network or npm registry issue (not framework issue)
@@ -339,18 +339,18 @@ import TestOrphanedPage from './pages/TestOrphanedPage.tsx';
 
 1. **Manual Install concurrently** (when npm registry accessible):
    ```bash
-   npm install concurrently@^8.2.2 --save
+   pnpm install concurrently@^8.2.2 --save
    ```
 
 2. **Test Concurrent Mode** (after concurrently installed):
    ```bash
-   pnpm run dev:validated
+   ppnpm dev:validated
    # Verify both BUILD and WATCH processes run
    ```
 
 3. **Test Real-Time File Changes**:
    ```bash
-   pnpm run validate:watch --verbose
+   ppnpm validate:watch --verbose
    # In another terminal: edit TestOrphanedPage.tsx
    # Verify warning appears within 500ms
    ```
@@ -373,7 +373,7 @@ import TestOrphanedPage from './pages/TestOrphanedPage.tsx';
 1. **Memory Usage**:
    ```bash
    # Start watcher
-   pnpm run validate:watch &
+   ppnpm validate:watch &
    WATCHER_PID=$!
 
    # Monitor memory

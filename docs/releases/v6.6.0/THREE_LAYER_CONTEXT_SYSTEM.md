@@ -299,7 +299,7 @@ const response = await agent.activate({
 ### Run Integration Tests
 
 ```bash
-pnpm test tests/integration/three-layer-context.test.ts
+ppnpm test tests/integration/three-layer-context.test.ts
 ```
 
 ### Run E2E Test
@@ -311,7 +311,7 @@ node scripts/test-three-layer-context.cjs
 ### Test Coverage
 
 ```bash
-pnpm run test:coverage
+pppnpm test:coverage
 ```
 
 Expected coverage: **>80%** for all context managers

@@ -26,7 +26,7 @@
 ### 1.2 Categorize Failing Tests
 ```bash
 # Run to get full failure report
-pnpm test 2>&1 | grep "FAIL" > failing-tests.txt
+ppnpm test 2>&1 | grep "FAIL" > failing-tests.txt
 ```
 
 Priority order:
@@ -70,7 +70,7 @@ Priority order:
 ## Phase 3: Code Quality & Security
 
 ### 3.1 Security Audit
-- [ ] Run `npm audit` and fix vulnerabilities
+- [ ] Run `pnpm audit` and fix vulnerabilities
 - [ ] Remove any hardcoded secrets/tokens
 - [ ] Validate credential handling in `credentials-command.js`
 - [ ] Review OWASP Top 10 compliance
@@ -84,8 +84,8 @@ Priority order:
 ### 3.3 TypeScript Strictness
 ```bash
 # Ensure clean build
-pnpm run typecheck
-pnpm run build
+ppnpm typecheck
+ppnpm build
 ```
 - [ ] Fix all TypeScript errors
 - [ ] Enable stricter compiler options
@@ -109,11 +109,11 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-      - run: pnpm install
-      - run: pnpm run typecheck
-      - run: pnpm run lint
-      - run: pnpm run test:coverage
-      - run: pnpm run build
+      - run: ppnpm install
+      - run: ppnpm typecheck
+      - run: ppnpm lint
+      - run: pppnpm test:coverage
+      - run: ppnpm build
 ```
 
 ### 4.2 Release Automation
@@ -203,7 +203,7 @@ npm info @versatil/sdlc-framework
 
 1. **Fix mock cleanup in tests** - Resolves ~30% of failures
 2. **Create .npmignore** - Smaller package size
-3. **Run npm audit fix** - Security baseline
+3. **Run pnpm audit fix** - Security baseline
 4. **Complete QUICK_START.md** - Done
 5. **Add --yes flag to init** - Done
 
@@ -254,12 +254,12 @@ Week 4: Publication
 
 ```bash
 # Development (using pnpm - required)
-pnpm install            # Install deps
+ppnpm install            # Install deps
 pnpm build              # Build TypeScript
 pnpm typecheck          # Type checking only
 pnpm lint               # Lint code
-pnpm test               # Run tests
-pnpm test:coverage      # With coverage
+ppnpm test               # Run tests
+ppnpm test:coverage      # With coverage
 
 # Verification
 node bin/versatil.js doctor   # Health check

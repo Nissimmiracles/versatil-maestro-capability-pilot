@@ -1627,7 +1627,7 @@ const stressTests = await stressTestGenerator.generate({
 **Before Context System**:
 ```bash
 # Daily audit checks framework health only
-pnpm run audit
+pppnpm audit
 
 # Output: Framework health: 92%
 ```
@@ -1635,7 +1635,7 @@ pnpm run audit
 **After Context System**:
 ```bash
 # Daily audit checks framework + user/team/project health
-pnpm run audit
+pppnpm audit
 
 # Output (context-aware):
 Framework Health: 92% ✓
@@ -1681,7 +1681,7 @@ Recommendations:
 **Before Context System**:
 ```bash
 # Onboarding asks user to manually configure preferences
-pnpm run init
+ppnpm init
 
 # Questions:
 # - Indentation: tabs or spaces?
@@ -1693,7 +1693,7 @@ pnpm run init
 **After Context System**:
 ```bash
 # Onboarding auto-detects preferences from git history
-pnpm run init
+ppnpm init
 
 # Auto-Detection:
 🔍 Analyzing your git history (147 commits)...
@@ -1746,7 +1746,7 @@ Ready to code! Run /plan to start your first feature.
 **Before Context System**:
 ```bash
 # Release creates generic changelog
-pnpm run release
+ppnpm release
 
 # Changelog:
 # v1.2.3
@@ -1757,7 +1757,7 @@ pnpm run release
 **After Context System**:
 ```bash
 # Release creates context-aware changelog
-pnpm run release
+ppnpm release
 
 # Changelog (personalized for Team Alpha, Project GDPR-App):
 
@@ -2214,7 +2214,7 @@ const patterns = await rag.query({
 ```bash
 # New developer joins
 git clone repo
-npm install
+pnpm install
 
 # Framework analyzes git history
 🔍 Analyzing Bob's commits (89 commits)...
@@ -2279,10 +2279,10 @@ app.post("/api/auth/logout", async (req, res) => {
 **Process**:
 ```bash
 # Step 1: Install latest VERSATIL version
-npm install versatil-sdlc-framework@latest
+pnpm install versatil-sdlc-framework@latest
 
 # Step 2: Run migration script (automated)
-pnpm run migrate:context-system
+ppnpm migrate:context-system
 
 # Migration script does:
 ✓ Analyzes git history (147 commits)
@@ -2294,7 +2294,7 @@ pnpm run migrate:context-system
 ✓ Backs up old config to .versatil-legacy/
 
 # Step 3: Verify migration
-pnpm run validate:context
+ppnpm validate:context
 
 # Validation checks:
 ✓ User preferences detected: 8/8 categories

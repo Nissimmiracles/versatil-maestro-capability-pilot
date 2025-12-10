@@ -14,7 +14,7 @@ This document provides working examples for using the VERSATIL SDLC Framework's 
 
 ```bash
 # Install VERSATIL framework
-npm install -g versatil-sdlc-framework
+pnpm add -g versatil-sdlc-framework
 
 # Start MCP server
 versatil-mcp start
@@ -56,7 +56,7 @@ Check onboarding status, verify configuration, and get setup instructions for VE
 {
   "setupComplete": true,
   "frameworkHome": "/Users/username/.versatil",
-  "instructions": "✅ VERSATIL MCP Server is fully configured!\n\n📁 Configuration location: /Users/username/.versatil\n\n🚀 Getting Started:\n  • All MCP tools are ready to use\n  • Agents will activate automatically based on your requests\n  • Framework works locally without external dependencies\n\n📖 Learn More:\n  • Tool examples: Use any versatil_* tool from Claude\n  • Resources: Access versatil:// URIs for real-time framework data\n  • Prompts: Generate AI-powered code analysis prompts\n\n🔧 Optional Configuration:\n  • Edit preferences: /Users/username/.versatil/preferences.json\n  • Add credentials: /Users/username/.versatil/.env\n  • Install full framework: npm install -g @versatil/sdlc-framework",
+  "instructions": "✅ VERSATIL MCP Server is fully configured!\n\n📁 Configuration location: /Users/username/.versatil\n\n🚀 Getting Started:\n  • All MCP tools are ready to use\n  • Agents will activate automatically based on your requests\n  • Framework works locally without external dependencies\n\n📖 Learn More:\n  • Tool examples: Use any versatil_* tool from Claude\n  • Resources: Access versatil:// URIs for real-time framework data\n  • Prompts: Generate AI-powered code analysis prompts\n\n🔧 Optional Configuration:\n  • Edit preferences: /Users/username/.versatil/preferences.json\n  • Add credentials: /Users/username/.versatil/.env\n  • Install full framework: pnpm add -g @versatil/sdlc-framework",
   "details": {
     "hasPreferences": true,
     "hasEnvFile": true,

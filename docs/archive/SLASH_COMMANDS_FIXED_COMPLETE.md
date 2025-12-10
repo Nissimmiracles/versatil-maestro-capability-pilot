@@ -289,7 +289,7 @@ private registerAllAgents(): void {
 ### Compilation Tests ✅
 
 ```bash
-pnpm run build
+ppnpm build
 # ✅ SUCCESS: No TypeScript errors
 # ✅ All files compiled correctly
 ```
@@ -397,7 +397,7 @@ Recommendations:
 
 1. **Install Framework**:
    ```bash
-   npm install @versatil/claude-opera
+   pnpm install @versatil/claude-opera
    ```
 
 2. **Start MCP Server** (automatically configured):

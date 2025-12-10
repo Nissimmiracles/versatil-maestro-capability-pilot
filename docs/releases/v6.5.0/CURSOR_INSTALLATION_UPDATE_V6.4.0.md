@@ -245,7 +245,7 @@ Claude will:
 
 ```bash
 # Install globally
-npm install -g @versatil/claude-opera
+pnpm add -g @versatil/claude-opera
 
 # Or update existing installation
 pnpm update -g @versatil/claude-opera

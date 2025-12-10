@@ -29,11 +29,11 @@ The VERSATIL Framework integrates **12 Model Context Protocol (MCP) servers** to
 
 ```bash
 # 1. Run automated setup wizard
-pnpm run mcp:setup
+ppnpm mcp:setup
 
 # 2. Follow interactive prompts to configure MCPs
 # 3. Validate installation
-pnpm run mcp:health
+ppnpm mcp:health
 
 # Done! All MCPs configured and validated.
 ```
@@ -71,10 +71,10 @@ Ensure VERSATIL Framework is installed:
 
 ```bash
 # Install framework globally
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 
 # Or install in project
-npm install --save-dev @versatil/sdlc-framework
+pnpm add -D @versatil/sdlc-framework
 
 # Verify installation
 versatil --version
@@ -135,7 +135,7 @@ The easiest way to configure MCPs is using the automated setup wizard:
 
 ```bash
 # Launch setup wizard
-pnpm run mcp:setup
+ppnpm mcp:setup
 ```
 
 **Wizard Features**:
@@ -210,19 +210,19 @@ pnpm run mcp:setup
 
 ```bash
 # Full interactive mode (default)
-pnpm run mcp:setup
+ppnpm mcp:setup
 
 # Configure specific MCP
-pnpm run mcp:setup -- --only=github
+ppnpm mcp:setup -- --only=github
 
 # Skip validation (faster, for testing)
-pnpm run mcp:setup -- --no-validate
+ppnpm mcp:setup -- --no-validate
 
 # Reconfigure existing MCP (overwrites)
-pnpm run mcp:setup -- --force
+ppnpm mcp:setup -- --force
 
 # Show current configuration
-pnpm run mcp:setup -- --show
+ppnpm mcp:setup -- --show
 ```
 
 ---
@@ -284,19 +284,19 @@ Some MCPs require additional npm packages:
 
 ```bash
 # Install Playwright browsers (one-time)
-pnpm run playwright:install
+ppnpm playwright:install
 
 # Install optional MCP servers
-npm install -g @modelcontextprotocol/server-github
-npm install -g exa-mcp-server
-npm install -g vertex-ai-mcp-server
+pnpm add -g @modelcontextprotocol/server-github
+pnpm add -g exa-mcp-server
+pnpm add -g vertex-ai-mcp-server
 ```
 
 ### Step 5: Validate Configuration
 
 ```bash
 # Run health check
-pnpm run mcp:health
+ppnpm mcp:health
 
 # Expected output:
 # ✅ GitHub MCP: Healthy (120ms)
@@ -341,13 +341,13 @@ Verify all MCPs are configured correctly:
 
 ```bash
 # Quick health check (5 seconds)
-pnpm run mcp:health
+ppnpm mcp:health
 
 # Verbose output (shows connection details)
-pnpm run mcp:health:verbose
+ppnpm mcp:health:verbose
 
 # Continuous monitoring (every 60s)
-pnpm run mcp:health:watch
+ppnpm mcp:health:watch
 ```
 
 ### Health Check Output
@@ -394,13 +394,13 @@ Test specific MCP functionality:
 
 ```bash
 # Test GitHub MCP
-pnpm run test:mcp -- --filter=github
+pppnpm test:mcp -- --filter=github
 
 # Test Playwright MCP
-pnpm run test:mcp -- --filter=playwright
+pppnpm test:mcp -- --filter=playwright
 
 # Test Supabase MCP
-pnpm run test:mcp -- --filter=supabase
+pppnpm test:mcp -- --filter=supabase
 ```
 
 ### Framework Integration Test
@@ -409,11 +409,11 @@ Verify MCPs integrate correctly with OPERA agents:
 
 ```bash
 # Run integration tests
-pnpm run test:integration
+pppnpm test:integration
 
 # Test specific agent + MCP integration
-pnpm run test:maria-qa  # Tests Playwright + Chrome MCP
-pnpm run test:marcus   # Tests GitHub + Semgrep + Sentry
+pppnpm test:maria-qa  # Tests Playwright + Chrome MCP
+pppnpm test:marcus   # Tests GitHub + Semgrep + Sentry
 ```
 
 ---
@@ -429,7 +429,7 @@ pnpm run test:marcus   # Tests GitHub + Semgrep + Sentry
 **Solution**:
 ```bash
 # Install MCP globally
-npm install -g @modelcontextprotocol/server-github
+pnpm add -g @modelcontextprotocol/server-github
 
 # Or use full path in mcp_config.json
 "command": "/usr/local/bin/node",
@@ -459,7 +459,7 @@ source ~/.versatil/.env
 **Solution**:
 ```bash
 # Check MCP server health
-pnpm run mcp:health:verbose
+ppnpm mcp:health:verbose
 
 # Increase timeout in mcp_config.json
 "env": {
@@ -490,7 +490,7 @@ curl -I https://api.github.com  # For GitHub MCP
 **Solution**:
 ```bash
 # Validate isolation
-pnpm run validate:isolation
+ppnpm validate:isolation
 
 # Move credentials to correct location
 mv .env ~/.versatil/.env
@@ -521,7 +521,7 @@ For complex issues, see:
 
 1. **Verify Framework Health**
    ```bash
-   pnpm run doctor
+   ppnpm doctor
    ```
 
 2. **Test Agent Integration**
@@ -536,7 +536,7 @@ For complex issues, see:
 3. **Configure Proactive Agents**
    ```bash
    # Enable automatic agent activation
-   pnpm run init
+   ppnpm init
 
    # Start daemon for background monitoring
    versatil-daemon start
@@ -670,7 +670,7 @@ All other MCPs are optional enhancements.
 npm cache clean --force
 
 # Reinstall MCP servers
-pnpm run install-mcps
+ppnpm install-mcps
 ```
 
 ### Q: Can I use custom MCP servers?
@@ -711,7 +711,7 @@ pnpm run install-mcps
 Or use the wizard:
 
 ```bash
-pnpm run mcp:setup -- --disable=sentry
+ppnpm mcp:setup -- --disable=sentry
 ```
 
 ---

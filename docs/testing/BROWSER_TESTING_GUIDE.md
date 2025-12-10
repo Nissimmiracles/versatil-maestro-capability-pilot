@@ -23,7 +23,7 @@ VERSATIL's browser testing system provides **real-time frontend validation** wit
 ### 1. Start Dev Server
 
 ```bash
-pnpm run dev
+ppnpm dev
 # Dev server runs on http://localhost:3000
 ```
 
@@ -39,7 +39,7 @@ BROWSER_ERROR_SEVERITY_THRESHOLD=warn   # Capture warn+ (log|warn|error)
 ### 3. Watch and Test (Continuous Feedback)
 
 ```bash
-pnpm run watch-and-test
+ppnpm watch-and-test
 # Watches frontend files
 # Runs browser tests automatically
 # Captures console/network errors
@@ -192,7 +192,7 @@ npx tsx .claude/hooks/post-file-edit-browser-check.ts src/components/Button.tsx
 ### Example 2: Continuous Feedback Loop
 
 ```bash
-pnpm run watch-and-test
+ppnpm watch-and-test
 
 # Watches frontend files in src/
 # On file change:
@@ -222,7 +222,7 @@ npx tsx src/dashboard/dev-browser-monitor.ts
 ### Example 4: Context-Aware User Flow Test
 
 ```bash
-pnpm run test:context-validation
+pppnpm test:context-validation
 
 # Runs context-validation tests:
 # - Validates homepage user flow
@@ -290,7 +290,7 @@ verified_by: "Browser Check Hook"
 ## 📊 Next Steps
 
 1. Fix detected issues
-2. Run `pnpm run test:e2e` to verify
+2. Run `pppnpm test:e2e` to verify
 3. Run `/learn "Fixed browser errors in Button.tsx"` to store pattern
 ```
 
@@ -418,7 +418,7 @@ export BROWSER_ERROR_SEVERITY_THRESHOLD=log
 **Symptom**: Hook shows "Dev server not available"
 
 **Solution**:
-1. Start dev server: `pnpm run dev`
+1. Start dev server: `ppnpm dev`
 2. Verify port: `curl http://localhost:3000`
 3. Check `PLAYWRIGHT_BASE_URL` matches dev server
 
@@ -502,13 +502,13 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
 
-      - run: npm install
-      - run: pnpm run dev &
+      - run: pnpm install
+      - run: ppnpm dev &
       - run: sleep 10  # Wait for dev server
 
       - name: Run browser checks
         run: |
-          pnpm run test:context-validation
+          pppnpm test:context-validation
         env:
           BROWSER_ERROR_CAPTURE: true
           PLAYWRIGHT_HEADLESS: true

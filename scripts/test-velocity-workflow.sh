@@ -24,7 +24,7 @@ echo "📋 Checking prerequisites..."
 
 if [ ! -f "$VELOCITY_CLI" ]; then
   echo -e "${RED}❌ velocity-cli.js not found at: $VELOCITY_CLI${NC}"
-  echo "   Run: npm run build"
+  echo "   Run: pnpm build"
   exit 1
 fi
 

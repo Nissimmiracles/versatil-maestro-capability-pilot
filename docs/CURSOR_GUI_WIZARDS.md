@@ -284,8 +284,8 @@ Modified: Setting changed
    // Claude uses these tools behind the scenes:
    await Read('.versatil/config.json');       // Load current config
    await Write('.versatil/config.json', ...); // Save new config
-   await Bash('npm install');                 // Install dependencies
-   await Bash('pnpm run build');              // Rebuild framework
+   await Bash('pnpm install');                 // Install dependencies
+   await Bash('ppnpm build');              // Rebuild framework
    ```
 
 ---
@@ -313,8 +313,8 @@ Modified: Setting changed
 
 ```bash
 # Old way (still works)
-pnpm run onboard                    # Terminal wizard
-pnpm run update:check               # Check for updates
+ppnpm onboard                    # Terminal wizard
+ppnpm update:check               # Check for updates
 versatil config wizard             # Terminal config wizard
 
 # New way (chat-based GUI)
@@ -419,13 +419,13 @@ versatil config wizard             # Terminal config wizard
 
 ```bash
 # Run wizard integration tests
-pnpm run test:wizards
+pppnpm test:wizards
 
 # Test markdown rendering
-pnpm run test:markdown-output
+pppnpm test:markdown-output
 
 # Verify configuration file generation
-pnpm run test:config-generation
+pppnpm test:config-generation
 ```
 
 ---
@@ -452,7 +452,7 @@ pnpm run test:config-generation
 ## FAQ
 
 ### Q: Can I still use terminal commands?
-**A**: Yes! Terminal commands (`pnpm run onboard`, etc.) still work. Chat-based wizards are an alternative, not a replacement.
+**A**: Yes! Terminal commands (`ppnpm onboard`, etc.) still work. Chat-based wizards are an alternative, not a replacement.
 
 ### Q: How do I share my configuration with my team?
 **A**: Use `/config-wizard --export` to create a configuration file, then share it. Your team can import via `/config-wizard --import team-config.json`.
@@ -510,7 +510,7 @@ After reloading, type in chat:
 Don't like chat-based wizards? Terminal commands are still available:
 
 ```bash
-pnpm run onboard
+ppnpm onboard
 versatil update check
 versatil config wizard
 ```

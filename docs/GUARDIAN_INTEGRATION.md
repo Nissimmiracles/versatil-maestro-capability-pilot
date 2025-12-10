@@ -64,10 +64,10 @@ const healthResult = await guardian.performHealthCheck();
 
 | Scenario | Confidence | Auto-Fix |
 |----------|------------|----------|
-| Build failure | 95% | `pnpm run build` |
-| Missing dependencies | 90% | `npm install` |
-| Security vulnerabilities | 85% | `pnpm audit fix` |
-| Missing hooks | 95% | `pnpm run build:hooks` |
+| Build failure | 95% | `ppnpm build` |
+| Missing dependencies | 90% | `pnpm install` |
+| Security vulnerabilities | 85% | `ppnpm audit fix` |
+| Missing hooks | 95% | `ppnpm build:hooks` |
 | Supabase connection lost | 85% | Auto-reconnect |
 | GraphRAG query failure | 90% | Fallback to vector |
 | Missing config | 95% | Create `.versatil-project.json` |
@@ -327,7 +327,7 @@ Guardian operates in **two monitoring modes**:
 
 🚨 [Guardian] 2 critical issue(s) detected:
   1. agents: Agent Maria-QA failing (5 recent failures)
-  2. build: Framework not built - run pnpm run build
+  2. build: Framework not built - run ppnpm build
 ```
 
 #### 2. post-file-edit Hook (After File Changes)
@@ -624,8 +624,8 @@ echo "Test" | claude
 **Breaking Changes**: None
 
 **Action Required**:
-1. Run `npm install` to get new dependencies
-2. Run `pnpm run build` to build Guardian components
+1. Run `pnpm install` to get new dependencies
+2. Run `ppnpm build` to build Guardian components
 3. Run `/guardian health` to verify installation
 4. Guardian now monitors automatically via hooks (no daemon needed)
 
@@ -640,8 +640,8 @@ echo "Test" | claude
 **Solutions**:
 1. Check Guardian logger logs: `/guardian-logs`
 2. Verify context detection: `/guardian status --verbose`
-3. Rebuild framework: `pnpm run build`
-4. Check dependencies: `npm install`
+3. Rebuild framework: `ppnpm build`
+4. Check dependencies: `pnpm install`
 
 ### Auto-Fix Doesn't Work
 
@@ -658,7 +658,7 @@ echo "Test" | claude
 
 **Solutions**:
 1. Verify hooks are built: `ls .claude/hooks/dist/`
-2. Rebuild hooks: `pnpm run build:hooks`
+2. Rebuild hooks: `ppnpm build:hooks`
 3. Check hook execution: `/guardian-logs` for hook errors
 4. Verify Claude SDK version: `claude --version` (≥1.0.0)
 

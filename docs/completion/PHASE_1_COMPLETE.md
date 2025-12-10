@@ -53,7 +53,7 @@ Phase 1 of the Gap Remediation Roadmap is **COMPLETE**. All 8 critical gaps bloc
 | 1.3 | Smart test selection (60-80% time saved) |  | `smart-test-selector.ts` dependency graph |
 | 1.3 | Quality gates enforce 80%+ coverage |  | `quality-gate-enforcer.ts` thresholds |
 | 1.3 | Integration with Maria-QA |  | `instinctive-testing-engine.ts` routing |
-| 1.4 | Hooks config created on npm install |  | `create-cursor-hooks.cjs` postinstall |
+| 1.4 | Hooks config created on pnpm install |  | `create-cursor-hooks.cjs` postinstall |
 | 1.4 | Isolation validation blocks violations |  | `afterFileEdit.sh` forbidden patterns |
 | 1.4 | Security blocks destructive commands |  | `beforeShellExecution.sh` 12 patterns |
 | 1.4 | Stop hook stores learnings to RAG |  | `stop.sh` session codification |

@@ -10,7 +10,7 @@
 
 All slash command workflows are now **100% functional** when users install VERSATIL Opera framework. The plugin is ready for distribution via:
 
-- ✅ npm package (`npm install @versatil/claude-opera`)
+- ✅ npm package (`pnpm install @versatil/claude-opera`)
 - ✅ Claude Code marketplace (`.claude-plugin/marketplace.json`)
 - ✅ Direct GitHub installation (`github:Nissimmiracles/versatil-sdlc-framework`)
 - ✅ Local plugin testing (`/plugin marketplace add .`)
@@ -346,7 +346,7 @@ Users should test:
 
 ### 1. npm Package
 ```bash
-npm install @versatil/claude-opera
+pnpm install @versatil/claude-opera
 ```
 
 **Repository**: [npmjs.com/package/@versatil/claude-opera](https://www.npmjs.com/package/@versatil/claude-opera)

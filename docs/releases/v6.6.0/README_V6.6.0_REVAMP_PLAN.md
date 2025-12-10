@@ -237,13 +237,13 @@ graph TB
 
 **Current**:
 ```bash
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 npx versatil init
 ```
 
 **New**:
 ```bash
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 npx versatil init
 
 # Auto-detection runs automatically:
@@ -266,13 +266,13 @@ npx versatil init
 **Existing VERSATIL users**:
 ```bash
 # 1. Upgrade
-npm install @versatil/sdlc-framework@latest
+pnpm install @versatil/sdlc-framework@latest
 
 # 2. Run migration (automatic backup)
-pnpm run context:migrate
+ppnpm context:migrate
 
 # 3. Validate
-pnpm run context:test
+ppnpm context:test
 
 # 4. Start using context-aware agents!
 ```

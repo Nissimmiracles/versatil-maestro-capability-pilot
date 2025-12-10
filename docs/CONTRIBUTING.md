@@ -54,10 +54,10 @@ cd versatil-sdlc-framework
 ### 2. Install Dependencies
 ```bash
 # Install pnpm if not already installed
-npm install -g pnpm
+pnpm add -g pnpm
 
 # Install framework dependencies
-pnpm install
+ppnpm install
 ```
 
 **Note**: The framework uses pnpm@10.17.0 for dependency management. All scripts use pnpm.
@@ -65,16 +65,16 @@ pnpm install
 ### 3. Build and Test
 ```bash
 # Build the framework
-pnpm run build
+ppnpm build
 
 # Run linting
-pnpm run lint
+ppnpm lint
 
 # Run tests
-pnpm test
+ppnpm test
 
 # Full validation
-pnpm run validate
+ppnpm validate
 ```
 
 ### 4. Set Up Development Environment
@@ -337,16 +337,16 @@ All contributions must pass:
 ### Unit Tests
 ```bash
 # Run specific test
-pnpm test -- --testNamePattern="Agent Dispatcher"
+ppnpm test -- --testNamePattern="Agent Dispatcher"
 
 # Run with coverage
-pnpm run test:coverage
+pppnpm test:coverage
 ```
 
 ### Integration Testing
 ```bash
 # Test framework integration
-pnpm run test:integration
+pppnpm test:integration
 
 # Test CLI commands
 versatil init --dry-run
@@ -428,7 +428,7 @@ versatil-mcp /path/to/test/project
 ## 📋 Pull Request Process
 
 ### Before Submitting
-- [ ] Run `pnpm run validate` successfully
+- [ ] Run `ppnpm validate` successfully
 - [ ] Update documentation for new features
 - [ ] Add tests for new functionality
 - [ ] Follow commit message conventions

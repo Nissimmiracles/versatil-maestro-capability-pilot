@@ -65,7 +65,7 @@ Optional:
 
 1. **Install VERSATIL Framework**:
    ```bash
-   npm install -g versatil-sdlc-framework
+   pnpm add -g versatil-sdlc-framework
    ```
 
 2. **Initialize Framework**:
@@ -76,7 +76,7 @@ Optional:
 3. **Verify Installation**:
    ```bash
    versatil --version
-   pnpm run doctor
+   ppnpm doctor
    ```
 
 ---
@@ -127,7 +127,7 @@ SENTRY_ORG=your-org-slug
 ### 3. Test MCP Health
 
 ```bash
-pnpm run mcp:health
+ppnpm mcp:health
 ```
 
 Expected output:
@@ -152,7 +152,7 @@ Expected output:
 #### Installation
 
 ```bash
-npm install -D @playwright/test
+pnpm install -D @playwright/test
 npx playwright install chromium
 ```
 
@@ -227,7 +227,7 @@ npx playwright test --debug
 #### Installation
 
 ```bash
-npm install -D playwright-extra puppeteer-extra-plugin-stealth
+pnpm install -D playwright-extra puppeteer-extra-plugin-stealth
 ```
 
 #### Configuration
@@ -261,7 +261,7 @@ VERSATIL_RATE_LIMIT=2000  # Milliseconds between requests (ethical rate limiting
 
 ```bash
 # Test stealth mode
-pnpm run test:stealth
+pppnpm test:stealth
 
 # Test design scraping
 node scripts/test-design-scraper.js https://example.com
@@ -321,7 +321,7 @@ Built_In_Protection:
 #### Installation
 
 ```bash
-npm install -D @modelcontextprotocol/server-github
+pnpm install -D @modelcontextprotocol/server-github
 ```
 
 #### Configuration
@@ -403,7 +403,7 @@ curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user
 #### Installation
 
 ```bash
-npm install -D exa-js
+pnpm install -D exa-js
 ```
 
 #### Configuration
@@ -549,7 +549,7 @@ exec -l $SHELL
 gcloud init
 
 # Install Vertex AI npm package
-npm install -D @google-cloud/vertexai
+pnpm install -D @google-cloud/vertexai
 ```
 
 #### Configuration
@@ -644,7 +644,7 @@ curl -X POST \
 #### Installation
 
 ```bash
-npm install -D @supabase/supabase-js
+pnpm install -D @supabase/supabase-js
 ```
 
 #### Configuration
@@ -708,7 +708,7 @@ CREATE INDEX ON embeddings USING ivfflat (embedding vector_cosine_ops);
 node -e "const { createClient } = require('@supabase/supabase-js'); const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY); supabase.from('embeddings').select('*').limit(1).then(console.log);"
 
 # Test vector search
-pnpm run test:rag
+pppnpm test:rag
 ```
 
 #### Usage with Agents
@@ -794,7 +794,7 @@ N8N_API_KEY=your_n8n_api_key_here
 curl -H "X-N8N-API-KEY: $N8N_API_KEY" $N8N_BASE_URL/api/v1/workflows
 
 # Test workflow execution
-pnpm run test:n8n
+pppnpm test:n8n
 ```
 
 #### Usage with Agents
@@ -916,7 +916,7 @@ semgrep ci
 #### Installation
 
 ```bash
-npm install -D @sentry/node @sentry/tracing
+pnpm install -D @sentry/node @sentry/tracing
 ```
 
 #### Configuration
@@ -1074,7 +1074,7 @@ export function LoginForm() {
 #### Installation
 
 ```bash
-npm install antd
+pnpm install antd
 ```
 
 #### Configuration
@@ -1109,7 +1109,7 @@ export function AntdTest() {
 EOF
 
 # Run dev server
-pnpm run dev
+ppnpm dev
 ```
 
 #### Usage with James-Frontend
@@ -1189,7 +1189,7 @@ MCP_CLAUDE_DEBUG=false
 
 ```bash
 # Test Claude Code MCP
-pnpm run test:claude-mcp
+pppnpm test:claude-mcp
 ```
 
 #### Usage
@@ -1326,7 +1326,7 @@ Automatic integration with all VERSATIL agents. No manual usage required.
 ### Run Health Check
 
 ```bash
-pnpm run mcp:health
+ppnpm mcp:health
 ```
 
 ### Expected Output
@@ -1361,7 +1361,7 @@ Automation & Monitoring MCPs:
 ### Validate MCP Configuration
 
 ```bash
-pnpm run mcp:validate
+ppnpm mcp:validate
 ```
 
 This runs `scripts/validate-mcp-config.cjs` which:
@@ -1393,13 +1393,13 @@ See [docs/guides/mcp-troubleshooting.md](./mcp-troubleshooting.md) for detailed 
 tail -f ~/.versatil/logs/mcp.log
 
 # Test specific MCP
-pnpm run mcp:test playwright
+ppnpm mcp:test playwright
 
 # Validate environment
-pnpm run env:validate
+ppnpm env:validate
 
 # Reset MCP configuration
-pnpm run mcp:reset
+ppnpm mcp:reset
 ```
 
 ---

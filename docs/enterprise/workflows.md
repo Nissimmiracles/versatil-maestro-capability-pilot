@@ -55,9 +55,9 @@ The VERSATIL SDLC Framework uses **7 active GitHub workflows** to ensure quality
 - **Steps**:
   1. Checkout code
   2. Setup Node.js with npm cache
-  3. Install dependencies (`pnpm install --frozen-lockfile`)
-  4. Run unit tests (`pnpm run test:unit`)
-  5. Build (`pnpm run build`)
+  3. Install dependencies (`ppnpm install --frozen-lockfile`)
+  4. Run unit tests (`pppnpm test:unit`)
+  5. Build (`ppnpm build`)
 
 #### 2. `lint` Job
 - **Platform**: Ubuntu Latest, Node 20
@@ -71,10 +71,10 @@ The VERSATIL SDLC Framework uses **7 active GitHub workflows** to ensure quality
 **Example**:
 ```yaml
 - name: Run unit tests
-  run: pnpm run test:unit
+  run: pppnpm test:unit
 
 - name: Build
-  run: pnpm run build
+  run: ppnpm build
 ```
 
 ---
@@ -269,7 +269,7 @@ const criticalFiles = [
 
 #### 2. `dependency-scan` Job
 - **Steps**:
-  1. Run `pnpm audit` (moderate+ vulnerabilities)
+  1. Run `ppnpm audit` (moderate+ vulnerabilities)
   2. Generate JSON report
   3. Upload results
 
@@ -292,7 +292,7 @@ grep -r -n -i "api[_-]key" --include="*.ts" src/
 
 **Artifacts**:
 - `security-scan-report` - Semgrep results
-- `dependency-scan-results` - pnpm audit JSON
+- `dependency-scan-results` - ppnpm audit JSON
 - `overall-security-summary` - Aggregated report
 
 ---
@@ -436,7 +436,7 @@ await Promise.race([testPromise, timeoutPromise]);
 
 **Purpose**: Deploy to staging environment (infrastructure-based deployments)
 
-**Note**: The VERSATIL SDLC Framework is distributed via NPM, so traditional staging deployments are not applicable. Users install via `npm install -g @versatil/sdlc-framework`.
+**Note**: The VERSATIL SDLC Framework is distributed via NPM, so traditional staging deployments are not applicable. Users install via `pnpm add -g @versatil/sdlc-framework`.
 
 ---
 

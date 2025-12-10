@@ -351,7 +351,7 @@ app.use(securityHeaders);
 
 **Or use Helmet.js** (recommended for production):
 ```bash
-npm install helmet
+pnpm install helmet
 ```
 
 ```typescript
@@ -383,7 +383,7 @@ export default fp(securityPlugin, { name: 'security-headers' });
 
 **Or use @fastify/helmet:**
 ```bash
-npm install @fastify/helmet
+pnpm install @fastify/helmet
 ```
 
 ```typescript
@@ -716,10 +716,10 @@ Add to `package.json`:
 
 **Usage:**
 ```bash
-pnpm run security:scan https://example.com
-pnpm run security:report https://example.com
-pnpm run security:fix
-pnpm run security:validate https://example.com
+ppnpm security:scan https://example.com
+ppnpm security:report https://example.com
+ppnpm security:fix
+ppnpm security:validate https://example.com
 ```
 
 ---

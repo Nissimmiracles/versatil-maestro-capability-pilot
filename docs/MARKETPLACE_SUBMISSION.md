@@ -102,16 +102,16 @@ git clone https://github.com/Nissimmiracles/versatil-sdlc-framework.git
 
 # Install dependencies
 cd versatil-sdlc-framework
-npm install
+pnpm install
 
 # Verify installation
-pnpm run demo:native
+ppnpm demo:native
 ```
 
 ### Method 3: npm (Future)
 
 ```bash
-npm install -g @versatil/opera-framework
+pnpm add -g @versatil/opera-framework
 ```
 
 ---
@@ -152,7 +152,7 @@ ls -la .claude/hooks/*.ts
 
 ```bash
 # Test native hook simulation
-pnpm run demo:native
+ppnpm demo:native
 ```
 
 **Expected**: Color-coded output showing all 4 SDK events
@@ -248,7 +248,7 @@ pnpm run demo:native
 
 4. **Run Interactive Demo**:
    ```bash
-   pnpm run demo:native
+   ppnpm demo:native
    # See all 4 SDK events simulated
    ```
 
@@ -330,7 +330,7 @@ grep -r "lifecycle_hooks\|auto_activation_rules" .claude/agents/
 # Expected: No output
 
 # Run demo
-pnpm run demo:native
+ppnpm demo:native
 # Expected: All 4 SDK events simulated successfully
 ```
 
@@ -427,6 +427,6 @@ Option C: **Self-Hosted Marketplace**
 
 **Installation**: `git clone https://github.com/Nissimmiracles/versatil-sdlc-framework.git`
 
-**Demo**: `pnpm run demo:native`
+**Demo**: `ppnpm demo:native`
 
 **Proof**: First framework with 100% native Claude SDK integration

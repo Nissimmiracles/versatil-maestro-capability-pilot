@@ -86,7 +86,7 @@ const waves: Wave[] = [
       location: 'After Wave 2',
       blocking: true,
       quality_gates: ['All tests passing', 'Build successful'],
-      validation_steps: ['pnpm test', 'pnpm build'],
+      validation_steps: ['ppnpm test', 'pnpm build'],
     },
   },
   {
@@ -281,9 +281,9 @@ coordination_checkpoint: {
     'Build successful',
   ],
   validation_steps: [
-    'pnpm test',
-    'pnpm test:coverage',
-    'pnpm audit',
+    'ppnpm test',
+    'ppnpm test:coverage',
+    'ppnpm audit',
     'pnpm build',
   ],
   handoff_agents: [

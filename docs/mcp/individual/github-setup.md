@@ -128,7 +128,7 @@ cat .cursor/mcp_config.json | jq '.mcpServers.github'
 
 ```bash
 # Run health check
-pnpm run mcp:health -- --filter=github
+ppnpm mcp:health -- --filter=github
 ```
 
 **Expected Output**:
@@ -164,7 +164,7 @@ curl -H "Authorization: token $GITHUB_TOKEN" \
 
 ```bash
 # Run integration tests
-pnpm run test:mcp -- --filter=github
+pppnpm test:mcp -- --filter=github
 
 # Expected: All tests passing
 ```
@@ -325,7 +325,7 @@ curl -H "Authorization: token $GITHUB_TOKEN" \
 **Solution**:
 1. Regenerate token: https://github.com/settings/tokens
 2. Update `~/.versatil/.env` with new token
-3. Restart framework: `pnpm run doctor:fix`
+3. Restart framework: `ppnpm doctor:fix`
 
 ### Issue: "Two-factor authentication required"
 
@@ -394,7 +394,7 @@ read -p "Enter new token: " NEW_TOKEN
 sed -i '' "s/GITHUB_TOKEN=.*/GITHUB_TOKEN=$NEW_TOKEN/" ~/.versatil/.env
 
 # Validate new token
-if pnpm run mcp:health -- --filter=github; then
+if ppnpm mcp:health -- --filter=github; then
   echo "✅ Token rotation successful"
 else
   echo "❌ Token validation failed - restore previous token"
@@ -553,7 +553,7 @@ Configure webhook in GitHub:
 
 1. **Test GitHub Integration**
    ```bash
-   pnpm run test:marcus  # Tests GitHub + Semgrep + Sentry
+   pppnpm test:marcus  # Tests GitHub + Semgrep + Sentry
    ```
 
 2. **Configure Other MCPs**

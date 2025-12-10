@@ -42,7 +42,7 @@ Execution:
 # → Runs in parallel automatically
 
 # Monitor parallel execution
-pnpm run dashboard
+ppnpm dashboard
 # → See real-time parallel task visualization
 
 # Force sequential (if needed)
@@ -101,13 +101,13 @@ Output:
 # → Edit API file → stress tests auto-run
 
 # Manual stress test
-pnpm run test:stress
+pppnpm test:stress
 
 # Generate stress tests for specific file
 /maria generate stress-tests src/api/users.ts
 
 # View stress test results
-pnpm run test:stress -- --verbose
+pppnpm test:stress -- --verbose
 ```
 
 ### Benefits
@@ -179,7 +179,7 @@ Report_Output:
 ### Examples
 ```bash
 # Manual audit (any time)
-pnpm run audit
+pppnpm audit
 
 # View last audit report
 cat ~/.versatil/audit-reports/latest.md
@@ -188,7 +188,7 @@ cat ~/.versatil/audit-reports/latest.md
 versatil-config set audit.schedule "0 2 * * *"  # 2 AM daily
 
 # Background monitoring
-pnpm run dashboard:background
+ppnpm dashboard:background
 ```
 
 ### Benefits
@@ -260,16 +260,16 @@ Onboarding_Workflow:
 ### Examples
 ```bash
 # Run onboarding (new project)
-pnpm run init
+ppnpm init
 
 # Re-run onboarding (detect new tech stack)
-pnpm run init --force
+ppnpm init --force
 
 # Dry-run (see what would be configured)
-pnpm run init --dry-run
+ppnpm init --dry-run
 
 # Skip specific steps
-pnpm run init --skip-templates
+ppnpm init --skip-templates
 ```
 
 ### Benefits
@@ -345,19 +345,19 @@ Example_Timeline:
 ### Examples
 ```bash
 # View pending releases
-pnpm run release:status
+ppnpm release:status
 
 # Create release manually
-pnpm run release
+ppnpm release
 
 # Create pre-release (alpha, beta)
-pnpm run release -- --prerelease alpha
+ppnpm release -- --prerelease alpha
 
 # Dry-run (see what would be released)
-pnpm run release -- --dry-run
+ppnpm release -- --dry-run
 
 # Skip deployment
-pnpm run release -- --no-deploy
+ppnpm release -- --no-deploy
 ```
 
 ### Benefits
@@ -433,10 +433,10 @@ versatil-config set rule5.auto_deploy_production false  # Manual approval
 
 ```bash
 # View rule execution stats
-pnpm run monitor -- --rules
+ppnpm monitor -- --rules
 
 # View rule efficiency
-pnpm run dashboard  # → Rules tab
+ppnpm dashboard  # → Rules tab
 
 # Disable rule temporarily
 versatil-config set rule2.enabled false  # Disable stress testing

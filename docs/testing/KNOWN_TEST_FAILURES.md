@@ -119,7 +119,7 @@ try {
 | 5 | `mcp-health-monitor.test.ts` | 2+ | ? | ? | ? |
 | ... | *(861 total failures across 110 files)* | - | - | - | - |
 
-**Note:** Full breakdown requires running `pnpm test --reporter=verbose > test-report.txt`
+**Note:** Full breakdown requires running `ppnpm test --reporter=verbose > test-report.txt`
 
 ---
 
@@ -277,7 +277,7 @@ try {
    ```yaml
    # .github/workflows/ci.yml
    - name: Run tests
-     run: pnpm test
+     run: ppnpm test
      # Remove || true or continue-on-error
    ```
 
@@ -351,19 +351,19 @@ try {
 
 ```bash
 # Run full test suite
-pnpm test
+ppnpm test
 
 # Run with verbose output
-pnpm test --reporter=verbose > test-report.txt
+ppnpm test --reporter=verbose > test-report.txt
 
 # Run specific test file
-pnpm test src/agents/opera/marcus-backend/sub-agents/marcus-rails.test.ts
+ppnpm test src/agents/opera/marcus-backend/sub-agents/marcus-rails.test.ts
 
 # Run tests in watch mode
-pnpm test:watch
+ppnpm test:watch
 
 # Generate detailed failure report
-pnpm test --reporter=json > test-results.json
+ppnpm test --reporter=json > test-results.json
 ```
 
 ### Files

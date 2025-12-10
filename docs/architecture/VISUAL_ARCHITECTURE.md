@@ -394,9 +394,9 @@ graph LR
         M5["/learn" Command<br/>Pattern codification]
         M6["/monitor" Command<br/>Health check]
         M7["/doctor --fix"<br/>Auto-fix issues]
-        M8["pnpm run dashboard"<br/>Launch interactive UI]
-        M9["pnpm run init"<br/>Project onboarding]
-        M10["pnpm run validate"<br/>Full validation]
+        M8["ppnpm dashboard"<br/>Launch interactive UI]
+        M9["ppnpm init"<br/>Project onboarding]
+        M10["ppnpm validate"<br/>Full validation]
     end
 
     classDef automatic fill:#c8e6c9,stroke:#4caf50,stroke-width:3px
@@ -436,9 +436,9 @@ graph LR
 | **Pattern Codification** | 🔴 Manual | None | `/learn [branch]` |
 | **Health Check** | 🔴 Manual | None | `/monitor` |
 | **Auto-Fix** | 🔴 Manual | None | `/doctor --fix` |
-| **Dashboard Launch** | 🔴 Manual | None | `pnpm run dashboard` |
-| **Project Onboarding** | 🔴 Manual | None | `pnpm run init` |
-| **Full Validation** | 🔴 Manual | None | `pnpm run validate` |
+| **Dashboard Launch** | 🔴 Manual | None | `ppnpm dashboard` |
+| **Project Onboarding** | 🔴 Manual | None | `ppnpm init` |
+| **Full Validation** | 🔴 Manual | None | `ppnpm validate` |
 
 **Legend:**
 - 🟢 **Automatic**: Zero user action, runs automatically
@@ -1133,7 +1133,7 @@ graph TB
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**Launch**: `pnpm run dashboard`
+**Launch**: `ppnpm dashboard`
 **Technology**: Node.js + blessed library
 **Update Frequency**: 500ms (configurable)
 **Location**: Terminal window (separate from Cursor IDE)

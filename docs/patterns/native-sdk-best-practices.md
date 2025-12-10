@@ -371,7 +371,7 @@ ls -la .claude/hooks/*.ts | grep "^-rwx"
 # Expected: All hooks have execute permissions
 
 # 4. Test hook execution (optional)
-pnpm run demo:native
+ppnpm demo:native
 # Expected: All SDK events simulated successfully
 ```
 

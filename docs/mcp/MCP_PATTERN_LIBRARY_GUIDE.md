@@ -110,7 +110,7 @@ Apply the WebSocket pattern to my project with authentication enabled
   "dependencies": ["socket.io", "socket.io-client"],
   "env_variables": ["JWT_SECRET"],
   "next_steps": [
-    "Install dependencies: npm install socket.io socket.io-client",
+    "Install dependencies: pnpm install socket.io socket.io-client",
     "Set JWT_SECRET in .env",
     "Create src/websocket/socket-server.ts (see implementation below)",
     "Integrate with Express: app.listen(3000) → server.listen(3000)"
@@ -154,7 +154,7 @@ Set up WebSocket with authentication and room support on port 3001
   "success": true,
   "message": "WebSocket setup configuration ready (port: 3001, auth: true, rooms: true)",
   "next_steps": [
-    "Install: npm install socket.io socket.io-client",
+    "Install: pnpm install socket.io socket.io-client",
     "Create src/websocket/socket-server.ts (see pattern JSON)",
     "Create src/hooks/useWebSocket.ts for React client",
     "Implement JWT authentication middleware",
@@ -209,7 +209,7 @@ Set up Stripe payment integration with webhooks and subscription support
     "Get API keys from Stripe Dashboard (https://dashboard.stripe.com/apikeys)",
     "Set STRIPE_SECRET_KEY in .env",
     "Set STRIPE_WEBHOOK_SECRET in .env (from Webhook settings)",
-    "Install: npm install stripe @stripe/stripe-js",
+    "Install: pnpm install stripe @stripe/stripe-js",
     "Create src/payments/stripe-service.ts (see pattern JSON)",
     "Create webhook endpoint: POST /webhooks/stripe",
     "Configure Stripe webhook URL: https://yourdomain.com/webhooks/stripe",
@@ -276,7 +276,7 @@ Set up S3 file upload with image optimization and CloudFront CDN
     "Optional: Set up CloudFront distribution for CDN"
   ],
   "implementation_steps": [
-    "Install: npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner sharp",
+    "Install: pnpm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner sharp",
     "Create src/storage/s3-service.ts (see pattern JSON)",
     "Create src/storage/image-optimizer.ts (Sharp integration)",
     "Create upload endpoint: POST /uploads/presigned-url",
@@ -338,7 +338,7 @@ Set up email system with SendGrid and Handlebars templates
     ]
   },
   "implementation_steps": [
-    "Install: npm install @sendgrid/mail handlebars",
+    "Install: pnpm install @sendgrid/mail handlebars",
     "Create src/email/email-service.ts (see pattern JSON)",
     "Create src/email/templates/ directory",
     "Create templates: welcome.hbs, password-reset.hbs, notification.hbs",
@@ -398,7 +398,7 @@ Set up Redis-backed rate limiting with tiered limits for API endpoints
     "Set REDIS_URL in .env (default: redis://localhost:6379)"
   ],
   "implementation_steps": [
-    "Install: npm install ioredis express-rate-limit rate-limit-redis",
+    "Install: pnpm install ioredis express-rate-limit rate-limit-redis",
     "Create src/middleware/rate-limiter.ts (see pattern JSON)",
     "Create src/config/rate-limit-tiers.ts (tier definitions)",
     "Apply middleware to Express routes: app.use('/api', rateLimiter)",
@@ -496,9 +496,9 @@ console.log(report.total_time_saved);
 
 **CLI Usage**:
 ```bash
-pnpm run telemetry:report        # Console output
-pnpm run telemetry:report:json   # JSON export
-pnpm run telemetry:report:md     # Markdown report
+ppnpm telemetry:report        # Console output
+ppnpm telemetry:report:json   # JSON export
+ppnpm telemetry:report:md     # Markdown report
 ```
 
 ---
@@ -605,7 +605,7 @@ const result = await oliver.routeRequest({
 ### WebSocket Testing
 ```bash
 # Start server
-pnpm run dev
+ppnpm dev
 
 # Test connection
 curl -X POST http://localhost:3001/test-websocket
@@ -679,7 +679,7 @@ redis-cli keys "rate-limit:*"
 cat config/mcp.json | grep version
 
 # Should be 7.5.1+
-# If not, update: git pull origin main && npm install
+# If not, update: git pull origin main && pnpm install
 ```
 
 ### Issue: Pattern search returns no results

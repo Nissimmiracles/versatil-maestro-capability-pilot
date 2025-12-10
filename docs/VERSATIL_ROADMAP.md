@@ -186,8 +186,8 @@ The following agents will help you build and maintain this project:
 
 - **VERSATIL Documentation**: `.claude/AGENTS.md`, `.claude/rules/README.md`
 - **Agent Slash Commands**: `.claude/commands/`
-- **Framework Health Check**: `pnpm run doctor`
-- **Quality Validation**: `pnpm run validate`
+- **Framework Health Check**: `ppnpm doctor`
+- **Quality Validation**: `ppnpm validate`
 
 ---
 

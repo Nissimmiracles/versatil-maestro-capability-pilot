@@ -25,7 +25,7 @@ This document provides a complete demo script for showcasing the VERSATIL SDLC F
 
 ```bash
 # Install VERSATIL Framework
-npm install -g versatil-sdlc-framework
+pnpm add -g versatil-sdlc-framework
 
 # Verify installation
 versatil health
@@ -72,7 +72,7 @@ touch src/components/LoginForm.jsx
 ```bash
 # Trigger emergency by breaking build
 echo "invalid syntax" >> src/index.js
-pnpm run build
+ppnpm build
 ```
 
 **Demonstrate:**

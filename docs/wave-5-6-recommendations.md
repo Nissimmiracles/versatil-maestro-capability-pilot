@@ -77,8 +77,8 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '20'
-      - run: pnpm install
-      - run: pnpm test src/mcp/
+      - run: ppnpm install
+      - run: ppnpm test src/mcp/
 
   test-sub-agents-marcus:
     runs-on: ubuntu-latest
@@ -88,8 +88,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      - run: pnpm install
-      - run: pnpm test src/agents/opera/marcus-backend/sub-agents/marcus-${{ matrix.agent }}.test.ts
+      - run: ppnpm install
+      - run: ppnpm test src/agents/opera/marcus-backend/sub-agents/marcus-${{ matrix.agent }}.test.ts
 
   test-sub-agents-james:
     runs-on: ubuntu-latest
@@ -99,8 +99,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      - run: pnpm install
-      - run: pnpm test src/agents/opera/james-frontend/sub-agents/james-${{ matrix.agent }}.test.ts
+      - run: ppnpm install
+      - run: ppnpm test src/agents/opera/james-frontend/sub-agents/james-${{ matrix.agent }}.test.ts
 
   test-integration:
     runs-on: ubuntu-latest
@@ -114,8 +114,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      - run: pnpm install
-      - run: pnpm test tests/integration/${{ matrix.test }}.test.ts
+      - run: ppnpm install
+      - run: ppnpm test tests/integration/${{ matrix.test }}.test.ts
 ```
 
 **Benefits**:
@@ -144,8 +144,8 @@ RUN echo "* hard nproc 65536" >> /etc/security/limits.conf
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
-RUN npm install -g pnpm
-RUN pnpm install
+RUN pnpm add -g pnpm
+RUN ppnpm install
 
 CMD ["pnpm", "test"]
 ```
@@ -191,13 +191,13 @@ When CI/CD is available, run specific test categories to validate:
 
 ```bash
 # Priority 1: Core infrastructure
-pnpm test src/mcp/
+ppnpm test src/mcp/
 
 # Priority 2: Sub-agents
-pnpm test src/agents/opera/
+ppnpm test src/agents/opera/
 
 # Priority 3: Integration
-pnpm test tests/integration/
+ppnpm test tests/integration/
 ```
 
 ---

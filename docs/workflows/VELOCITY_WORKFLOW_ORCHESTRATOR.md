@@ -368,13 +368,13 @@ interface WorkflowMetrics {
 
 ```bash
 # Run all workflow tests
-pnpm test -- tests/workflows/
+ppnpm test -- tests/workflows/
 
 # Run with coverage
-pnpm run test:coverage -- tests/workflows/
+pppnpm test:coverage -- tests/workflows/
 
 # Run specific test suite
-pnpm test -- tests/workflows/every-workflow-orchestrator.test.ts
+ppnpm test -- tests/workflows/every-workflow-orchestrator.test.ts
 ```
 
 ### Key Test Scenarios

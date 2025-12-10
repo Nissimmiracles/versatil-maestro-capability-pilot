@@ -269,12 +269,12 @@ Similar Issue: "PostgreSQL timeout" detected
 Enhancement Detected → Execute Immediately → Notify User → Create Audit Trail TODO
 ```
 
-**Example**: `npm install` for missing dependencies
+**Example**: `pnpm install` for missing dependencies
 
 **User Experience**:
 ```
 ✅ Guardian Auto-Applied: Auto-fix security vulnerabilities
-   pnpm audit fix --force
+   ppnpm audit fix --force
    ROI: 15 vulnerabilities fixed, 0.5h/week saved
 
 📝 Audit trail: todos/enhancement-security-critical-1234-ab3f.md

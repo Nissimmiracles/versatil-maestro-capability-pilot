@@ -65,9 +65,9 @@ coordination_checkpoint: {
     'TypeScript compilation',
   ],
   validation_steps: [
-    'pnpm test',
-    'pnpm test:coverage',
-    'pnpm audit --audit-level moderate',
+    'ppnpm test',
+    'ppnpm test:coverage',
+    'ppnpm audit --audit-level moderate',
     'pnpm build',
     'pnpm typecheck',
   ],
@@ -87,14 +87,14 @@ coordination_checkpoint: {
 
 | Quality Gate | Purpose | Validation Step | Threshold |
 |-------------|---------|-----------------|-----------|
-| **All tests passing** | Verify functionality | `pnpm test` | 100% pass |
-| **Code coverage** | Ensure test coverage | `pnpm test:coverage` | >= 80% |
-| **Security scan** | Detect vulnerabilities | `pnpm audit` | 0 critical/high |
+| **All tests passing** | Verify functionality | `ppnpm test` | 100% pass |
+| **Code coverage** | Ensure test coverage | `ppnpm test:coverage` | >= 80% |
+| **Security scan** | Detect vulnerabilities | `ppnpm audit` | 0 critical/high |
 | **Build successful** | Verify compilation | `pnpm build` | Exit code 0 |
 | **Lint check** | Code quality | `pnpm lint` | 0 errors |
 | **Type check** | TypeScript validity | `pnpm typecheck` | 0 errors |
-| **Performance** | Benchmark performance | `pnpm test:perf` | < threshold |
-| **Accessibility** | WCAG compliance | `pnpm test:a11y` | AA standard |
+| **Performance** | Benchmark performance | `ppnpm test:perf` | < threshold |
+| **Accessibility** | WCAG compliance | `ppnpm test:a11y` | AA standard |
 
 ### Gate Validation Logic
 
@@ -171,9 +171,9 @@ result: FAIL (75% < 80%)
     'Performance benchmarks met',
   ],
   validation_steps: [
-    'pnpm test',
-    'pnpm audit',
-    'pnpm test:perf',
+    'ppnpm test',
+    'ppnpm audit',
+    'ppnpm test:perf',
   ],
 }
 ```
@@ -314,7 +314,7 @@ handoff_agents: [
     location: 'After Wave 2',
     blocking: true,
     quality_gates: ['API tests passing', 'Documentation generated'],
-    validation_steps: ['pnpm test:api', 'pnpm docs:api'],
+    validation_steps: ['ppnpm test:api', 'pnpm docs:api'],
     handoff_agents: [
       {
         from: 'Marcus-Backend',
@@ -334,7 +334,7 @@ handoff_agents: [
     location: 'After Wave 3',
     blocking: true,
     quality_gates: ['Component tests passing', 'Accessibility validated'],
-    validation_steps: ['pnpm test:components', 'pnpm test:a11y'],
+    validation_steps: ['ppnpm test:components', 'ppnpm test:a11y'],
     handoff_agents: [
       {
         from: 'James-Frontend',
@@ -383,11 +383,11 @@ Agent Handoffs:
     'Environment variables validated',
   ],
   validation_steps: [
-    'pnpm test:all',
-    'pnpm test:coverage',
-    'pnpm audit --audit-level high',
-    'pnpm test:perf',
-    'pnpm test:a11y',
+    'ppnpm test:all',
+    'ppnpm test:coverage',
+    'ppnpm audit --audit-level high',
+    'ppnpm test:perf',
+    'ppnpm test:a11y',
     'pnpm build',
     'pnpm validate:env',
   ],
@@ -410,7 +410,7 @@ Agent Handoffs:
     'Build successful',
   ],
   validation_steps: [
-    'pnpm test',
+    'ppnpm test',
     'pnpm lint',
     'pnpm typecheck',
     'pnpm build',
@@ -458,10 +458,10 @@ Agent Handoffs:
     'Authentication/authorization tested',
   ],
   validation_steps: [
-    'pnpm audit --audit-level high',
-    'pnpm test:security:owasp',
+    'ppnpm audit --audit-level high',
+    'ppnpm test:security:owasp',
     'pnpm validate:secrets',
-    'pnpm test:auth',
+    'ppnpm test:auth',
   ],
 }
 ```
@@ -472,17 +472,17 @@ Agent Handoffs:
 
 1. **Use specific commands**
    ```typescript
-   ✅ 'pnpm test --run'
-   ❌ 'npm test'  // May hang waiting for input
+   ✅ 'ppnpm test --run'
+   ❌ 'pnpm test'  // May hang waiting for input
    ```
 
 2. **Set appropriate timeouts**
    ```typescript
    // CheckpointValidator uses 2-minute timeout
    // For longer operations, split into multiple steps
-   ✅ 'pnpm test:unit'   // Fast
-   ✅ 'pnpm test:e2e'    // Separate step
-   ❌ 'pnpm test:all'    // May exceed timeout
+   ✅ 'ppnpm test:unit'   // Fast
+   ✅ 'ppnpm test:e2e'    // Separate step
+   ❌ 'ppnpm test:all'    // May exceed timeout
    ```
 
 3. **Provide clear output**
@@ -497,7 +497,7 @@ Agent Handoffs:
 
 4. **Handle errors gracefully**
    ```typescript
-   ✅ 'pnpm test || echo "Tests failed"'
+   ✅ 'ppnpm test || echo "Tests failed"'
    ✅ 'pnpm build --no-bail'
    ```
 
@@ -505,7 +505,7 @@ Agent Handoffs:
 
 1. **Don't use interactive commands**
    ```typescript
-   ❌ 'npm test'  // May prompt for input
+   ❌ 'pnpm test'  // May prompt for input
    ❌ 'git commit -i'  // Interactive mode
    ```
 
@@ -517,7 +517,7 @@ Agent Handoffs:
 
 3. **Don't skip error codes**
    ```typescript
-   ❌ 'pnpm test; exit 0'  // Masks failures
+   ❌ 'ppnpm test; exit 0'  // Masks failures
    ```
 
 ## Checkpoint Execution Flow
@@ -582,7 +582,7 @@ if (!checkpointResult.passed && checkpoint.blocking) {
 ```typescript
 [CheckpointValidator] INFO: Validating checkpoint: Production Readiness
 [CheckpointValidator] DEBUG: Validating quality gate: All tests passing
-[CheckpointValidator] DEBUG: Executing validation step: pnpm test
+[CheckpointValidator] DEBUG: Executing validation step: ppnpm test
 [CheckpointValidator] INFO: Checkpoint validation complete: Production Readiness
 ```
 
@@ -708,7 +708,7 @@ const checkpoint = {
   checkpoint_name: 'Production Validation',
   blocking: process.env.NODE_ENV === 'production',  // Only block in prod
   quality_gates: ['Security scan'],
-  validation_steps: ['pnpm audit'],
+  validation_steps: ['ppnpm audit'],
 };
 ```
 

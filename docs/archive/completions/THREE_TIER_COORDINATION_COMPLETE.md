@@ -217,7 +217,7 @@ For larger features with 10+ database tables:
 ## 🔍 Validation Results
 
 ```bash
-$ pnpm run validate:commands
+$ ppnpm validate:commands
 
 🔍 VERSATIL Slash Command Validator
 
@@ -380,11 +380,11 @@ export class DanaSDKAgent extends SDKAgentAdapter {
 
 ### Phase 3: Database Quality Gates
 
-**Add to `pnpm run validate`**:
+**Add to `ppnpm validate`**:
 ```bash
-pnpm run validate:schema    # Validate schema migrations
-pnpm run validate:rls       # Check RLS policies
-pnpm run validate:queries   # Query performance analysis
+ppnpm validate:schema    # Validate schema migrations
+ppnpm validate:rls       # Check RLS policies
+ppnpm validate:queries   # Query performance analysis
 ```
 
 **Estimated Time**: 3 hours

@@ -201,7 +201,7 @@ With intelligent priority resolution: **User > Team > Project > Framework**
 
 ```bash
 # Build TypeScript
-pnpm run build
+ppnpm build
 
 # Run end-to-end test
 node scripts/test-three-layer-context.cjs
@@ -240,7 +240,7 @@ node scripts/test-three-layer-context.cjs
 ### Run Integration Tests
 
 ```bash
-pnpm test tests/integration/three-layer-context.test.ts
+ppnpm test tests/integration/three-layer-context.test.ts
 ```
 
 ### Migrate Existing Projects
@@ -382,7 +382,7 @@ if (analysis.confidence > 0.7) {
 
 1. **Run Tests**: Verify everything works in your environment
    ```bash
-   pnpm run build
+   ppnpm build
    node scripts/test-three-layer-context.cjs
    ```
 

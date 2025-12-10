@@ -79,7 +79,7 @@ OPENAI_API_KEY=your-openai-key
 
 ```bash
 # Validate deployment environment
-pnpm run edge:validate
+ppnpm edge:validate
 
 # Expected output:
 # 🔍 Validating Deployment Environment
@@ -92,7 +92,7 @@ pnpm run edge:validate
 
 ```bash
 # Deploy all functions with verification
-pnpm run edge:deploy:verify
+ppnpm edge:deploy:verify
 
 # Expected output:
 # 🚀 VERSATIL Edge Function Deployment
@@ -153,7 +153,7 @@ pnpm run edge:deploy:verify
 
 ```bash
 # Check health of all deployed functions
-pnpm run edge:health
+ppnpm edge:health
 
 # Expected output:
 # 🏥 Edge Function Health Check
@@ -173,7 +173,7 @@ pnpm run edge:health
 
 ```bash
 # Run complete integration test suite
-pnpm run test:edge-functions
+pppnpm test:edge-functions
 
 # Expected output:
 # 🧪 VERSATIL Edge Function Integration Tests
@@ -251,7 +251,7 @@ pnpm run test:edge-functions
 
 ```bash
 # Monitor performance for 10 minutes
-pnpm run edge:monitor --duration 10
+ppnpm edge:monitor --duration 10
 
 # Expected output:
 # 📊 Monitoring Edge Functions (10 minutes)
@@ -374,19 +374,19 @@ curl -X POST https://your-project-ref.supabase.co/functions/v1/opera-agent \
 
 ```bash
 # Daily health checks
-pnpm run edge:health
+ppnpm edge:health
 
 # Weekly performance monitoring
-pnpm run edge:monitor --duration 60
+ppnpm edge:monitor --duration 60
 
 # Monthly full testing
-pnpm run test:edge-functions
+pppnpm test:edge-functions
 
 # Emergency rollback (if needed)
-pnpm run edge:rollback
+ppnpm edge:rollback
 
 # Update deployments
-pnpm run edge:deploy:verify
+ppnpm edge:deploy:verify
 ```
 
 ## Troubleshooting
@@ -404,7 +404,7 @@ pnpm run edge:deploy:verify
 2. **Rate Limit Errors**
    ```bash
    # Monitor rate limiting
-   pnpm run edge:monitor --duration 5
+   ppnpm edge:monitor --duration 5
 
    # Adjust rate limits in production-optimizations.ts if needed
    ```
@@ -412,7 +412,7 @@ pnpm run edge:deploy:verify
 3. **Function Health Issues**
    ```bash
    # Check individual function health
-   pnpm run edge:health --verbose
+   ppnpm edge:health --verbose
 
    # Redeploy specific function if needed
    supabase functions deploy opera-agent

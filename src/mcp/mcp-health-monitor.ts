@@ -22,6 +22,36 @@ export interface MCPHealth {
   circuitOpen: boolean;
 }
 
+export interface MCPMetrics {
+  mcpId: string;
+  totalRequests: number;
+  successfulRequests: number;
+  failedRequests: number;
+  averageLatency: number;
+  lastLatency: number;
+  rejectedRequests: number;
+}
+
+export interface HealthReport {
+  timestamp: Date;
+  totalMCPs: number;
+  healthyCount: number;
+  degradedCount: number;
+  unhealthyCount: number;
+  overallHealth: number;
+  mcps: MCPHealth[];
+  circuitBreakers: ReturnType<MCPHealthMonitor['getCircuitBreakerStats']>;
+  recommendations: string[];
+}
+
+export interface SummaryStats {
+  totalMCPs: number;
+  overallHealthScore: number;
+  averageLatency: number;
+  totalRequests: number;
+  successRate: number;
+}
+
 export interface RetryConfig {
   maxRetries: number;
   baseDelay: number;
@@ -40,6 +70,7 @@ export interface MCPExecutionResult {
 
 export class MCPHealthMonitor extends EventEmitter {
   private healthStatus: Map<string, MCPHealth> = new Map();
+  private metrics: Map<string, MCPMetrics> = new Map();
   private retryConfig: RetryConfig;
   private monitoringInterval: NodeJS.Timeout | null = null;
 
@@ -68,7 +99,7 @@ export class MCPHealthMonitor extends EventEmitter {
       ...retryConfig
     };
 
-    // Initialize health status for all MCPs
+    // Initialize health status and metrics for all MCPs
     for (const mcpId of this.MCP_IDS) {
       this.healthStatus.set(mcpId, {
         mcpId,
@@ -78,6 +109,15 @@ export class MCPHealthMonitor extends EventEmitter {
         successRate: 100,
         averageLatency: 0,
         circuitOpen: false
+      });
+      this.metrics.set(mcpId, {
+        mcpId,
+        totalRequests: 0,
+        successfulRequests: 0,
+        failedRequests: 0,
+        averageLatency: 0,
+        lastLatency: 0,
+        rejectedRequests: 0
       });
     }
   }

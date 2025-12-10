@@ -1,0 +1,114 @@
+{
+  "version": "7.16.2",
+  "lastUpdated": "2025-12-10",
+  "agents": {
+    "alex-ba": {
+      "name": "Alex-BA",
+      "role": "Business Analyst",
+      "status": "active",
+      "priority": 5,
+      "autoActivate": true,
+      "triggers": ["requirements", "specs", "user stories", "acceptance criteria"],
+      "filePatterns": ["*.requirements.md", "*.user-story.md", "docs/requirements/**"],
+      "model": "sonnet",
+      "implementation": "src/agents/opera/alex-ba/"
+    },
+    "sarah-pm": {
+      "name": "Sarah-PM",
+      "role": "Project Manager",
+      "status": "active",
+      "priority": 8,
+      "autoActivate": true,
+      "triggers": ["coordination", "planning", "sprint", "roadmap"],
+      "filePatterns": ["*.plan.md", "docs/roadmap/**", "ROADMAP.md"],
+      "model": "sonnet",
+      "implementation": "src/agents/opera/sarah-pm/"
+    },
+    "james-frontend": {
+      "name": "James-Frontend",
+      "role": "UI/UX Lead",
+      "status": "active",
+      "priority": 5,
+      "autoActivate": true,
+      "triggers": ["frontend", "ui", "component", "css", "styling"],
+      "filePatterns": ["*.tsx", "*.jsx", "*.vue", "*.svelte", "*.css", "*.scss"],
+      "model": "sonnet",
+      "implementation": "src/agents/opera/james-frontend/"
+    },
+    "marcus-backend": {
+      "name": "Marcus-Backend",
+      "role": "API Lead",
+      "status": "active",
+      "priority": 5,
+      "autoActivate": true,
+      "triggers": ["api", "endpoint", "backend", "server", "rest", "graphql"],
+      "filePatterns": ["*.api.ts", "*.service.ts", "*.controller.ts", "src/api/**", "src/server/**"],
+      "model": "sonnet",
+      "implementation": "src/agents/opera/marcus-backend/"
+    },
+    "dana-database": {
+      "name": "Dana-Database",
+      "role": "Database Lead",
+      "status": "active",
+      "priority": 6,
+      "autoActivate": true,
+      "triggers": ["database", "schema", "migration", "query", "sql"],
+      "filePatterns": ["*.sql", "migrations/**", "*.migration.ts", "prisma/**", "supabase/**"],
+      "model": "sonnet",
+      "implementation": "src/agents/opera/dana-database/"
+    },
+    "maria-qa": {
+      "name": "Maria-QA",
+      "role": "Quality Guardian",
+      "status": "active",
+      "priority": 10,
+      "autoActivate": true,
+      "triggers": ["test", "coverage", "quality", "validation"],
+      "filePatterns": ["*.test.ts", "*.spec.ts", "*.test.tsx", "tests/**"],
+      "model": "sonnet",
+      "implementation": "src/agents/opera/maria-qa/"
+    },
+    "dr-ai-ml": {
+      "name": "Dr.AI-ML",
+      "role": "ML Engineer",
+      "status": "active",
+      "priority": 5,
+      "autoActivate": true,
+      "triggers": ["ml", "ai", "model", "training", "embeddings", "rag"],
+      "filePatterns": ["*.py", "*.ipynb", "ml/**", "ai/**", "models/**"],
+      "model": "sonnet",
+      "implementation": "src/agents/opera/dr-ai-ml/"
+    },
+    "oliver-mcp": {
+      "name": "Oliver-MCP",
+      "role": "MCP Orchestrator",
+      "status": "active",
+      "priority": 7,
+      "autoActivate": true,
+      "triggers": ["mcp", "tool", "server", "integration"],
+      "filePatterns": ["src/mcp/**", "*.mcp.ts"],
+      "model": "haiku",
+      "implementation": "src/agents/opera/oliver-mcp/"
+    }
+  },
+  "infrastructure": {
+    "iris-guardian": {
+      "name": "Iris-Guardian",
+      "role": "Health Monitor",
+      "status": "active",
+      "autoRemediate": true,
+      "checkInterval": 60000
+    },
+    "victor-verifier": {
+      "name": "Victor-Verifier",
+      "role": "Verification",
+      "status": "active",
+      "useCoVe": true
+    },
+    "feedback-codifier": {
+      "name": "Feedback-Codifier",
+      "role": "Learning System",
+      "status": "active"
+    }
+  }
+}

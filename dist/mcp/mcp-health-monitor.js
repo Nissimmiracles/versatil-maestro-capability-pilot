@@ -57,10 +57,21 @@ export class MCPHealthMonitor extends EventEmitter {
         }
         console.log(`🔍 Starting MCP health monitoring (interval: ${intervalMs}ms)...`);
         this.monitoringInterval = setInterval(async () => {
-            await this.checkAllMCPs();
+            try {
+                await this.checkAllMCPs();
+            }
+            catch (err) {
+                console.error('MCP health check failed:', err);
+                this.emit('error', err);
+            }
         }, intervalMs);
+        // Emit monitoring_started event
+        this.emit('monitoring_started', { intervalMs });
         // Initial check
-        this.checkAllMCPs().catch(err => console.error('Initial MCP health check failed:', err));
+        this.checkAllMCPs().catch(err => {
+            console.error('Initial MCP health check failed:', err);
+            this.emit('error', err);
+        });
     }
     /**
      * Stop health monitoring
@@ -70,6 +81,8 @@ export class MCPHealthMonitor extends EventEmitter {
             clearInterval(this.monitoringInterval);
             this.monitoringInterval = null;
             console.log('⏹️  Stopped MCP health monitoring');
+            // Emit monitoring_stopped event
+            this.emit('monitoring_stopped');
         }
     }
     /**

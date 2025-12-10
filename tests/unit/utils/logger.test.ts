@@ -15,16 +15,20 @@ describe('VERSATILLogger', () => {
   let consoleErrorSpy: MockInstance;
 
   beforeEach(() => {
-    logger = new VERSATILLogger();
+    // Initialize spies first to ensure they exist
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // Then create logger
+    logger = new VERSATILLogger();
   });
 
   afterEach(() => {
-    consoleLogSpy.mockRestore();
-    consoleWarnSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
+    // Safe cleanup - check if spies exist before restoring
+    if (consoleLogSpy) consoleLogSpy.mockRestore();
+    if (consoleWarnSpy) consoleWarnSpy.mockRestore();
+    if (consoleErrorSpy) consoleErrorSpy.mockRestore();
+    vi.clearAllMocks();
   });
 
   describe('Logging Methods', () => {

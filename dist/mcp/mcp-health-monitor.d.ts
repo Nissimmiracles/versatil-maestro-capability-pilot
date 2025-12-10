@@ -19,6 +19,33 @@ export interface MCPHealth {
     averageLatency: number;
     circuitOpen: boolean;
 }
+export interface MCPMetrics {
+    mcpId: string;
+    totalRequests: number;
+    successfulRequests: number;
+    failedRequests: number;
+    averageLatency: number;
+    lastLatency: number;
+    rejectedRequests: number;
+}
+export interface HealthReport {
+    timestamp: Date;
+    totalMCPs: number;
+    healthyCount: number;
+    degradedCount: number;
+    unhealthyCount: number;
+    overallHealth: number;
+    mcps: MCPHealth[];
+    circuitBreakers: ReturnType<MCPHealthMonitor['getCircuitBreakerStats']>;
+    recommendations: string[];
+}
+export interface SummaryStats {
+    totalMCPs: number;
+    overallHealthScore: number;
+    averageLatency: number;
+    totalRequests: number;
+    successRate: number;
+}
 export interface RetryConfig {
     maxRetries: number;
     baseDelay: number;
@@ -35,6 +62,7 @@ export interface MCPExecutionResult {
 }
 export declare class MCPHealthMonitor extends EventEmitter {
     private healthStatus;
+    private metrics;
     private retryConfig;
     private monitoringInterval;
     private readonly MCP_IDS;

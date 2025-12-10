@@ -14,6 +14,7 @@ export class MCPHealthMonitor extends EventEmitter {
     constructor(retryConfig = {}) {
         super();
         this.healthStatus = new Map();
+        this.metrics = new Map();
         this.monitoringInterval = null;
         this.MCP_IDS = [
             'chrome_mcp',
@@ -35,7 +36,7 @@ export class MCPHealthMonitor extends EventEmitter {
             backoffMultiplier: 2,
             ...retryConfig
         };
-        // Initialize health status for all MCPs
+        // Initialize health status and metrics for all MCPs
         for (const mcpId of this.MCP_IDS) {
             this.healthStatus.set(mcpId, {
                 mcpId,
@@ -45,6 +46,15 @@ export class MCPHealthMonitor extends EventEmitter {
                 successRate: 100,
                 averageLatency: 0,
                 circuitOpen: false
+            });
+            this.metrics.set(mcpId, {
+                mcpId,
+                totalRequests: 0,
+                successfulRequests: 0,
+                failedRequests: 0,
+                averageLatency: 0,
+                lastLatency: 0,
+                rejectedRequests: 0
             });
         }
     }

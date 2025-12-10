@@ -18,13 +18,28 @@ export function calculateTodoFingerprint(todo) {
 }
 /**
  * Check if two TODOs are similar
+ *
+ * Two TODOs are similar if:
+ * 1. Their fingerprints are identical, OR
+ * 2. Their titles are identical (case-insensitive) and same file
  */
 export function areTodosSimilar(todo1, todo2, threshold = 0.8) {
     const fp1 = calculateTodoFingerprint(todo1);
     const fp2 = calculateTodoFingerprint(todo2);
+    // Exact fingerprint match
     if (fp1 === fp2)
         return true;
-    // Calculate simple similarity
+    // Title-based matching: titles must match exactly (case-insensitive)
+    const title1 = todo1.title.toLowerCase().trim();
+    const title2 = todo2.title.toLowerCase().trim();
+    if (title1 === title2) {
+        return true;
+    }
+    // For very short titles, require exact match
+    if (title1.length < 15 || title2.length < 15) {
+        return false;
+    }
+    // For longer titles, use similarity threshold
     const maxLen = Math.max(fp1.length, fp2.length);
     if (maxLen === 0)
         return true;

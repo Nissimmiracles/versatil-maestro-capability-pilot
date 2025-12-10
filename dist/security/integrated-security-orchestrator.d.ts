@@ -17,28 +17,28 @@ export declare const SecurityIncidentSchema: z.ZodObject<{
     status: z.ZodEnum<["detected", "investigating", "contained", "resolved", "escalated"]>;
     resolved_at: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
-    status?: "investigating" | "resolved" | "escalated" | "detected" | "contained";
-    timestamp?: string;
     id?: string;
-    description?: string;
+    timestamp?: string;
+    incident_type?: "boundary_violation" | "path_traversal_attack" | "privilege_escalation" | "unauthorized_access" | "data_exfiltration" | "system_compromise" | "policy_violation";
+    status?: "detected" | "investigating" | "contained" | "resolved" | "escalated";
     severity?: "low" | "medium" | "high" | "critical";
-    evidence?: Record<string, any>;
-    project_id?: string;
-    response_actions?: string[];
-    incident_type?: "unauthorized_access" | "privilege_escalation" | "data_exfiltration" | "boundary_violation" | "path_traversal_attack" | "system_compromise" | "policy_violation";
     source_system?: string;
+    project_id?: string;
+    description?: string;
+    evidence?: Record<string, any>;
+    response_actions?: string[];
     resolved_at?: string;
 }, {
-    status?: "investigating" | "resolved" | "escalated" | "detected" | "contained";
-    timestamp?: string;
     id?: string;
-    description?: string;
+    timestamp?: string;
+    incident_type?: "boundary_violation" | "path_traversal_attack" | "privilege_escalation" | "unauthorized_access" | "data_exfiltration" | "system_compromise" | "policy_violation";
+    status?: "detected" | "investigating" | "contained" | "resolved" | "escalated";
     severity?: "low" | "medium" | "high" | "critical";
-    evidence?: Record<string, any>;
-    project_id?: string;
-    response_actions?: string[];
-    incident_type?: "unauthorized_access" | "privilege_escalation" | "data_exfiltration" | "boundary_violation" | "path_traversal_attack" | "system_compromise" | "policy_violation";
     source_system?: string;
+    project_id?: string;
+    description?: string;
+    evidence?: Record<string, any>;
+    response_actions?: string[];
     resolved_at?: string;
 }>;
 export declare const SecurityPostureSchema: z.ZodObject<{
@@ -53,43 +53,43 @@ export declare const SecurityPostureSchema: z.ZodObject<{
         boundary_enforcement: z.ZodNumber;
         path_protection: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        zero_trust?: number;
         microsegmentation?: number;
+        zero_trust?: number;
         boundary_enforcement?: number;
         path_protection?: number;
     }, {
-        zero_trust?: number;
         microsegmentation?: number;
+        zero_trust?: number;
         boundary_enforcement?: number;
         path_protection?: number;
     }>;
     recommendations: z.ZodArray<z.ZodString, "many">;
 }, "strip", z.ZodTypeAny, {
-    recommendations?: string[];
     overall_score?: number;
-    compliance_status?: "warning" | "critical" | "violation" | "compliant";
     last_assessment?: string;
+    compliance_status?: "critical" | "compliant" | "warning" | "violation";
     active_threats?: number;
     resolved_incidents?: number;
     system_health?: {
-        zero_trust?: number;
         microsegmentation?: number;
+        zero_trust?: number;
         boundary_enforcement?: number;
         path_protection?: number;
     };
+    recommendations?: string[];
 }, {
-    recommendations?: string[];
     overall_score?: number;
-    compliance_status?: "warning" | "critical" | "violation" | "compliant";
     last_assessment?: string;
+    compliance_status?: "critical" | "compliant" | "warning" | "violation";
     active_threats?: number;
     resolved_incidents?: number;
     system_health?: {
-        zero_trust?: number;
         microsegmentation?: number;
+        zero_trust?: number;
         boundary_enforcement?: number;
         path_protection?: number;
     };
+    recommendations?: string[];
 }>;
 export type SecurityIncident = z.infer<typeof SecurityIncidentSchema>;
 export type SecurityPosture = z.infer<typeof SecurityPostureSchema>;

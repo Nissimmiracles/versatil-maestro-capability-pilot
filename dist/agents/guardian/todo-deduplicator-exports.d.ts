@@ -12,6 +12,10 @@ export declare function calculateTodoFingerprint(todo: {
 }): string;
 /**
  * Check if two TODOs are similar
+ *
+ * Two TODOs are similar if:
+ * 1. Their fingerprints are identical, OR
+ * 2. Their titles are identical (case-insensitive) and same file
  */
 export declare function areTodosSimilar(todo1: {
     title: string;

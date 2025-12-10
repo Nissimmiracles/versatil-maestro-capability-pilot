@@ -18,29 +18,29 @@ export declare const PathTraversalAttemptSchema: z.ZodObject<{
     source_ip: z.ZodOptional<z.ZodString>;
     evidence: z.ZodRecord<z.ZodString, z.ZodAny>;
 }, "strip", z.ZodTypeAny, {
-    timestamp?: string;
     id?: string;
-    blocked?: boolean;
+    timestamp?: string;
     severity?: "low" | "medium" | "high" | "critical";
-    evidence?: Record<string, any>;
     project_id?: string;
+    evidence?: Record<string, any>;
     attack_type?: "basic_traversal" | "encoded_traversal" | "unicode_traversal" | "symlink_traversal" | "double_encoding" | "null_byte_injection" | "windows_traversal" | "mixed_separators";
     original_path?: string;
     normalized_path?: string;
     intended_target?: string;
+    blocked?: boolean;
     user_agent?: string;
     source_ip?: string;
 }, {
-    timestamp?: string;
     id?: string;
-    blocked?: boolean;
+    timestamp?: string;
     severity?: "low" | "medium" | "high" | "critical";
-    evidence?: Record<string, any>;
     project_id?: string;
+    evidence?: Record<string, any>;
     attack_type?: "basic_traversal" | "encoded_traversal" | "unicode_traversal" | "symlink_traversal" | "double_encoding" | "null_byte_injection" | "windows_traversal" | "mixed_separators";
     original_path?: string;
     normalized_path?: string;
     intended_target?: string;
+    blocked?: boolean;
     user_agent?: string;
     source_ip?: string;
 }>;
@@ -51,16 +51,16 @@ export declare const SafePathSchema: z.ZodObject<{
     violations: z.ZodArray<z.ZodString, "many">;
     recommended_path: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    violations?: string[];
     original_path?: string;
     sanitized_path?: string;
     is_safe?: boolean;
+    violations?: string[];
     recommended_path?: string;
 }, {
-    violations?: string[];
     original_path?: string;
     sanitized_path?: string;
     is_safe?: boolean;
+    violations?: string[];
     recommended_path?: string;
 }>;
 export type PathTraversalAttempt = z.infer<typeof PathTraversalAttemptSchema>;

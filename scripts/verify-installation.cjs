@@ -69,10 +69,10 @@ const checks = [
     }
   },
   {
-    name: 'npm is available',
+    name: 'pnpm is available',
     check: async () => {
       try {
-        await execAsync('npm --version');
+        await execAsync('pnpm --version');
         return true;
       } catch {
         return false;
@@ -339,7 +339,7 @@ async function generateReport(outputPath) {
  */
 async function getNpmVersion() {
   try {
-    const { stdout } = await execAsync('npm --version');
+    const { stdout } = await execAsync('pnpm --version');
     return stdout.trim();
   } catch {
     return 'unknown';

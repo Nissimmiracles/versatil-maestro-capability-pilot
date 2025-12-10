@@ -129,16 +129,16 @@ class VersatilValidator {
     return this.runCheck('Node.js environment', async () => {
       try {
         const nodeVersion = execSync('node --version', { encoding: 'utf8' }).trim();
-        const npmVersion = execSync('npm --version', { encoding: 'utf8' }).trim();
+        const pnpmVersion = execSync('pnpm --version', { encoding: 'utf8' }).trim();
 
         const nodeVersionNumber = parseFloat(nodeVersion.replace('v', ''));
         if (nodeVersionNumber >= 16.0) {
-          return { success: true, message: `Node ${nodeVersion}, npm ${npmVersion}` };
+          return { success: true, message: `Node ${nodeVersion}, pnpm ${pnpmVersion}` };
         } else {
           return { success: false, message: `Node version ${nodeVersion} is too old (minimum: 16.0)` };
         }
       } catch (error) {
-        return { success: false, message: 'Node.js or npm not found' };
+        return { success: false, message: 'Node.js or pnpm not found' };
       }
     });
   }
@@ -147,7 +147,7 @@ class VersatilValidator {
     return this.runCheck('Chrome MCP installation', async () => {
       try {
         // Check if chrome-mcp is installed
-        execSync('npm list -g @modelcontextprotocol/server-chrome', { stdio: 'pipe' });
+        execSync('pnpm list -g @modelcontextprotocol/server-chrome', { stdio: 'pipe' });
         return { success: true, message: 'Chrome MCP server installed globally' };
       } catch (error) {
         return { success: false, message: 'Chrome MCP server not installed' };

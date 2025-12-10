@@ -253,11 +253,11 @@ Options:
 | GitHub Actions | 11 | 2 | 9 | 18% |
 | Dockerfiles | 2 | 0 | 2 | 0% |
 | Shell Scripts | 8 | 3 | 5 | 38% |
-| JS/CJS Scripts | 12 | 0 | 12 | 0% |
+| JS/CJS Scripts | 12 | 3 | 9 | 25% |
 | .cursor/commands | 4 | 4 | 0 | 100% |
 | docs/ (key files) | 5 | 3 | 2 | 60% |
 | Documentation (other) | 137 | 0 | 137 | 0% |
-| **TOTAL** | **182** | **15** | **167** | **8%** |
+| **TOTAL** | **182** | **18** | **164** | **10%** |
 
 ---
 
@@ -338,5 +338,5 @@ git diff docs/
 ---
 
 **Last Updated**: 2025-12-10
-**Status**: Migration 8% complete (Core + workflows + .cursor/commands + key docs + shell scripts)
-**Next Action**: Update JS/CJS scripts and remaining GitHub Actions workflows
+**Status**: Migration 10% complete (Core + workflows + commands + docs + shell + CJS scripts)
+**Next Action**: Update remaining GitHub Actions workflows and Dockerfiles

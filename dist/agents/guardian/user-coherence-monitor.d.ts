@@ -1,32 +1,78 @@
 /**
  * User Coherence Monitor - Guardian Module for User Projects
  *
- * Proactive health monitoring for users of VERSATIL framework
- * (not framework developers - that's handled by Guardian's core modules)
+ * Proactive health monitoring and user request coherence tracking.
  *
- * PROJECT_CONTEXT ONLY - This module only operates in user projects
+ * Features:
+ * - User request tracking and intent inference
+ * - Request coherence validation
+ * - Context drift detection
+ * - Contradictory request identification
+ * - User goal alignment
+ * - Framework health monitoring
  *
- * Responsibilities:
- * - Automatic update notifications (weekly check)
- * - Installation drift detection (files modified/missing)
- * - Proactive issue warnings (before they cause failures)
- * - Auto-remediation suggestions
- * - Health trend analysis
- *
- * Integration:
- * - Called by Guardian.performHealthCheck() in PROJECT_CONTEXT
- * - Logs to ~/.versatil/logs/guardian/user-coherence-*.log
- * - Uses UserCoherenceCheckService for health validation
- *
- * @version 7.9.0
+ * @version 7.16.2
  */
-import { CoherenceCheckResult } from '../../coherence/user-coherence-check.js';
 export interface UserCoherenceMonitorConfig {
     check_interval_hours: number;
     notify_on_updates: boolean;
     notify_on_issues: boolean;
     auto_fix_threshold: number;
     enable_trend_analysis: boolean;
+    coherence_threshold: number;
+    alert_on_low_coherence: boolean;
+    alert_on_contradiction: boolean;
+}
+export interface UserRequest {
+    message: string;
+    timestamp?: string;
+    context?: string;
+}
+export interface UserIntent {
+    type: string;
+    confidence: number;
+    keywords: string[];
+    category: string;
+}
+export interface CoherenceBreak {
+    index: number;
+    from: string;
+    to: string;
+    severity: number;
+}
+export interface ContextSwitch {
+    index: number;
+    from: string;
+    to: string;
+    timestamp: string;
+}
+export interface Contradiction {
+    request1: UserRequest;
+    request2: UserRequest;
+    type: string;
+    description: string;
+}
+export interface Conflict {
+    request1: UserRequest;
+    request2: UserRequest;
+    nature: string;
+}
+export interface Reversal {
+    original: UserRequest;
+    reversal: UserRequest;
+    type: string;
+}
+export interface RequirementChange {
+    from: string;
+    to: string;
+    request: UserRequest;
+}
+export interface CoherenceReport {
+    coherenceScore: number;
+    contextDrift: boolean;
+    contradictions: Contradiction[];
+    alignment: number;
+    recommendations: string[];
 }
 export interface CoherenceTrend {
     timestamp: string;
@@ -35,17 +81,12 @@ export interface CoherenceTrend {
     issues_fixed: number;
     version_behind_by: number;
 }
-export interface UserCoherenceReport {
-    current_health: CoherenceCheckResult;
-    last_check_time: string;
-    next_check_time: string;
-    trends: CoherenceTrend[];
-    notifications: string[];
-    auto_remediations_applied: number;
+export interface CoherenceTrends {
+    improving: boolean;
+    degrading: boolean;
+    stable: boolean;
+    data: CoherenceTrend[];
 }
-/**
- * User Coherence Monitor
- */
 export declare class UserCoherenceMonitor {
     private static instance;
     private logger;
@@ -53,63 +94,54 @@ export declare class UserCoherenceMonitor {
     private config;
     private lastCheckFile;
     private trendsFile;
+    private requestHistory;
+    private intentHistory;
+    private userGoal;
+    private isMonitoringActive;
+    private monitoringInterval;
     private constructor();
-    static getInstance(projectRoot: string): UserCoherenceMonitor;
-    /**
-     * Configure monitoring
-     */
+    static getInstance(projectRoot?: string): UserCoherenceMonitor;
+    static resetInstance(): void;
     configure(config: Partial<UserCoherenceMonitorConfig>): void;
-    /**
-     * Check if health check is due
-     */
-    isCheckDue(): Promise<boolean>;
-    /**
-     * Perform health check and monitoring
-     */
-    performMonitoring(): Promise<UserCoherenceReport>;
-    /**
-     * Generate notifications based on health check
-     */
-    private generateNotifications;
-    /**
-     * Apply auto-remediations
-     */
-    private applyAutoRemediations;
-    /**
-     * Update trends
-     */
-    private updateTrends;
-    /**
-     * Store check result
-     */
-    private storeCheck;
-    /**
-     * Load last check result
-     */
-    private loadLastCheck;
-    /**
-     * Store trends
-     */
-    private storeTrends;
-    /**
-     * Load trends
-     */
-    private loadTrends;
-    /**
-     * Create report from cached check
-     */
-    private createReportFromCache;
-    /**
-     * Get health trend analysis
-     */
-    getHealthTrends(): Promise<{
-        current_health: number;
-        avg_health_7d: number;
-        avg_health_30d: number;
-        trend: 'improving' | 'stable' | 'degrading';
-        issues_resolved_7d: number;
-        issues_detected_7d: number;
-    }>;
+    configureAlertThresholds(thresholds: {
+        coherence?: number;
+        contradiction?: boolean;
+    }): void;
+    trackRequest(request: UserRequest): void;
+    getRequestHistory(): UserRequest[];
+    inferIntent(request: UserRequest): UserIntent;
+    getIntentHistory(): UserIntent[];
+    identifyPrimaryGoal(): string;
+    validateCoherence(): boolean;
+    calculateCoherenceScore(): number;
+    private areRelatedCategories;
+    identifyCoherenceBreaks(): CoherenceBreak[];
+    detectContextDrift(): boolean;
+    measureDriftSeverity(): number;
+    getContextSwitches(): ContextSwitch[];
+    detectContradictions(): Contradiction[];
+    findConflicts(): Conflict[];
+    detectReversals(): Reversal[];
+    identifyRequirementChanges(): RequirementChange[];
+    setUserGoal(goal: string): void;
+    getUserGoal(): string | undefined;
+    isAlignedWithGoal(): boolean;
+    calculateAlignmentScore(): number;
+    suggestRefocus(): string[];
+    generateCoherenceReport(): CoherenceReport;
+    private generateRecommendations;
+    getCoherenceTrends(): CoherenceTrends;
+    private getStoredTrends;
+    identifyPatterns(): string[];
+    detectDevelopmentPattern(): string;
+    identifyWorkingStyle(): string;
+    startMonitoring(intervalMs?: number): void;
+    stopMonitoring(): void;
+    isMonitoring(): boolean;
+    clearHistory(): void;
+    reset(): void;
+    private checkAlerts;
+    private triggerAlert;
 }
 /**
  * Get User Coherence Monitor instance

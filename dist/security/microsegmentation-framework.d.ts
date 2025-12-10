@@ -14,15 +14,15 @@ export declare const SecuritySegmentSchema: z.ZodObject<{
         execute: z.ZodArray<z.ZodString, "many">;
         network: z.ZodArray<z.ZodString, "many">;
     }, "strip", z.ZodTypeAny, {
+        read?: string[];
+        write?: string[];
         execute?: string[];
         network?: string[];
-        write?: string[];
-        read?: string[];
     }, {
+        read?: string[];
+        write?: string[];
         execute?: string[];
         network?: string[];
-        write?: string[];
-        read?: string[];
     }>;
     isolation_rules: z.ZodArray<z.ZodObject<{
         rule_id: z.ZodString;
@@ -31,14 +31,14 @@ export declare const SecuritySegmentSchema: z.ZodObject<{
         action: z.ZodEnum<["allow", "deny", "audit", "quarantine"]>;
         conditions: z.ZodArray<z.ZodString, "many">;
     }, "strip", z.ZodTypeAny, {
-        action?: "allow" | "quarantine" | "audit" | "deny";
         rule_id?: string;
+        action?: "quarantine" | "allow" | "deny" | "audit";
         source_pattern?: string;
         target_pattern?: string;
         conditions?: string[];
     }, {
-        action?: "allow" | "quarantine" | "audit" | "deny";
         rule_id?: string;
+        action?: "quarantine" | "allow" | "deny" | "audit";
         source_pattern?: string;
         target_pattern?: string;
         conditions?: string[];
@@ -63,6 +63,22 @@ export declare const SecuritySegmentSchema: z.ZodObject<{
         audit_enabled?: boolean;
     }>;
 }, "strip", z.ZodTypeAny, {
+    segmentId?: string;
+    segmentType?: "framework_core" | "project_sandbox" | "shared_intelligence" | "boundary_controller";
+    trustLevel?: "untrusted" | "limited" | "trusted" | "privileged";
+    accessPolicy?: {
+        read?: string[];
+        write?: string[];
+        execute?: string[];
+        network?: string[];
+    };
+    isolation_rules?: {
+        rule_id?: string;
+        action?: "quarantine" | "allow" | "deny" | "audit";
+        source_pattern?: string;
+        target_pattern?: string;
+        conditions?: string[];
+    }[];
     metadata?: {
         created_at?: string;
         owner?: string;
@@ -70,23 +86,23 @@ export declare const SecuritySegmentSchema: z.ZodObject<{
         encryption_required?: boolean;
         audit_enabled?: boolean;
     };
-    segmentId?: string;
-    segmentType?: "framework_core" | "project_sandbox" | "shared_intelligence" | "boundary_controller";
-    trustLevel?: "limited" | "untrusted" | "trusted" | "privileged";
-    accessPolicy?: {
-        execute?: string[];
-        network?: string[];
-        write?: string[];
-        read?: string[];
-    };
-    isolation_rules?: {
-        action?: "allow" | "quarantine" | "audit" | "deny";
-        rule_id?: string;
-        source_pattern?: string;
-        target_pattern?: string;
-        conditions?: string[];
-    }[];
 }, {
+    segmentId?: string;
+    segmentType?: "framework_core" | "project_sandbox" | "shared_intelligence" | "boundary_controller";
+    trustLevel?: "untrusted" | "limited" | "trusted" | "privileged";
+    accessPolicy?: {
+        read?: string[];
+        write?: string[];
+        execute?: string[];
+        network?: string[];
+    };
+    isolation_rules?: {
+        rule_id?: string;
+        action?: "quarantine" | "allow" | "deny" | "audit";
+        source_pattern?: string;
+        target_pattern?: string;
+        conditions?: string[];
+    }[];
     metadata?: {
         created_at?: string;
         owner?: string;
@@ -94,22 +110,6 @@ export declare const SecuritySegmentSchema: z.ZodObject<{
         encryption_required?: boolean;
         audit_enabled?: boolean;
     };
-    segmentId?: string;
-    segmentType?: "framework_core" | "project_sandbox" | "shared_intelligence" | "boundary_controller";
-    trustLevel?: "limited" | "untrusted" | "trusted" | "privileged";
-    accessPolicy?: {
-        execute?: string[];
-        network?: string[];
-        write?: string[];
-        read?: string[];
-    };
-    isolation_rules?: {
-        action?: "allow" | "quarantine" | "audit" | "deny";
-        rule_id?: string;
-        source_pattern?: string;
-        target_pattern?: string;
-        conditions?: string[];
-    }[];
 }>;
 export declare const ProjectSecurityContextSchema: z.ZodObject<{
     projectId: z.ZodString;
@@ -121,15 +121,15 @@ export declare const ProjectSecurityContextSchema: z.ZodObject<{
         enforcement_level: z.ZodEnum<["advisory", "blocking", "quarantine"]>;
         monitoring_enabled: z.ZodBoolean;
     }, "strip", z.ZodTypeAny, {
-        enforcement_level?: "blocking" | "quarantine" | "advisory";
         boundary_id?: string;
-        boundary_type?: "memory" | "network" | "file_system" | "process";
+        boundary_type?: "network" | "file_system" | "memory" | "process";
         monitoring_enabled?: boolean;
+        enforcement_level?: "quarantine" | "advisory" | "blocking";
     }, {
-        enforcement_level?: "blocking" | "quarantine" | "advisory";
         boundary_id?: string;
-        boundary_type?: "memory" | "network" | "file_system" | "process";
+        boundary_type?: "network" | "file_system" | "memory" | "process";
         monitoring_enabled?: boolean;
+        enforcement_level?: "quarantine" | "advisory" | "blocking";
     }>, "many">;
     accessCredentials: z.ZodObject<{
         project_token: z.ZodString;
@@ -137,13 +137,13 @@ export declare const ProjectSecurityContextSchema: z.ZodObject<{
         expiry: z.ZodString;
         renewable: z.ZodBoolean;
     }, "strip", z.ZodTypeAny, {
-        permissions?: string[];
         project_token?: string;
+        permissions?: string[];
         expiry?: string;
         renewable?: boolean;
     }, {
-        permissions?: string[];
         project_token?: string;
+        permissions?: string[];
         expiry?: string;
         renewable?: boolean;
     }>;
@@ -153,58 +153,58 @@ export declare const ProjectSecurityContextSchema: z.ZodObject<{
         compliance_status: z.ZodEnum<["compliant", "warning", "violation", "quarantined"]>;
         audit_trail_size: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
+        compliance_status?: "compliant" | "warning" | "violation" | "quarantined";
         last_breach_attempt?: string;
         security_score?: number;
-        compliance_status?: "warning" | "quarantined" | "violation" | "compliant";
         audit_trail_size?: number;
     }, {
+        compliance_status?: "compliant" | "warning" | "violation" | "quarantined";
         last_breach_attempt?: string;
         security_score?: number;
-        compliance_status?: "warning" | "quarantined" | "violation" | "compliant";
         audit_trail_size?: number;
     }>;
 }, "strip", z.ZodTypeAny, {
-    projectId?: string;
     segmentId?: string;
+    projectId?: string;
     securityFingerprint?: string;
     trustBoundaries?: {
-        enforcement_level?: "blocking" | "quarantine" | "advisory";
         boundary_id?: string;
-        boundary_type?: "memory" | "network" | "file_system" | "process";
+        boundary_type?: "network" | "file_system" | "memory" | "process";
         monitoring_enabled?: boolean;
+        enforcement_level?: "quarantine" | "advisory" | "blocking";
     }[];
     accessCredentials?: {
-        permissions?: string[];
         project_token?: string;
+        permissions?: string[];
         expiry?: string;
         renewable?: boolean;
     };
     isolationMetrics?: {
+        compliance_status?: "compliant" | "warning" | "violation" | "quarantined";
         last_breach_attempt?: string;
         security_score?: number;
-        compliance_status?: "warning" | "quarantined" | "violation" | "compliant";
         audit_trail_size?: number;
     };
 }, {
-    projectId?: string;
     segmentId?: string;
+    projectId?: string;
     securityFingerprint?: string;
     trustBoundaries?: {
-        enforcement_level?: "blocking" | "quarantine" | "advisory";
         boundary_id?: string;
-        boundary_type?: "memory" | "network" | "file_system" | "process";
+        boundary_type?: "network" | "file_system" | "memory" | "process";
         monitoring_enabled?: boolean;
+        enforcement_level?: "quarantine" | "advisory" | "blocking";
     }[];
     accessCredentials?: {
-        permissions?: string[];
         project_token?: string;
+        permissions?: string[];
         expiry?: string;
         renewable?: boolean;
     };
     isolationMetrics?: {
+        compliance_status?: "compliant" | "warning" | "violation" | "quarantined";
         last_breach_attempt?: string;
         security_score?: number;
-        compliance_status?: "warning" | "quarantined" | "violation" | "compliant";
         audit_trail_size?: number;
     };
 }>;
@@ -221,15 +221,15 @@ export declare const MicrosegmentationPolicySchema: z.ZodObject<{
             execute: z.ZodArray<z.ZodString, "many">;
             network: z.ZodArray<z.ZodString, "many">;
         }, "strip", z.ZodTypeAny, {
+            read?: string[];
+            write?: string[];
             execute?: string[];
             network?: string[];
-            write?: string[];
-            read?: string[];
         }, {
+            read?: string[];
+            write?: string[];
             execute?: string[];
             network?: string[];
-            write?: string[];
-            read?: string[];
         }>;
         isolation_rules: z.ZodArray<z.ZodObject<{
             rule_id: z.ZodString;
@@ -238,14 +238,14 @@ export declare const MicrosegmentationPolicySchema: z.ZodObject<{
             action: z.ZodEnum<["allow", "deny", "audit", "quarantine"]>;
             conditions: z.ZodArray<z.ZodString, "many">;
         }, "strip", z.ZodTypeAny, {
-            action?: "allow" | "quarantine" | "audit" | "deny";
             rule_id?: string;
+            action?: "quarantine" | "allow" | "deny" | "audit";
             source_pattern?: string;
             target_pattern?: string;
             conditions?: string[];
         }, {
-            action?: "allow" | "quarantine" | "audit" | "deny";
             rule_id?: string;
+            action?: "quarantine" | "allow" | "deny" | "audit";
             source_pattern?: string;
             target_pattern?: string;
             conditions?: string[];
@@ -270,6 +270,22 @@ export declare const MicrosegmentationPolicySchema: z.ZodObject<{
             audit_enabled?: boolean;
         }>;
     }, "strip", z.ZodTypeAny, {
+        segmentId?: string;
+        segmentType?: "framework_core" | "project_sandbox" | "shared_intelligence" | "boundary_controller";
+        trustLevel?: "untrusted" | "limited" | "trusted" | "privileged";
+        accessPolicy?: {
+            read?: string[];
+            write?: string[];
+            execute?: string[];
+            network?: string[];
+        };
+        isolation_rules?: {
+            rule_id?: string;
+            action?: "quarantine" | "allow" | "deny" | "audit";
+            source_pattern?: string;
+            target_pattern?: string;
+            conditions?: string[];
+        }[];
         metadata?: {
             created_at?: string;
             owner?: string;
@@ -277,23 +293,23 @@ export declare const MicrosegmentationPolicySchema: z.ZodObject<{
             encryption_required?: boolean;
             audit_enabled?: boolean;
         };
-        segmentId?: string;
-        segmentType?: "framework_core" | "project_sandbox" | "shared_intelligence" | "boundary_controller";
-        trustLevel?: "limited" | "untrusted" | "trusted" | "privileged";
-        accessPolicy?: {
-            execute?: string[];
-            network?: string[];
-            write?: string[];
-            read?: string[];
-        };
-        isolation_rules?: {
-            action?: "allow" | "quarantine" | "audit" | "deny";
-            rule_id?: string;
-            source_pattern?: string;
-            target_pattern?: string;
-            conditions?: string[];
-        }[];
     }, {
+        segmentId?: string;
+        segmentType?: "framework_core" | "project_sandbox" | "shared_intelligence" | "boundary_controller";
+        trustLevel?: "untrusted" | "limited" | "trusted" | "privileged";
+        accessPolicy?: {
+            read?: string[];
+            write?: string[];
+            execute?: string[];
+            network?: string[];
+        };
+        isolation_rules?: {
+            rule_id?: string;
+            action?: "quarantine" | "allow" | "deny" | "audit";
+            source_pattern?: string;
+            target_pattern?: string;
+            conditions?: string[];
+        }[];
         metadata?: {
             created_at?: string;
             owner?: string;
@@ -301,22 +317,6 @@ export declare const MicrosegmentationPolicySchema: z.ZodObject<{
             encryption_required?: boolean;
             audit_enabled?: boolean;
         };
-        segmentId?: string;
-        segmentType?: "framework_core" | "project_sandbox" | "shared_intelligence" | "boundary_controller";
-        trustLevel?: "limited" | "untrusted" | "trusted" | "privileged";
-        accessPolicy?: {
-            execute?: string[];
-            network?: string[];
-            write?: string[];
-            read?: string[];
-        };
-        isolation_rules?: {
-            action?: "allow" | "quarantine" | "audit" | "deny";
-            rule_id?: string;
-            source_pattern?: string;
-            target_pattern?: string;
-            conditions?: string[];
-        }[];
     }>, "many">;
     inter_segment_rules: z.ZodArray<z.ZodObject<{
         rule_id: z.ZodString;
@@ -331,14 +331,14 @@ export declare const MicrosegmentationPolicySchema: z.ZodObject<{
         target_segment?: string;
         allowed_operations?: string[];
         security_controls?: string[];
-        monitoring_level?: "basic" | "full" | "none" | "enhanced";
+        monitoring_level?: "basic" | "enhanced" | "none" | "full";
     }, {
         rule_id?: string;
         source_segment?: string;
         target_segment?: string;
         allowed_operations?: string[];
         security_controls?: string[];
-        monitoring_level?: "basic" | "full" | "none" | "enhanced";
+        monitoring_level?: "basic" | "enhanced" | "none" | "full";
     }>, "many">;
     breach_response: z.ZodObject<{
         detection_threshold: z.ZodNumber;
@@ -370,9 +370,25 @@ export declare const MicrosegmentationPolicySchema: z.ZodObject<{
         certification_required?: boolean;
     }>;
 }, "strip", z.ZodTypeAny, {
-    version?: string;
     policy_id?: string;
+    version?: string;
     framework_segments?: {
+        segmentId?: string;
+        segmentType?: "framework_core" | "project_sandbox" | "shared_intelligence" | "boundary_controller";
+        trustLevel?: "untrusted" | "limited" | "trusted" | "privileged";
+        accessPolicy?: {
+            read?: string[];
+            write?: string[];
+            execute?: string[];
+            network?: string[];
+        };
+        isolation_rules?: {
+            rule_id?: string;
+            action?: "quarantine" | "allow" | "deny" | "audit";
+            source_pattern?: string;
+            target_pattern?: string;
+            conditions?: string[];
+        }[];
         metadata?: {
             created_at?: string;
             owner?: string;
@@ -380,22 +396,6 @@ export declare const MicrosegmentationPolicySchema: z.ZodObject<{
             encryption_required?: boolean;
             audit_enabled?: boolean;
         };
-        segmentId?: string;
-        segmentType?: "framework_core" | "project_sandbox" | "shared_intelligence" | "boundary_controller";
-        trustLevel?: "limited" | "untrusted" | "trusted" | "privileged";
-        accessPolicy?: {
-            execute?: string[];
-            network?: string[];
-            write?: string[];
-            read?: string[];
-        };
-        isolation_rules?: {
-            action?: "allow" | "quarantine" | "audit" | "deny";
-            rule_id?: string;
-            source_pattern?: string;
-            target_pattern?: string;
-            conditions?: string[];
-        }[];
     }[];
     inter_segment_rules?: {
         rule_id?: string;
@@ -403,7 +403,7 @@ export declare const MicrosegmentationPolicySchema: z.ZodObject<{
         target_segment?: string;
         allowed_operations?: string[];
         security_controls?: string[];
-        monitoring_level?: "basic" | "full" | "none" | "enhanced";
+        monitoring_level?: "basic" | "enhanced" | "none" | "full";
     }[];
     breach_response?: {
         detection_threshold?: number;
@@ -417,9 +417,25 @@ export declare const MicrosegmentationPolicySchema: z.ZodObject<{
         certification_required?: boolean;
     };
 }, {
-    version?: string;
     policy_id?: string;
+    version?: string;
     framework_segments?: {
+        segmentId?: string;
+        segmentType?: "framework_core" | "project_sandbox" | "shared_intelligence" | "boundary_controller";
+        trustLevel?: "untrusted" | "limited" | "trusted" | "privileged";
+        accessPolicy?: {
+            read?: string[];
+            write?: string[];
+            execute?: string[];
+            network?: string[];
+        };
+        isolation_rules?: {
+            rule_id?: string;
+            action?: "quarantine" | "allow" | "deny" | "audit";
+            source_pattern?: string;
+            target_pattern?: string;
+            conditions?: string[];
+        }[];
         metadata?: {
             created_at?: string;
             owner?: string;
@@ -427,22 +443,6 @@ export declare const MicrosegmentationPolicySchema: z.ZodObject<{
             encryption_required?: boolean;
             audit_enabled?: boolean;
         };
-        segmentId?: string;
-        segmentType?: "framework_core" | "project_sandbox" | "shared_intelligence" | "boundary_controller";
-        trustLevel?: "limited" | "untrusted" | "trusted" | "privileged";
-        accessPolicy?: {
-            execute?: string[];
-            network?: string[];
-            write?: string[];
-            read?: string[];
-        };
-        isolation_rules?: {
-            action?: "allow" | "quarantine" | "audit" | "deny";
-            rule_id?: string;
-            source_pattern?: string;
-            target_pattern?: string;
-            conditions?: string[];
-        }[];
     }[];
     inter_segment_rules?: {
         rule_id?: string;
@@ -450,7 +450,7 @@ export declare const MicrosegmentationPolicySchema: z.ZodObject<{
         target_segment?: string;
         allowed_operations?: string[];
         security_controls?: string[];
-        monitoring_level?: "basic" | "full" | "none" | "enhanced";
+        monitoring_level?: "basic" | "enhanced" | "none" | "full";
     }[];
     breach_response?: {
         detection_threshold?: number;

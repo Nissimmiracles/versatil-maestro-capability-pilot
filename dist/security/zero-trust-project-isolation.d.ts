@@ -36,14 +36,14 @@ export declare const ProjectIsolationBoundarySchema: z.ZodObject<{
         monitoring_enabled: z.ZodBoolean;
         automatic_remediation: z.ZodBoolean;
     }, "strip", z.ZodTypeAny, {
-        monitoring_enabled?: boolean;
         mechanism?: string;
-        strength?: "medium" | "strong" | "weak" | "cryptographic";
+        strength?: "medium" | "weak" | "strong" | "cryptographic";
+        monitoring_enabled?: boolean;
         automatic_remediation?: boolean;
     }, {
-        monitoring_enabled?: boolean;
         mechanism?: string;
-        strength?: "medium" | "strong" | "weak" | "cryptographic";
+        strength?: "medium" | "weak" | "strong" | "cryptographic";
+        monitoring_enabled?: boolean;
         automatic_remediation?: boolean;
     }>, "many">;
     verification_checks: z.ZodArray<z.ZodObject<{
@@ -52,14 +52,14 @@ export declare const ProjectIsolationBoundarySchema: z.ZodObject<{
         failure_action: z.ZodEnum<["log", "alert", "block", "quarantine"]>;
         remediation_steps: z.ZodArray<z.ZodString, "many">;
     }, "strip", z.ZodTypeAny, {
-        frequency?: "continuous" | "periodic" | "on_access" | "on_change";
         check_name?: string;
-        failure_action?: "log" | "alert" | "quarantine" | "block";
+        frequency?: "continuous" | "periodic" | "on_access" | "on_change";
+        failure_action?: "log" | "alert" | "block" | "quarantine";
         remediation_steps?: string[];
     }, {
-        frequency?: "continuous" | "periodic" | "on_access" | "on_change";
         check_name?: string;
-        failure_action?: "log" | "alert" | "quarantine" | "block";
+        frequency?: "continuous" | "periodic" | "on_access" | "on_change";
+        failure_action?: "log" | "alert" | "block" | "quarantine";
         remediation_steps?: string[];
     }>, "many">;
     metrics: z.ZodObject<{
@@ -79,49 +79,49 @@ export declare const ProjectIsolationBoundarySchema: z.ZodObject<{
         verification_failures?: number;
     }>;
 }, "strip", z.ZodTypeAny, {
+    project_id?: string;
+    boundary_id?: string;
+    boundary_type?: "physical" | "logical" | "temporal" | "credential";
+    enforcement_mechanisms?: {
+        mechanism?: string;
+        strength?: "medium" | "weak" | "strong" | "cryptographic";
+        monitoring_enabled?: boolean;
+        automatic_remediation?: boolean;
+    }[];
+    verification_checks?: {
+        check_name?: string;
+        frequency?: "continuous" | "periodic" | "on_access" | "on_change";
+        failure_action?: "log" | "alert" | "block" | "quarantine";
+        remediation_steps?: string[];
+    }[];
     metrics?: {
         boundary_integrity_score?: number;
         breach_attempts?: number;
         last_verification?: string;
         verification_failures?: number;
     };
-    project_id?: string;
-    boundary_id?: string;
-    boundary_type?: "credential" | "physical" | "logical" | "temporal";
-    enforcement_mechanisms?: {
-        monitoring_enabled?: boolean;
-        mechanism?: string;
-        strength?: "medium" | "strong" | "weak" | "cryptographic";
-        automatic_remediation?: boolean;
-    }[];
-    verification_checks?: {
-        frequency?: "continuous" | "periodic" | "on_access" | "on_change";
-        check_name?: string;
-        failure_action?: "log" | "alert" | "quarantine" | "block";
-        remediation_steps?: string[];
-    }[];
 }, {
+    project_id?: string;
+    boundary_id?: string;
+    boundary_type?: "physical" | "logical" | "temporal" | "credential";
+    enforcement_mechanisms?: {
+        mechanism?: string;
+        strength?: "medium" | "weak" | "strong" | "cryptographic";
+        monitoring_enabled?: boolean;
+        automatic_remediation?: boolean;
+    }[];
+    verification_checks?: {
+        check_name?: string;
+        frequency?: "continuous" | "periodic" | "on_access" | "on_change";
+        failure_action?: "log" | "alert" | "block" | "quarantine";
+        remediation_steps?: string[];
+    }[];
     metrics?: {
         boundary_integrity_score?: number;
         breach_attempts?: number;
         last_verification?: string;
         verification_failures?: number;
     };
-    project_id?: string;
-    boundary_id?: string;
-    boundary_type?: "credential" | "physical" | "logical" | "temporal";
-    enforcement_mechanisms?: {
-        monitoring_enabled?: boolean;
-        mechanism?: string;
-        strength?: "medium" | "strong" | "weak" | "cryptographic";
-        automatic_remediation?: boolean;
-    }[];
-    verification_checks?: {
-        frequency?: "continuous" | "periodic" | "on_access" | "on_change";
-        check_name?: string;
-        failure_action?: "log" | "alert" | "quarantine" | "block";
-        remediation_steps?: string[];
-    }[];
 }>;
 export declare const ThreatDetectionRuleSchema: z.ZodObject<{
     rule_id: z.ZodString;
@@ -134,15 +134,15 @@ export declare const ThreatDetectionRuleSchema: z.ZodObject<{
         severity: z.ZodEnum<["low", "medium", "high", "critical"]>;
         confidence: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        confidence?: number;
-        pattern?: string;
         severity?: "low" | "medium" | "high" | "critical";
         pattern_type?: "file_access" | "process_behavior" | "network_activity" | "system_call";
+        pattern?: string;
+        confidence?: number;
     }, {
-        confidence?: number;
-        pattern?: string;
         severity?: "low" | "medium" | "high" | "critical";
         pattern_type?: "file_access" | "process_behavior" | "network_activity" | "system_call";
+        pattern?: string;
+        confidence?: number;
     }>, "many">;
     response_actions: z.ZodArray<z.ZodObject<{
         action: z.ZodString;
@@ -161,38 +161,38 @@ export declare const ThreatDetectionRuleSchema: z.ZodObject<{
         requires_approval?: boolean;
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
-    name?: string;
     description?: string;
-    rule_id?: string;
-    threat_category?: "resource_exhaustion" | "privilege_escalation" | "data_exfiltration" | "lateral_movement" | "persistence" | "code_injection" | "configuration_tampering";
-    detection_patterns?: {
-        confidence?: number;
-        pattern?: string;
-        severity?: "low" | "medium" | "high" | "critical";
-        pattern_type?: "file_access" | "process_behavior" | "network_activity" | "system_call";
-    }[];
     response_actions?: {
         action?: string;
         priority?: number;
         automatic?: boolean;
         requires_approval?: boolean;
+    }[];
+    rule_id?: string;
+    name?: string;
+    threat_category?: "privilege_escalation" | "data_exfiltration" | "lateral_movement" | "persistence" | "code_injection" | "configuration_tampering" | "resource_exhaustion";
+    detection_patterns?: {
+        severity?: "low" | "medium" | "high" | "critical";
+        pattern_type?: "file_access" | "process_behavior" | "network_activity" | "system_call";
+        pattern?: string;
+        confidence?: number;
     }[];
 }, {
-    name?: string;
     description?: string;
-    rule_id?: string;
-    threat_category?: "resource_exhaustion" | "privilege_escalation" | "data_exfiltration" | "lateral_movement" | "persistence" | "code_injection" | "configuration_tampering";
-    detection_patterns?: {
-        confidence?: number;
-        pattern?: string;
-        severity?: "low" | "medium" | "high" | "critical";
-        pattern_type?: "file_access" | "process_behavior" | "network_activity" | "system_call";
-    }[];
     response_actions?: {
         action?: string;
         priority?: number;
         automatic?: boolean;
         requires_approval?: boolean;
+    }[];
+    rule_id?: string;
+    name?: string;
+    threat_category?: "privilege_escalation" | "data_exfiltration" | "lateral_movement" | "persistence" | "code_injection" | "configuration_tampering" | "resource_exhaustion";
+    detection_patterns?: {
+        severity?: "low" | "medium" | "high" | "critical";
+        pattern_type?: "file_access" | "process_behavior" | "network_activity" | "system_call";
+        pattern?: string;
+        confidence?: number;
     }[];
 }>;
 export type ZeroTrustPolicy = z.infer<typeof ZeroTrustPolicySchema>;

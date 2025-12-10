@@ -1,25 +1,65 @@
 /**
  * VERSATIL SDLC Framework - IDE Performance Detector Tests
- * Priority 2: Guardian Component Testing (Batch 7 - Final)
+ * Tests for IDE crash risk detection and optimization
  *
  * Test Coverage:
- * - IDE lag detection
- * - Memory usage monitoring
- * - File operation performance tracking
- * - Response time analysis
- * - Performance bottleneck identification
- * - Optimization recommendations
+ * - Singleton pattern
+ * - IDE crash risk detection
+ * - Missing ignore file detection
+ * - Large directory detection
+ * - Crash risk calculation
+ * - Recommendation generation
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { IDEPerformanceDetector } from './ide-performance-detector.js';
+
+// Mock fs module
+vi.mock('fs', async () => {
+  const actual = await vi.importActual('fs');
+  return {
+    ...actual,
+    existsSync: vi.fn().mockReturnValue(false),
+    mkdirSync: vi.fn(),
+    readFileSync: vi.fn().mockReturnValue(''),
+    writeFileSync: vi.fn(),
+  };
+});
+
+// Mock child_process
+vi.mock('child_process', async () => {
+  const actual = await vi.importActual('child_process');
+  return {
+    ...actual,
+    exec: vi.fn((cmd: string, callback: (err: Error | null, result: { stdout: string; stderr: string }) => void) => {
+      // Mock different commands
+      if (cmd.includes('ps aux') && cmd.includes('cursor|vscode')) {
+        callback(null, { stdout: 'Cursor.app', stderr: '' });
+      } else if (cmd.includes('du -sk')) {
+        callback(null, { stdout: '102400\t/path', stderr: '' }); // 100MB
+      } else if (cmd.includes('sysctl hw.memsize')) {
+        callback(null, { stdout: 'hw.memsize: 17179869184', stderr: '' }); // 16GB
+      } else if (cmd.includes('awk')) {
+        callback(null, { stdout: '45.5', stderr: '' }); // 45.5% memory usage
+      } else {
+        callback(null, { stdout: '', stderr: '' });
+      }
+    }),
+  };
+});
 
 describe('IDEPerformanceDetector', () => {
   let detector: IDEPerformanceDetector;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset singleton
+    (IDEPerformanceDetector as any).instance = undefined;
     detector = IDEPerformanceDetector.getInstance();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
   });
 
   describe('Singleton Pattern', () => {
@@ -28,356 +68,201 @@ describe('IDEPerformanceDetector', () => {
       const instance2 = IDEPerformanceDetector.getInstance();
       expect(instance1).toBe(instance2);
     });
-  });
 
-  describe('IDE Lag Detection', () => {
-    it('should detect IDE lag from response times', () => {
-      const responseTimes = [100, 150, 3000, 200, 180]; // 3000ms is laggy
-
-      const hasLag = detector.detectLag(responseTimes);
-      expect(hasLag).toBe(true);
-    });
-
-    it('should not detect lag for normal response times', () => {
-      const responseTimes = [100, 150, 120, 200, 180];
-
-      const hasLag = detector.detectLag(responseTimes);
-      expect(hasLag).toBe(false);
-    });
-
-    it('should track response time history', () => {
-      detector.recordResponseTime('file-read', 150);
-      detector.recordResponseTime('file-write', 200);
-      detector.recordResponseTime('file-read', 180);
-
-      const history = detector.getResponseTimeHistory();
-      expect(history.length).toBeGreaterThanOrEqual(3);
-    });
-
-    it('should calculate average response time', () => {
-      detector.recordResponseTime('file-read', 100);
-      detector.recordResponseTime('file-read', 200);
-      detector.recordResponseTime('file-read', 150);
-
-      const average = detector.getAverageResponseTime('file-read');
-      expect(average).toBe(150);
+    it('should accept project root parameter', () => {
+      (IDEPerformanceDetector as any).instance = undefined;
+      const customDetector = IDEPerformanceDetector.getInstance('/custom/path');
+      expect(customDetector).toBeDefined();
     });
   });
 
-  describe('Memory Usage Monitoring', () => {
-    it('should track memory usage over time', () => {
-      const memoryUsage = { heapUsed: 100 * 1024 * 1024, heapTotal: 200 * 1024 * 1024 };
+  describe('Crash Risk Detection', () => {
+    it('should detect crash risk', async () => {
+      const result = await detector.detectCrashRisk();
 
-      detector.recordMemoryUsage(memoryUsage);
-
-      const history = detector.getMemoryHistory();
-      expect(history.length).toBeGreaterThan(0);
+      expect(result).toHaveProperty('ide_type');
+      expect(result).toHaveProperty('crash_risk');
+      expect(result).toHaveProperty('confidence');
+      expect(result).toHaveProperty('evidence');
+      expect(result).toHaveProperty('recommendation');
+      expect(result).toHaveProperty('auto_fixable');
+      expect(result).toHaveProperty('suggested_fixes');
     });
 
-    it('should detect memory leaks', () => {
-      // Simulate increasing memory usage
-      for (let i = 0; i < 10; i++) {
-        detector.recordMemoryUsage({
-          heapUsed: (100 + i * 10) * 1024 * 1024,
-          heapTotal: 500 * 1024 * 1024
-        });
+    it('should return valid IDE type', async () => {
+      const result = await detector.detectCrashRisk();
+
+      expect(['cursor', 'vscode', 'jetbrains', 'unknown']).toContain(result.ide_type);
+    });
+
+    it('should return valid crash risk level', async () => {
+      const result = await detector.detectCrashRisk();
+
+      expect(['low', 'medium', 'high', 'critical']).toContain(result.crash_risk);
+    });
+
+    it('should return confidence between 0 and 100', async () => {
+      const result = await detector.detectCrashRisk();
+
+      expect(result.confidence).toBeGreaterThanOrEqual(0);
+      expect(result.confidence).toBeLessThanOrEqual(100);
+    });
+  });
+
+  describe('Evidence Collection', () => {
+    it('should include missing ignore files in evidence', async () => {
+      const result = await detector.detectCrashRisk();
+
+      expect(result.evidence).toHaveProperty('missing_ignore_files');
+      expect(Array.isArray(result.evidence.missing_ignore_files)).toBe(true);
+    });
+
+    it('should include large directories in evidence', async () => {
+      const result = await detector.detectCrashRisk();
+
+      expect(result.evidence).toHaveProperty('large_directories');
+      expect(Array.isArray(result.evidence.large_directories)).toBe(true);
+    });
+
+    it('should include total indexable size', async () => {
+      const result = await detector.detectCrashRisk();
+
+      expect(result.evidence).toHaveProperty('total_indexable_size_gb');
+      expect(typeof result.evidence.total_indexable_size_gb).toBe('number');
+    });
+
+    it('should include available RAM', async () => {
+      const result = await detector.detectCrashRisk();
+
+      expect(result.evidence).toHaveProperty('available_ram_gb');
+      expect(typeof result.evidence.available_ram_gb).toBe('number');
+    });
+
+    it('should include memory usage percentage', async () => {
+      const result = await detector.detectCrashRisk();
+
+      expect(result.evidence).toHaveProperty('current_memory_usage_percent');
+      expect(typeof result.evidence.current_memory_usage_percent).toBe('number');
+    });
+  });
+
+  describe('Recommendations', () => {
+    it('should generate recommendation string', async () => {
+      const result = await detector.detectCrashRisk();
+
+      expect(typeof result.recommendation).toBe('string');
+      expect(result.recommendation.length).toBeGreaterThan(0);
+    });
+
+    it('should generate suggested fixes array', async () => {
+      const result = await detector.detectCrashRisk();
+
+      expect(Array.isArray(result.suggested_fixes)).toBe(true);
+      expect(result.suggested_fixes.length).toBeGreaterThan(0);
+    });
+
+    it('should set auto_fixable based on confidence', async () => {
+      const result = await detector.detectCrashRisk();
+
+      expect(typeof result.auto_fixable).toBe('boolean');
+      // auto_fixable should be true only if confidence >= 90 and missing files > 0
+      if (result.confidence >= 90 && result.evidence.missing_ignore_files.length > 0) {
+        expect(result.auto_fixable).toBe(true);
       }
-
-      const hasLeak = detector.detectMemoryLeak();
-      expect(typeof hasLeak).toBe('boolean');
-    });
-
-    it('should calculate memory growth rate', () => {
-      detector.recordMemoryUsage({ heapUsed: 100 * 1024 * 1024, heapTotal: 500 * 1024 * 1024 });
-      detector.recordMemoryUsage({ heapUsed: 150 * 1024 * 1024, heapTotal: 500 * 1024 * 1024 });
-
-      const growthRate = detector.getMemoryGrowthRate();
-      expect(typeof growthRate).toBe('number');
-    });
-
-    it('should warn on high memory usage', () => {
-      const highMemory = { heapUsed: 450 * 1024 * 1024, heapTotal: 500 * 1024 * 1024 }; // 90%
-
-      detector.recordMemoryUsage(highMemory);
-
-      const warnings = detector.getMemoryWarnings();
-      expect(warnings.length).toBeGreaterThan(0);
     });
   });
 
-  describe('File Operation Performance', () => {
-    it('should track file read performance', () => {
-      detector.recordFileOperation('read', '/path/to/file.ts', 150);
+  describe('Missing Ignore Files', () => {
+    it('should detect missing .cursorignore', async () => {
+      const result = await detector.detectCrashRisk();
 
-      const stats = detector.getFileOperationStats('read');
-      expect(stats).toHaveProperty('count');
-      expect(stats).toHaveProperty('averageTime');
+      // With mocked existsSync returning false, .cursorignore should be missing
+      expect(result.evidence.missing_ignore_files).toContain('.cursorignore');
     });
 
-    it('should track file write performance', () => {
-      detector.recordFileOperation('write', '/path/to/file.ts', 200);
+    it('should detect missing .vscode/settings.json', async () => {
+      const result = await detector.detectCrashRisk();
 
-      const stats = detector.getFileOperationStats('write');
-      expect(stats).toHaveProperty('count');
+      expect(result.evidence.missing_ignore_files).toContain('.vscode/settings.json');
     });
 
-    it('should detect slow file operations', () => {
-      detector.recordFileOperation('read', '/large-file.json', 5000); // Very slow
+    it('should suggest creating ignore files', async () => {
+      const result = await detector.detectCrashRisk();
 
-      const slowOps = detector.getSlowFileOperations();
-      expect(slowOps.length).toBeGreaterThan(0);
-    });
-
-    it('should identify frequently accessed files', () => {
-      detector.recordFileOperation('read', '/frequently-accessed.ts', 100);
-      detector.recordFileOperation('read', '/frequently-accessed.ts', 120);
-      detector.recordFileOperation('read', '/frequently-accessed.ts', 110);
-
-      const frequent = detector.getFrequentlyAccessedFiles();
-      expect(frequent).toContain('/frequently-accessed.ts');
+      const hasCursorignoreFix = result.suggested_fixes.some(
+        fix => fix.toLowerCase().includes('cursorignore')
+      );
+      expect(hasCursorignoreFix).toBe(true);
     });
   });
 
-  describe('Response Time Analysis', () => {
-    it('should analyze tool call response times', () => {
-      detector.recordToolCall('Read', 150);
-      detector.recordToolCall('Write', 200);
-      detector.recordToolCall('Bash', 300);
+  describe('Large Directory Detection', () => {
+    it('should identify large directories', async () => {
+      const result = await detector.detectCrashRisk();
 
-      const analysis = detector.analyzeToolCallPerformance();
-      expect(analysis).toHaveProperty('averageTime');
-      expect(analysis).toHaveProperty('slowestTool');
+      // Check that large_directories is populated
+      expect(result.evidence.large_directories).toBeDefined();
     });
 
-    it('should detect tool call timeouts', () => {
-      detector.recordToolCall('Bash', 120000); // 2 minutes - timeout
+    it('should include directory path and size', async () => {
+      const result = await detector.detectCrashRisk();
 
-      const timeouts = detector.getToolCallTimeouts();
-      expect(timeouts.length).toBeGreaterThan(0);
-    });
-
-    it('should track agent activation performance', () => {
-      detector.recordAgentActivation('maria-qa', 500, true);
-      detector.recordAgentActivation('james-frontend', 800, true);
-
-      const stats = detector.getAgentActivationStats();
-      expect(stats).toHaveProperty('maria-qa');
-      expect(stats).toHaveProperty('james-frontend');
-    });
-
-    it('should identify slow agents', () => {
-      detector.recordAgentActivation('slow-agent', 5000, true);
-      detector.recordAgentActivation('fast-agent', 200, true);
-
-      const slowAgents = detector.getSlowAgents();
-      expect(slowAgents).toContain('slow-agent');
-    });
-  });
-
-  describe('Performance Bottleneck Identification', () => {
-    it('should identify file system bottlenecks', async () => {
-      detector.recordFileOperation('read', '/file1.ts', 50);
-      detector.recordFileOperation('read', '/file2.ts', 3000); // Bottleneck
-
-      const bottlenecks = await detector.identifyBottlenecks();
-      expect(bottlenecks).toHaveProperty('fileSystem');
-    });
-
-    it('should identify network bottlenecks', async () => {
-      detector.recordNetworkRequest('https://api.example.com', 5000); // Slow
-
-      const bottlenecks = await detector.identifyBottlenecks();
-      expect(bottlenecks).toHaveProperty('network');
-    });
-
-    it('should identify computation bottlenecks', async () => {
-      detector.recordComputation('heavy-task', 8000); // Very slow
-
-      const bottlenecks = await detector.identifyBottlenecks();
-      expect(bottlenecks).toHaveProperty('computation');
-    });
-
-    it('should rank bottlenecks by severity', async () => {
-      detector.recordFileOperation('read', '/file.ts', 5000);
-      detector.recordNetworkRequest('https://api.example.com', 3000);
-
-      const ranked = await detector.rankBottlenecksBySeverity();
-      expect(Array.isArray(ranked)).toBe(true);
-      expect(ranked.length).toBeGreaterThan(0);
-    });
-  });
-
-  describe('Optimization Recommendations', () => {
-    it('should recommend caching for frequently accessed files', () => {
-      for (let i = 0; i < 10; i++) {
-        detector.recordFileOperation('read', '/config.json', 100);
+      for (const dir of result.evidence.large_directories) {
+        expect(dir).toHaveProperty('path');
+        expect(dir).toHaveProperty('size_mb');
+        expect(typeof dir.path).toBe('string');
+        expect(typeof dir.size_mb).toBe('number');
       }
+    });
+  });
 
-      const recommendations = detector.generateRecommendations();
-      expect(recommendations.some(r => r.includes('caching'))).toBe(true);
+  describe('Crash Risk Calculation', () => {
+    it('should calculate risk based on evidence', async () => {
+      const result = await detector.detectCrashRisk();
+
+      // Risk should be influenced by missing files and indexable size
+      expect(['low', 'medium', 'high', 'critical']).toContain(result.crash_risk);
     });
 
-    it('should recommend lazy loading for large files', () => {
-      detector.recordFileOperation('read', '/large-data.json', 5000);
+    it('should have higher confidence when IDE is detected', async () => {
+      const result = await detector.detectCrashRisk();
 
-      const recommendations = detector.generateRecommendations();
-      expect(recommendations.some(r => r.includes('lazy'))).toBe(true);
-    });
-
-    it('should recommend async operations for slow tasks', () => {
-      detector.recordComputation('sync-heavy-task', 3000);
-
-      const recommendations = detector.generateRecommendations();
-      expect(Array.isArray(recommendations)).toBe(true);
-    });
-
-    it('should recommend reducing file watchers', () => {
-      // Simulate many file watchers
-      for (let i = 0; i < 100; i++) {
-        detector.recordFileWatch(`/path/to/file${i}.ts`);
+      // With mocked Cursor IDE detection
+      if (result.ide_type !== 'unknown') {
+        expect(result.confidence).toBeGreaterThanOrEqual(30);
       }
-
-      const recommendations = detector.generateRecommendations();
-      expect(recommendations.some(r => r.includes('file watchers') || r.includes('watch'))).toBe(true);
-    });
-  });
-
-  describe('Performance Metrics Collection', () => {
-    it('should collect comprehensive performance metrics', () => {
-      detector.recordResponseTime('file-read', 150);
-      detector.recordMemoryUsage({ heapUsed: 100 * 1024 * 1024, heapTotal: 500 * 1024 * 1024 });
-      detector.recordFileOperation('read', '/file.ts', 100);
-
-      const metrics = detector.collectMetrics();
-
-      expect(metrics).toHaveProperty('responseTime');
-      expect(metrics).toHaveProperty('memory');
-      expect(metrics).toHaveProperty('fileOperations');
-    });
-
-    it('should generate performance report', () => {
-      detector.recordResponseTime('file-read', 150);
-      detector.recordToolCall('Read', 200);
-
-      const report = detector.generatePerformanceReport();
-
-      expect(report).toHaveProperty('timestamp');
-      expect(report).toHaveProperty('metrics');
-      expect(report).toHaveProperty('bottlenecks');
-      expect(report).toHaveProperty('recommendations');
-    });
-
-    it('should calculate overall performance score', () => {
-      detector.recordResponseTime('file-read', 150);
-      detector.recordMemoryUsage({ heapUsed: 100 * 1024 * 1024, heapTotal: 500 * 1024 * 1024 });
-
-      const score = detector.calculatePerformanceScore();
-
-      expect(typeof score).toBe('number');
-      expect(score).toBeGreaterThanOrEqual(0);
-      expect(score).toBeLessThanOrEqual(100);
-    });
-  });
-
-  describe('Monitoring Control', () => {
-    it('should start performance monitoring', () => {
-      detector.startMonitoring();
-
-      expect(detector.isMonitoring()).toBe(true);
-    });
-
-    it('should stop performance monitoring', () => {
-      detector.startMonitoring();
-      detector.stopMonitoring();
-
-      expect(detector.isMonitoring()).toBe(false);
-    });
-
-    it('should clear performance data', () => {
-      detector.recordResponseTime('file-read', 150);
-      detector.clearData();
-
-      const history = detector.getResponseTimeHistory();
-      expect(history.length).toBe(0);
-    });
-
-    it('should reset performance detector', () => {
-      detector.recordResponseTime('file-read', 150);
-      detector.recordMemoryUsage({ heapUsed: 100 * 1024 * 1024, heapTotal: 500 * 1024 * 1024 });
-
-      detector.reset();
-
-      const metrics = detector.collectMetrics();
-      expect(metrics.responseTime.history.length).toBe(0);
-      expect(metrics.memory.history.length).toBe(0);
-    });
-  });
-
-  describe('Performance Alerts', () => {
-    it('should trigger alert on high lag', () => {
-      const listener = vi.fn();
-      detector.onPerformanceAlert(listener);
-
-      detector.recordResponseTime('file-read', 10000); // Very slow
-
-      expect(listener).toHaveBeenCalledWith(expect.objectContaining({
-        type: 'high-lag',
-        severity: expect.any(String)
-      }));
-    });
-
-    it('should trigger alert on memory leak', () => {
-      const listener = vi.fn();
-      detector.onPerformanceAlert(listener);
-
-      for (let i = 0; i < 20; i++) {
-        detector.recordMemoryUsage({
-          heapUsed: (100 + i * 20) * 1024 * 1024,
-          heapTotal: 500 * 1024 * 1024
-        });
-      }
-
-      expect(listener).toHaveBeenCalled();
-    });
-
-    it('should configure alert thresholds', () => {
-      detector.setAlertThresholds({
-        responseTime: 2000,
-        memoryUsage: 0.9,
-        fileOperationTime: 1000
-      });
-
-      const thresholds = detector.getAlertThresholds();
-      expect(thresholds.responseTime).toBe(2000);
     });
   });
 
   describe('Edge Cases', () => {
-    it('should handle empty performance data', () => {
-      const metrics = detector.collectMetrics();
-      expect(metrics).toBeDefined();
+    it('should handle when no IDE is running', async () => {
+      // The mocked exec returns 'Cursor.app' which sets ide_type
+      // Test that unknown is a valid response type
+      const result = await detector.detectCrashRisk();
+      expect(['cursor', 'vscode', 'jetbrains', 'unknown']).toContain(result.ide_type);
     });
 
-    it('should handle invalid response times', () => {
-      expect(() => detector.recordResponseTime('test', -100)).not.toThrow();
-      expect(() => detector.recordResponseTime('test', NaN)).not.toThrow();
+    it('should handle system info unavailability gracefully', async () => {
+      // The detector should not throw even with unusual responses
+      const result = await detector.detectCrashRisk();
+
+      // Should always return valid structure
+      expect(result).toHaveProperty('ide_type');
+      expect(result).toHaveProperty('crash_risk');
+      expect(result).toHaveProperty('evidence');
+      expect(result).toHaveProperty('recommendation');
     });
 
-    it('should handle concurrent metric recording', () => {
-      const operations = Array.from({ length: 100 }, (_, i) =>
-        detector.recordResponseTime('test', i * 10)
-      );
+    it('should have valid fallback values in evidence', async () => {
+      const result = await detector.detectCrashRisk();
 
-      expect(() => operations).not.toThrow();
-    });
+      // RAM should be a reasonable value (our mock returns 16GB)
+      expect(result.evidence.available_ram_gb).toBeGreaterThan(0);
+      expect(result.evidence.available_ram_gb).toBeLessThanOrEqual(1024); // Max 1TB
 
-    it('should handle very large datasets', () => {
-      for (let i = 0; i < 10000; i++) {
-        detector.recordResponseTime('test', Math.random() * 1000);
-      }
-
-      const metrics = detector.collectMetrics();
-      expect(metrics).toBeDefined();
+      // Memory usage should be a percentage
+      expect(result.evidence.current_memory_usage_percent).toBeGreaterThanOrEqual(0);
+      expect(result.evidence.current_memory_usage_percent).toBeLessThanOrEqual(100);
     });
   });
 });

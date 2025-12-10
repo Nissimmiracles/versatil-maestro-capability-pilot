@@ -196,7 +196,7 @@ Use_Cases:
   - Layout system
   - Internationalization
 Configuration: .cursor/mcp_config.json → "antd"
-Installation: npm install antd
+Installation: pnpm install antd
 Example: "Build enterprise dashboard with data table"
 ```
 

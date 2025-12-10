@@ -98,7 +98,7 @@ This is expected! The `.md` files are **slash commands for Claude Code SDK chat 
 
 **Terminal commands** (still work):
 ```bash
-pnpm run onboard
+ppnpm onboard
 versatil update check
 versatil config wizard
 ```

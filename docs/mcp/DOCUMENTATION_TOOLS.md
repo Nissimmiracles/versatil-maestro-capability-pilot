@@ -1059,7 +1059,7 @@ Execution Time: 1.578s
 
 **Run Tests**:
 ```bash
-pnpm run test:unit -- tests/mcp/docs-search-engine.test.ts
+pppnpm test:unit -- tests/mcp/docs-search-engine.test.ts
 ```
 
 ### Integration Tests
@@ -1076,7 +1076,7 @@ pnpm run test:unit -- tests/mcp/docs-search-engine.test.ts
 
 **Run Tests**:
 ```bash
-pnpm run test:unit -- tests/mcp/docs-tools-integration.test.ts
+pppnpm test:unit -- tests/mcp/docs-tools-integration.test.ts
 ```
 
 ---

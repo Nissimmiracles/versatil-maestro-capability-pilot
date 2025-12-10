@@ -53,7 +53,7 @@ async storeNewPatterns(context: AgentActivationContext, response: AgentResponse)
 
 **Usage**:
 ```bash
-pnpm run rag:setup
+ppnpm rag:setup
 ```
 
 **Migrations Include**:
@@ -86,9 +86,9 @@ pnpm run rag:setup
 
 **Usage**:
 ```bash
-pnpm run rag:seed-framework          # Seed all patterns
-pnpm run rag:seed-framework --dry-run # Preview without storing
-pnpm run rag:seed-framework --agent=maria-qa # Specific agent only
+ppnpm rag:seed-framework          # Seed all patterns
+ppnpm rag:seed-framework --dry-run # Preview without storing
+ppnpm rag:seed-framework --agent=maria-qa # Specific agent only
 ```
 
 **For**: Framework developers (you)
@@ -142,9 +142,9 @@ pnpm run rag:seed-framework --agent=maria-qa # Specific agent only
 
 **Usage**:
 ```bash
-pnpm run rag:seed-defaults           # Seed all defaults
-pnpm run rag:seed-defaults --dry-run # Preview
-pnpm run rag:seed-defaults --silent  # Silent mode (for postinstall)
+ppnpm rag:seed-defaults           # Seed all defaults
+ppnpm rag:seed-defaults --dry-run # Preview
+ppnpm rag:seed-defaults --silent  # Silent mode (for postinstall)
 ```
 
 **For**: All users (including new users)
@@ -166,9 +166,9 @@ pnpm run rag:seed-defaults --silent  # Silent mode (for postinstall)
 
 **Usage**:
 ```bash
-pnpm run rag:test                # Quick verification
-pnpm run rag:test --verbose      # Detailed output with samples
-pnpm run rag:test --agent=maria-qa # Test specific agent
+ppnpm rag:test                # Quick verification
+ppnpm rag:test --verbose      # Detailed output with samples
+ppnpm rag:test --agent=maria-qa # Test specific agent
 ```
 
 **Expected Output**:
@@ -193,11 +193,11 @@ pnpm run rag:test --agent=maria-qa # Test specific agent
 "postinstall": "... && node scripts/seed-rag-defaults.cjs --silent || true"
 ```
 
-**Impact**: New users get 100 universal patterns automatically on `npm install`
+**Impact**: New users get 100 universal patterns automatically on `pnpm install`
 
 **Silent Mode**:
 - Gracefully fails if Supabase not configured yet (no error spam)
-- User can run `pnpm run rag:setup` manually later
+- User can run `ppnpm rag:setup` manually later
 - Retries seeding after setup
 
 ---
@@ -258,19 +258,19 @@ Month_6:
 
 ```yaml
 Setup:
-  1. pnpm run rag:setup
+  1. ppnpm rag:setup
      - Setup Supabase (cloud or local)
      - Run migrations
      - Test connection
 
-  2. pnpm run rag:seed-defaults
+  2. ppnpm rag:seed-defaults
      - Seed 100 universal patterns
-     - Verify: pnpm run rag:test (should show 100)
+     - Verify: ppnpm rag:test (should show 100)
 
-  3. pnpm run rag:seed-framework
+  3. ppnpm rag:seed-framework
      - Extract patterns from VERSATIL source
      - Seed ~500 framework-specific patterns
-     - Verify: pnpm run rag:test (should show ~600 total)
+     - Verify: ppnpm rag:test (should show ~600 total)
 
 Development:
   - Agents automatically use RAG (Phase 1 integration)
@@ -334,7 +334,7 @@ CREATE FUNCTION match_memories(
 **How to Access**:
 ```bash
 # Verify RAG exists
-pnpm run rag:test
+ppnpm rag:test
 
 # View patterns
 # 1. Open Supabase dashboard
@@ -355,7 +355,7 @@ pnpm run rag:test
 
 **Answer**:
 
-**Initial State** (After `npm install`):
+**Initial State** (After `pnpm install`):
 - Postinstall hook runs `seed-rag-defaults.cjs --silent`
 - Seeds 100 universal best practices automatically
 - No framework patterns (don't have VERSATIL source code)
@@ -419,16 +419,16 @@ async activate(context: AgentActivationContext): Promise<AgentResponse> {
 
 ```bash
 # 1. Setup RAG (if not done)
-pnpm run rag:setup
+ppnpm rag:setup
 
 # 2. Seed defaults
-pnpm run rag:seed-defaults
+ppnpm rag:seed-defaults
 
 # 3. Seed framework patterns
-pnpm run rag:seed-framework
+ppnpm rag:seed-framework
 
 # 4. Verify
-pnpm run rag:test --verbose
+ppnpm rag:test --verbose
 
 # 5. Use VERSATIL normally
 # → Agents will automatically use RAG
@@ -442,14 +442,14 @@ pnpm run rag:test --verbose
 
 ```bash
 # 1. Install VERSATIL
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 # → Postinstall seeds 100 defaults automatically
 
 # 2. Setup Supabase (optional, but recommended)
-pnpm run rag:setup
+ppnpm rag:setup
 
 # 3. Verify
-pnpm run rag:test
+ppnpm rag:test
 
 # 4. Use VERSATIL
 # → RAG learns from your successful work
@@ -478,10 +478,10 @@ pnpm run rag:test
 ### After RAG Infrastructure
 
 **Now**:
-- ✅ Setup wizard (`pnpm run rag:setup`)
+- ✅ Setup wizard (`ppnpm rag:setup`)
 - ✅ Supabase database with pgvector
 - ✅ 100 universal defaults seeded
-- ✅ ~500 framework patterns available (`pnpm run rag:seed-framework`)
+- ✅ ~500 framework patterns available (`ppnpm rag:seed-framework`)
 - ✅ Automatic learning from successful tasks
 - ✅ Semantic search working
 - ✅ New users get defaults automatically (postinstall)

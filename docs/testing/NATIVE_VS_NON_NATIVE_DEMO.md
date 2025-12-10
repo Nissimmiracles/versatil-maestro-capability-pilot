@@ -169,7 +169,7 @@ $ claude edit src/auth.test.ts
 
 🤖 Maria-QA: Test file edited - Quality validation recommended
    File: src/auth.test.ts
-   Suggestion: Run tests with `pnpm test src/auth.test.ts`
+   Suggestion: Run tests with `ppnpm test src/auth.test.ts`
 ```
 
 **Proof**: Hook triggered automatically via SDK's `PostToolUse` event
@@ -195,8 +195,8 @@ $ claude edit src/auth.test.ts
 🤖 Maria-QA: Task completed with file changes - Running quality checks
    Source files changed: 2
    Recommendation: Run test suite to validate changes
-   💡 Quick check: pnpm test
-   💡 Coverage check: pnpm run test:coverage
+   💡 Quick check: ppnpm test
+   💡 Coverage check: pppnpm test:coverage
 ```
 
 **Proof**: Hook triggered automatically via SDK's `SubagentStop` event
@@ -221,7 +221,7 @@ $ claude edit src/auth.test.ts
 
 📊 Session Analysis:
    Files edited: 5 (auth.ts, auth.test.ts, user.ts, user.test.ts, db.ts)
-   Commands run: 3 (pnpm test, pnpm run build, git commit)
+   Commands run: 3 (ppnpm test, ppnpm build, git commit)
    Agents used: Marcus-Backend, Maria-QA, Dana-Database
 
 💡 Learnings Captured:
@@ -284,7 +284,7 @@ head -5 .claude/hooks/post-file-edit.ts
 
 ### 4. Run Interactive Demo
 ```bash
-pnpm run demo:native
+ppnpm demo:native
 # Shows real-time hook simulation
 ```
 
@@ -443,4 +443,4 @@ grep "Stop" .claude/settings.json -A 5
 
 **Summary**: VERSATIL is 100% natively integrated with Claude SDK. No custom YAML. No bash workarounds. Just official SDK hooks that work everywhere.
 
-**Proof**: Run `pnpm run demo:native` to see it in action.
+**Proof**: Run `ppnpm demo:native` to see it in action.

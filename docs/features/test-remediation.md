@@ -177,16 +177,16 @@ Snapshot mismatch
 
 ```bash
 # Scan and fix all failing tests
-pnpm run test:remediate
+pppnpm test:remediate
 
 # Dry run (show fixes without applying)
-pnpm run test:remediate --dry-run
+pppnpm test:remediate --dry-run
 
 # Fix specific test file
-pnpm run test:remediate tests/api/users.test.ts
+pppnpm test:remediate tests/api/users.test.ts
 
 # Fix specific pattern type
-pnpm run test:remediate --pattern=imports
+pppnpm test:remediate --pattern=imports
 ```
 
 ### Maria-QA Integration
@@ -353,13 +353,13 @@ interface FixResult {
 
 ```bash
 # Rollback all changes
-pnpm run test:remediate --rollback
+pppnpm test:remediate --rollback
 
 # Rollback specific file
-pnpm run test:remediate --rollback tests/users.test.ts
+pppnpm test:remediate --rollback tests/users.test.ts
 
 # Rollback to specific timestamp
-pnpm run test:remediate --rollback --timestamp=2024-11-18-10-30-00
+pppnpm test:remediate --rollback --timestamp=2024-11-18-10-30-00
 ```
 
 ---
@@ -416,12 +416,12 @@ function improvePattern(failures: FailedFix[]) {
 ```yaml
 # .github/workflows/test.yml
 - name: Run Tests
-  run: pnpm test
+  run: ppnpm test
 
 - name: Auto-Remediate Failures
   if: failure()
   run: |
-    pnpm run test:remediate --dry-run > remediation-report.txt
+    pppnpm test:remediate --dry-run > remediation-report.txt
     # Review report, apply if safe
 ```
 
@@ -429,7 +429,7 @@ function improvePattern(failures: FailedFix[]) {
 
 ```bash
 # Get list of low-confidence fixes
-pnpm run test:remediate --report-low-confidence
+pppnpm test:remediate --report-low-confidence
 
 # Review these manually
 cat ~/.versatil/remediation/low-confidence-fixes.json
@@ -439,7 +439,7 @@ cat ~/.versatil/remediation/low-confidence-fixes.json
 
 ```bash
 # Update pattern library
-pnpm run test:update-patterns
+pppnpm test:update-patterns
 
 # Add project-specific patterns
 cp my-patterns.ts .versatil/remediation/custom-patterns.ts

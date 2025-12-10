@@ -147,7 +147,7 @@ This roadmap details the 4-phase implementation plan to transform VERSATIL from 
 ```
 
 **Acceptance Criteria**:
-- [ ] `~/.cursor/hooks.json` created on `npm install` (postinstall script)
+- [ ] `~/.cursor/hooks.json` created on `pnpm install` (postinstall script)
 - [ ] All 5 hook scripts executable and functional
 - [ ] afterFileEdit blocks framework file creation in user projects
 - [ ] beforeShellExecution blocks destructive commands (`rm -rf`, `DROP DATABASE`, etc.)
@@ -484,9 +484,9 @@ This roadmap details the 4-phase implementation plan to transform VERSATIL from 
 **Acceptance Criteria**:
 - [ ] Tracks all context clear events (timestamp, input tokens, tools cleared)
 - [ ] Tracks all memory operations (view, create, str_replace, etc.)
-- [ ] `pnpm run context:stats` shows dashboard
-- [ ] `pnpm run context:report` generates detailed markdown report
-- [ ] `pnpm run context:cleanup` removes stats older than 30 days
+- [ ] `ppnpm context:stats` shows dashboard
+- [ ] `ppnpm context:report` generates detailed markdown report
+- [ ] `ppnpm context:cleanup` removes stats older than 30 days
 
 ---
 

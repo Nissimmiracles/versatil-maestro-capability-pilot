@@ -155,7 +155,7 @@ This enhancement is a **wrapper** around existing monitoring systems, not new co
 
 ### 1. Framework Health Monitor
 - **Script**: `scripts/framework-monitor.cjs` (580 lines)
-- **npm command**: `pnpm run monitor`
+- **npm command**: `ppnpm monitor`
 - **Checks**:
   - All 7 OPERA agents (config, command, source)
   - Proactive system (settings, hooks, orchestrator)
@@ -168,7 +168,7 @@ This enhancement is a **wrapper** around existing monitoring systems, not new co
   - `scripts/realtime-dashboard.cjs` (v1, simple)
   - `scripts/realtime-dashboard-v2.cjs` (v2, balanced)
   - `scripts/realtime-dashboard-v3.cjs` (v3, full features)
-- **npm commands**: `pnpm run dashboard`, `pnpm run dashboard:v1`, etc.
+- **npm commands**: `ppnpm dashboard`, `ppnpm dashboard:v1`, etc.
 - **Features**:
   - Real-time workflow visualization
   - Live agent progress bars
@@ -201,9 +201,9 @@ This enhancement is a **wrapper** around existing monitoring systems, not new co
 ### 5. Background Monitor
 - **Script**: `scripts/background-monitor.cjs`
 - **npm commands**:
-  - `pnpm run dashboard:background` (start)
-  - `pnpm run dashboard:stop` (stop)
-  - `pnpm run dashboard:logs` (view logs)
+  - `ppnpm dashboard:background` (start)
+  - `ppnpm dashboard:stop` (stop)
+  - `ppnpm dashboard:logs` (view logs)
 - **Features**:
   - Runs health checks in background
   - Logs to `.versatil/logs/background-monitor.log`
@@ -222,7 +222,7 @@ This enhancement is a **wrapper** around existing monitoring systems, not new co
 
 ### 2. npm Scripts Tested
 ```bash
-✅ pnpm run monitor - Executes successfully
+✅ ppnpm monitor - Executes successfully
    Output: Health score 67% (expected degraded in dev)
    Detected issues: Missing agent configs (using .md instead of .json)
    Recommendations: Run /doctor --fix
@@ -308,19 +308,19 @@ Integrity = (PresentFiles / TotalFiles) × 100
 ## Monitoring Modes Breakdown
 
 ### Mode 1: Quick Health Check
-**Command**: `/monitor` or `pnpm run monitor`
+**Command**: `/monitor` or `ppnpm monitor`
 **Duration**: ~5 seconds
 **Output**: Health score + issues + recommendations
 **When to use**: Daily development startup, before commits
 
 ### Mode 2: Interactive Dashboard
-**Command**: `/monitor dashboard` or `pnpm run dashboard`
+**Command**: `/monitor dashboard` or `ppnpm dashboard`
 **Duration**: Continuous (until quit)
 **Output**: Real-time TUI with workflow visualization
 **When to use**: Monitoring active sessions, demos, debugging
 
 ### Mode 3: Continuous Monitoring
-**Command**: `/monitor watch` or `pnpm run monitor -- --watch`
+**Command**: `/monitor watch` or `ppnpm monitor -- --watch`
 **Duration**: Continuous (checks every 60s)
 **Output**: Live health updates in terminal
 **When to use**: Long-running sessions, background monitoring
@@ -332,7 +332,7 @@ Integrity = (PresentFiles / TotalFiles) × 100
 **When to use**: Troubleshooting, bug reports, pre-upgrade validation
 
 ### Mode 5: Agent Metrics
-**Command**: `/monitor agents` or `pnpm run show-agents`
+**Command**: `/monitor agents` or `ppnpm show-agents`
 **Duration**: ~2 seconds
 **Output**: All 7 agents with performance stats
 **When to use**: Performance analysis, identifying slow agents
@@ -344,7 +344,7 @@ Integrity = (PresentFiles / TotalFiles) × 100
 **When to use**: Checking recent errors, debugging issues
 
 ### Mode 7: Stress Testing
-**Command**: `/monitor stress` or `pnpm run monitor -- --stress`
+**Command**: `/monitor stress` or `ppnpm monitor -- --stress`
 **Duration**: ~15 seconds
 **Output**: Pass/fail for each stress test
 **When to use**: Pre-deployment validation, after major changes
@@ -362,22 +362,22 @@ Integrity = (PresentFiles / TotalFiles) × 100
 ### 1. Background Monitor (Recommended)
 ```bash
 # Start on server boot (add to systemd or launchd)
-pnpm run dashboard:background
+ppnpm dashboard:background
 
 # Verify running
 ps aux | grep background-monitor
 
 # View logs
-pnpm run dashboard:logs
+ppnpm dashboard:logs
 ```
 
 ### 2. Scheduled Health Checks (Cron)
 ```bash
 # Daily at 2 AM
-0 2 * * * cd /path/to/versatil && pnpm run monitor >> /var/log/versatil-health.log 2>&1
+0 2 * * * cd /path/to/versatil && ppnpm monitor >> /var/log/versatil-health.log 2>&1
 
 # Every 4 hours
-0 */4 * * * cd /path/to/versatil && pnpm run monitor
+0 */4 * * * cd /path/to/versatil && ppnpm monitor
 ```
 
 ### 3. CI/CD Integration (GitHub Actions)
@@ -395,15 +395,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      - run: npm install
-      - run: pnpm run monitor
-      - run: pnpm run test:full
+      - run: pnpm install
+      - run: ppnpm monitor
+      - run: pppnpm test:full
 ```
 
 ### 4. Slack Alerting
 ```javascript
 // scripts/alert-slack.js
-const health = execSync('pnpm run monitor -- --report').toString();
+const health = execSync('ppnpm monitor -- --report').toString();
 if (health.overall_health < 70) {
   // Send Slack webhook
   https.request({
@@ -421,7 +421,7 @@ if (health.overall_health < 70) {
 ### Issue: Health Score < 70%
 
 **Diagnosis:**
-1. Run: `pnpm run monitor -- --report`
+1. Run: `ppnpm monitor -- --report`
 2. Review issues section in output
 3. Check missing files: `cat framework-health-report.json | jq '.framework.missing_files'`
 
@@ -431,14 +431,14 @@ if (health.overall_health < 70) {
 /doctor --fix
 
 # If that fails, reinstall
-npm install
-pnpm run validate:isolation
+pnpm install
+ppnpm validate:isolation
 ```
 
 ### Issue: Agent Not Activating Proactively
 
 **Diagnosis:**
-1. Check proactive accuracy: `pnpm run monitor` (look for Proactive System)
+1. Check proactive accuracy: `ppnpm monitor` (look for Proactive System)
 2. Check settings: `cat .cursor/settings.json | jq '.versatil.proactive_agents'`
 3. Check hooks: `ls -la .claude/hooks/pre-tool-use/agent-coordinator.sh`
 
@@ -456,12 +456,12 @@ touch src/__tests__/example.test.ts  # Should activate Maria-QA
 **Diagnosis:**
 1. Check framework running: `ps aux | grep versatil`
 2. Check status file: `ls -la /tmp/versatil-sync-status-*.json`
-3. Trigger activity: `pnpm run test:unit`
+3. Trigger activity: `pppnpm test:unit`
 
 **Fix:**
 ```bash
 # Try different dashboard version
-pnpm run dashboard:v1  # Simpler, more stable
+ppnpm dashboard:v1  # Simpler, more stable
 ```
 
 ---
@@ -475,7 +475,7 @@ pnpm run dashboard:v1  # Simpler, more stable
 /monitor dashboard      # Launch in separate terminal
 
 # Before commit
-pnpm run test:full       # Run tests
+pppnpm test:full       # Run tests
 /monitor                # Final health check
 git commit              # Commit if health >= 90%
 ```
@@ -483,19 +483,19 @@ git commit              # Commit if health >= 90%
 ### Weekly Maintenance
 ```bash
 # Every Monday
-pnpm run monitor -- --stress      # Comprehensive check
-pnpm run show-agents              # Review performance
+ppnpm monitor -- --stress      # Comprehensive check
+ppnpm show-agents              # Review performance
 npm outdated                     # Check updates
 # Archive logs
 cp ~/.versatil/logs/framework.log ~/.versatil/logs/archive/$(date +%Y-%m-%d).log
 ```
 
 ### Pre-Deployment Checklist
-- [ ] `pnpm run monitor` → Health >= 95%
-- [ ] `pnpm run test:full` → All tests pass
-- [ ] `pnpm run monitor -- --stress` → All stress tests pass
-- [ ] `pnpm run validate:isolation` → No violations
-- [ ] `pnpm run show-agents` → All agents operational
+- [ ] `ppnpm monitor` → Health >= 95%
+- [ ] `pppnpm test:full` → All tests pass
+- [ ] `ppnpm monitor -- --stress` → All stress tests pass
+- [ ] `ppnpm validate:isolation` → No violations
+- [ ] `ppnpm show-agents` → All agents operational
 - [ ] `/monitor report` → Generate backup
 - [ ] Review logs for warnings
 - [ ] Test MCP integrations

@@ -752,9 +752,9 @@ Phase 3 introduced 20+ new npm scripts:
 ## Next Steps
 
 ### Immediate (v6.5.0 Release)
-1. ✅ Compile TypeScript: `pnpm run build`
-2. ✅ Run all tests: `pnpm run test:all`
-3. ✅ Validate framework: `pnpm run validate`
+1. ✅ Compile TypeScript: `ppnpm build`
+2. ✅ Run all tests: `pppnpm test:all`
+3. ✅ Validate framework: `ppnpm validate`
 4. ✅ Create release: `npm version minor`
 5. ✅ Publish: `npm publish`
 

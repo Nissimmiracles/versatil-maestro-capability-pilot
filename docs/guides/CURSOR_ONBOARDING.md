@@ -223,7 +223,7 @@ Expected output:
 ```bash
 # In terminal (outside Cursor):
 cd "/Users/nissimmenashe/VERSATIL SDLC FW"
-npm install
+pnpm install
 ```
 
 Then retry onboarding in Cursor chat.

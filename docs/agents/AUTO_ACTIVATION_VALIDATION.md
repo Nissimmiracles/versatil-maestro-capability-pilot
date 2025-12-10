@@ -88,16 +88,16 @@ File Change → Trigger Detection → Agent Selection → Activation → Metrics
 
 ```bash
 # Run all activation tests
-pnpm test -- tests/agents/auto-activation.test.ts
+ppnpm test -- tests/agents/auto-activation.test.ts
 
 # Run sub-agent tests
-pnpm test -- tests/agents/sub-agent-activation.test.ts
+ppnpm test -- tests/agents/sub-agent-activation.test.ts
 
 # Run E2E workflow tests
-pnpm test -- tests/integration/agent-auto-activation-e2e.test.ts
+ppnpm test -- tests/integration/agent-auto-activation-e2e.test.ts
 
 # Run all validation tests
-pnpm test -- tests/agents/ tests/integration/agent-auto-activation-e2e.test.ts
+ppnpm test -- tests/agents/ tests/integration/agent-auto-activation-e2e.test.ts
 ```
 
 ### Validation Dashboard
@@ -430,8 +430,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm test -- tests/agents/ tests/integration/agent-auto-activation-e2e.test.ts
+      - run: ppnpm install --frozen-lockfile
+      - run: ppnpm test -- tests/agents/ tests/integration/agent-auto-activation-e2e.test.ts
       - run: node scripts/validate-activation.cjs --json --csv
       - uses: actions/upload-artifact@v3
         with:

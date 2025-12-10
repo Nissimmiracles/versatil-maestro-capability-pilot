@@ -13,7 +13,7 @@ Wave 4 tests are **fully integrated** into the CI/CD pipeline and run automatica
 - ✅ Pre-commit hooks (fast smoke tests)
 - ✅ Quality gates workflow (comprehensive validation)
 
-**Test Command:** `pnpm run test:unit` (includes all Vitest tests, including Wave 4)
+**Test Command:** `pppnpm test:unit` (includes all Vitest tests, including Wave 4)
 
 ---
 
@@ -41,7 +41,7 @@ on:
 **Wave 4 Tests Run in:**
 ```yaml
 - name: Run unit tests
-  run: pnpm run test:unit
+  run: pppnpm test:unit
 ```
 
 **Jobs:**
@@ -81,7 +81,7 @@ on:
 | **accessibility-tests** | WCAG 2.1 AA compliance | No |
 | **code-quality** | Lint + typecheck + format | Yes (indirectly) |
 | **test-coverage** | Full test suite with coverage | ✅ **Yes** |
-| **security-audit** | npm audit + Semgrep SAST | No |
+| **security-audit** | pnpm audit + Semgrep SAST | No |
 | **observatory-scan** | Mozilla Observatory (DAST) | No |
 | **performance-tests** | Playwright performance tests | No |
 | **visual-regression** | Percy visual regression | No |
@@ -93,7 +93,7 @@ test-coverage:
   runs-on: ubuntu-latest
   steps:
     - name: Run tests with coverage
-      run: pnpm run test:coverage || pnpm run test:unit
+      run: pppnpm test:coverage || pppnpm test:unit
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
@@ -124,10 +124,10 @@ test-coverage:
 . "$(dirname "$0")/_/husky.sh"
 
 # Architectural validation
-pnpm run validate:architecture
+ppnpm validate:architecture
 
 # Fast smoke tests (includes Wave 4)
-pnpm run test:unit --run --reporter=dot
+pppnpm test:unit --run --reporter=dot
 ```
 
 **Wave 4 Tests:**
@@ -245,10 +245,10 @@ gh run download <run-id> -n coverage-report
 .husky/pre-commit
 
 # Simulate CI test job
-pnpm run test:unit
+pppnpm test:unit
 
 # Simulate coverage job
-pnpm run test:coverage
+pppnpm test:coverage
 ```
 
 ---
@@ -348,7 +348,7 @@ open coverage/index.html
 **Problem:** Tests fail in pre-commit hook
 
 **Solutions:**
-1. Run tests locally: `pnpm run test:unit`
+1. Run tests locally: `pppnpm test:unit`
 2. Check if tests pass without hook: `git commit --no-verify`
 3. Fix failing tests before committing
 4. Update hook if needed: `.husky/pre-commit`
@@ -361,27 +361,27 @@ open coverage/index.html
 
 ```bash
 # Always run locally before pushing
-pnpm run test:unit
-pnpm run test:coverage
-pnpm run lint
-pnpm run typecheck
+pppnpm test:unit
+pppnpm test:coverage
+ppnpm lint
+ppnpm typecheck
 ```
 
 ### 2. Watch Mode During Development
 
 ```bash
 # Run tests in watch mode
-pnpm run test:watch
+pppnpm test:watch
 
 # Filter to Wave 4 tests only
-pnpm run test:watch wave-execution
+pppnpm test:watch wave-execution
 ```
 
 ### 3. Coverage Monitoring
 
 ```bash
 # Check coverage after changes
-pnpm run test:coverage
+pppnpm test:coverage
 
 # View coverage report
 open coverage/index.html
@@ -464,8 +464,8 @@ gh workflow run ci.yml
      name: Wave 4 Orchestration Tests
      runs-on: ubuntu-latest
      steps:
-       - run: pnpm test tests/e2e/wave-execution-e2e.test.ts
-       - run: pnpm test tests/integration/wave-execution-integration.test.ts
+       - run: ppnpm test tests/e2e/wave-execution-e2e.test.ts
+       - run: ppnpm test tests/integration/wave-execution-integration.test.ts
    ```
 
 2. **Nightly Comprehensive Tests** (optional)

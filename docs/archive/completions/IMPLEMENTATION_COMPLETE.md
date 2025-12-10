@@ -118,8 +118,8 @@ Step 2/2: Test coverage check (existing)
 
 3. **New npm Scripts**
    ```bash
-   pnpm run validate:watch    # Start architectural watcher
-   pnpm run dev:validated     # TypeScript compiler + watcher (concurrent)
+   ppnpm validate:watch    # Start architectural watcher
+   ppnpm dev:validated     # TypeScript compiler + watcher (concurrent)
    ```
 
 4. **Color-Coded Terminal Output**
@@ -260,7 +260,7 @@ git commit -m "feat: add valid page with route"
 ### Manual Testing Checklist
 
 **Phase 1-3 (Commit-Time Validation):**
-- [ ] Run `pnpm run validate:architecture` manually
+- [ ] Run `ppnpm validate:architecture` manually
 - [ ] Test with orphaned page scenario
 - [ ] Test with broken navigation scenario
 - [ ] Test with valid complete deliverable
@@ -270,14 +270,14 @@ git commit -m "feat: add valid page with route"
 - [ ] Verify performance (< 2 seconds added to commit)
 
 **Phase 4 (HMR Real-Time Validation):**
-- [ ] Run `pnpm run dev:validated` to start concurrent watcher
+- [ ] Run `ppnpm dev:validated` to start concurrent watcher
 - [ ] Create orphaned page and verify immediate warning
 - [ ] Add route and verify success message
 - [ ] Test debouncing with rapid saves (should not spam)
 - [ ] Test graceful shutdown with Ctrl+C
 - [ ] Verify statistics display on shutdown
-- [ ] Test `pnpm run validate:watch -- --verbose` mode
-- [ ] Test `pnpm run validate:watch -- --errors-only` mode
+- [ ] Test `ppnpm validate:watch -- --verbose` mode
+- [ ] Test `ppnpm validate:watch -- --errors-only` mode
 - [ ] Verify color-coded output (red/yellow/green)
 - [ ] Measure watcher performance impact (CPU/memory)
 
@@ -372,7 +372,7 @@ git commit -m "feat: add valid page with route"
 3. **Measure Performance**
    ```bash
    # Time the validation
-   time pnpm run validate:architecture
+   time ppnpm validate:architecture
 
    # Target: < 2 seconds for typical project
    ```
@@ -427,10 +427,10 @@ git commit -m "feat: add valid page with route"
 
 ```bash
 # Run architectural validation manually
-pnpm run validate:architecture
+ppnpm validate:architecture
 
 # Compile TypeScript
-pnpm run build
+ppnpm build
 
 # Run with specific files
 node scripts/validate-architecture.cjs
@@ -439,7 +439,7 @@ node scripts/validate-architecture.cjs
 git commit --no-verify
 
 # View validation help
-pnpm run validate:architecture --help
+ppnpm validate:architecture --help
 ```
 
 ---

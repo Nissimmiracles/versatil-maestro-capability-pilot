@@ -11,7 +11,7 @@ This guide provides detailed troubleshooting steps for common VERSATIL framework
 - Installation or configuration problems
 - Performance degradation
 
-**Note**: As of v7.16.1, VERSATIL uses **npx** for MCP server execution (no installation required). Legacy `npm install` commands in this guide refer to development setup only.
+**Note**: As of v7.16.1, VERSATIL uses **npx** for MCP server execution (no installation required). Legacy `pnpm install` commands in this guide refer to development setup only.
 
 ---
 
@@ -93,7 +93,7 @@ npx versatil doctor
 **Solution**:
 ```bash
 # Reinstall without removing
-npm install @versatil/sdlc-framework --force
+pnpm install @versatil/sdlc-framework --force
 
 # Verify
 npx versatil doctor
@@ -122,7 +122,7 @@ pnpm update @versatil/sdlc-framework
 
 # Update (major - review breaking changes first)
 npm view @versatil/sdlc-framework@8.0.0  # Review changes
-npm install @versatil/sdlc-framework@latest
+pnpm install @versatil/sdlc-framework@latest
 
 # Verify
 npx versatil doctor
@@ -148,7 +148,7 @@ rm -rf node_modules
 rm package-lock.json
 
 # Reinstall all dependencies
-npm install
+pnpm install
 
 # Verify
 npx versatil doctor
@@ -165,7 +165,7 @@ npx versatil doctor
 **Solution**:
 ```bash
 # Rollback to previous version
-npm install @versatil/sdlc-framework@7.8.0
+pnpm install @versatil/sdlc-framework@7.8.0
 
 # Or fix breaking changes (check CHANGELOG)
 # https://github.com/Nissimmiracles/versatil-sdlc-framework/blob/main/CHANGELOG.md
@@ -197,7 +197,7 @@ cat node_modules/@versatil/sdlc-framework/docs/MIGRATION_*.md
 ls node_modules/@versatil/sdlc-framework/.claude/agents/
 
 # If missing, reinstall
-npm install @versatil/sdlc-framework --force
+pnpm install @versatil/sdlc-framework --force
 
 # Verify
 npx versatil doctor
@@ -223,7 +223,7 @@ cat node_modules/@versatil/sdlc-framework/.claude/agents/*.md
 
 # If found, report issue on GitHub
 # For now, reinstall
-npm install @versatil/sdlc-framework --force
+pnpm install @versatil/sdlc-framework --force
 ```
 
 ---
@@ -243,7 +243,7 @@ cat node_modules/@versatil/sdlc-framework/.claude/AGENT_TRIGGERS.md
 ls node_modules/@versatil/sdlc-framework/.claude/hooks/
 
 # Reinstall if missing
-npm install @versatil/sdlc-framework --force
+pnpm install @versatil/sdlc-framework --force
 
 # Verify auto-activation configuration
 npx versatil doctor
@@ -273,7 +273,7 @@ npx versatil doctor
 npx versatil doctor --fix
 
 # Or manually restart GraphRAG
-pnpm run rag:start
+ppnpm rag:start
 
 # Check Neo4j container status
 docker ps | grep neo4j
@@ -307,7 +307,7 @@ curl -H "apikey: YOUR_KEY" YOUR_SUPABASE_URL/rest/v1/
 
 # If credentials invalid, update .env
 # Then restart
-pnpm run rag:restart
+ppnpm rag:restart
 
 # Verify
 npx versatil doctor
@@ -327,10 +327,10 @@ npx versatil doctor
 cat .versatil/config/rag.json
 
 # Reset RAG system
-pnpm run rag:reset
+ppnpm rag:reset
 
 # Reinitialize
-pnpm run rag:init
+ppnpm rag:init
 
 # Verify
 npx versatil doctor
@@ -391,7 +391,7 @@ ping your-mcp-server-host
 
 **Symptoms**:
 - Health check shows critical vulnerabilities
-- pnpm audit reports issues
+- ppnpm audit reports issues
 
 **Health Check Output**:
 ```
@@ -406,10 +406,10 @@ ping your-mcp-server-host
 npx versatil doctor --fix
 
 # Or manually
-pnpm audit fix
+ppnpm audit fix
 
 # If force needed
-pnpm audit fix --force
+ppnpm audit fix --force
 
 # Verify
 npx versatil doctor
@@ -426,10 +426,10 @@ npx versatil doctor
 **Solution**:
 ```bash
 # Install peer dependencies
-npm install --save-dev @types/node typescript
+pnpm add -D @types/node typescript
 
 # For specific warnings
-npm install <missing-peer-dependency>
+pnpm install <missing-peer-dependency>
 
 # Verify
 npx versatil doctor
@@ -457,7 +457,7 @@ nvm use 20
 # Or download from: https://nodejs.org/
 
 # Update TypeScript
-npm install --save-dev typescript@latest
+pnpm add -D typescript@latest
 
 # Verify
 npx versatil doctor
@@ -479,7 +479,7 @@ npx versatil doctor
 cat package.json | grep @versatil/sdlc-framework
 
 # If missing, install it
-npm install @versatil/sdlc-framework
+pnpm install @versatil/sdlc-framework
 
 # Verify
 npx versatil doctor
@@ -499,7 +499,7 @@ npx versatil doctor
 ls node_modules/@versatil/sdlc-framework/.claude/hooks/
 
 # Reinstall if missing
-npm install @versatil/sdlc-framework --force
+pnpm install @versatil/sdlc-framework --force
 
 # Verify
 npx versatil doctor
@@ -596,7 +596,7 @@ npx versatil doctor --quick
 npx versatil doctor
 
 # If GraphRAG timeout, restart it
-pnpm run rag:start
+ppnpm rag:start
 
 # If Vector store slow, check Supabase status
 # https://status.supabase.com/
@@ -654,7 +654,7 @@ npx versatil doctor --fix
 
 # Or manually rebuild
 cd node_modules/@versatil/sdlc-framework
-pnpm run build
+ppnpm build
 
 # Verify
 npx versatil doctor
@@ -672,8 +672,8 @@ npx versatil doctor
 ```bash
 # Rebuild framework
 cd node_modules/@versatil/sdlc-framework
-npm install
-pnpm run build
+pnpm install
+ppnpm build
 
 # Verify
 npx versatil doctor
@@ -693,11 +693,11 @@ npx versatil doctor
 npx tsc --version  # Should be ≥5.0.0
 
 # Update TypeScript if needed
-npm install --save-dev typescript@latest
+pnpm add -D typescript@latest
 
 # Retry build
 cd node_modules/@versatil/sdlc-framework
-pnpm run build
+ppnpm build
 
 # If still failing, report issue on GitHub
 ```
@@ -730,7 +730,7 @@ rm package-lock.json
 rm -rf .versatil/
 
 # 5. Reinstall from scratch
-npm install
+pnpm install
 
 # 6. Verify
 npx versatil doctor
@@ -752,7 +752,7 @@ npx versatil doctor
 npm list @versatil/sdlc-framework
 
 # 2. Install previous version
-npm install @versatil/sdlc-framework@7.8.0
+pnpm install @versatil/sdlc-framework@7.8.0
 
 # 3. Verify
 npx versatil doctor
@@ -776,7 +776,7 @@ cd my-project
 npm init -y
 
 # 2. Install VERSATIL
-npm install @versatil/sdlc-framework
+pnpm install @versatil/sdlc-framework
 
 # 3. Initialize configuration
 cat > CLAUDE.md << 'EOF'
@@ -839,7 +839,7 @@ npx versatil doctor
 
 **Solution**: Reinstall framework
 ```bash
-npm install @versatil/sdlc-framework
+pnpm install @versatil/sdlc-framework
 ```
 
 ---
@@ -850,7 +850,7 @@ npm install @versatil/sdlc-framework
 
 **Solution**: Restart RAG services
 ```bash
-pnpm run rag:start
+ppnpm rag:start
 npx versatil doctor
 ```
 

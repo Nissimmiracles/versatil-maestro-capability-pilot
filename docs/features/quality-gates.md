@@ -269,7 +269,7 @@ Running comprehensive checks...
 Quality Gate: ❌ FAILED
 
 Push blocked. Add tests to meet 85% coverage threshold.
-  Run: pnpm test -- --coverage
+  Run: ppnpm test -- --coverage
 ```
 
 ---
@@ -404,7 +404,7 @@ Overall Score: 45/100 (Poor)
 Recommended actions:
   1. Fix payment refund logic
   2. Verify external payment API connectivity
-  3. Run: pnpm run test:e2e -- payment.spec.ts
+  3. Run: pppnpm test:e2e -- payment.spec.ts
   4. Re-run quality gate after fix
 
 Do NOT deploy to production with failing tests.
@@ -537,7 +537,7 @@ versatil quality-gate pre-deploy --request-bypass \
 versatil config set quality_gates.enabled=false
 
 # Run deployment
-pnpm run deploy
+ppnpm deploy
 
 # RE-ENABLE IMMEDIATELY AFTER
 versatil config set quality_gates.enabled=true
@@ -583,10 +583,10 @@ jobs:
           node-version: '20'
 
       - name: Install VERSATIL
-        run: npm install -g @versatil/sdlc-framework
+        run: pnpm add -g @versatil/sdlc-framework
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: ppnpm install --frozen-lockfile
 
       - name: Run Pre-Push Quality Gate
         run: versatil quality-gate pre-push
@@ -608,16 +608,16 @@ jobs:
           node-version: '20'
 
       - name: Install VERSATIL
-        run: npm install -g @versatil/sdlc-framework
+        run: pnpm add -g @versatil/sdlc-framework
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: ppnpm install --frozen-lockfile
 
       - name: Run Pre-Deploy Quality Gate
         run: versatil quality-gate pre-deploy
 
       - name: Deploy (if gate passed)
-        run: pnpm run deploy:production
+        run: ppnpm deploy:production
 ```
 
 ### GitLab CI
@@ -631,8 +631,8 @@ quality-gate:
   stage: quality
   image: node:20
   before_script:
-    - npm install -g @versatil/sdlc-framework
-    - pnpm install --frozen-lockfile
+    - pnpm add -g @versatil/sdlc-framework
+    - ppnpm install --frozen-lockfile
   script:
     - versatil quality-gate pre-push
   only:
@@ -642,11 +642,11 @@ deploy-gate:
   stage: deploy
   image: node:20
   before_script:
-    - npm install -g @versatil/sdlc-framework
-    - pnpm install --frozen-lockfile
+    - pnpm add -g @versatil/sdlc-framework
+    - ppnpm install --frozen-lockfile
   script:
     - versatil quality-gate pre-deploy
-    - pnpm run deploy:production
+    - ppnpm deploy:production
   only:
     - main
 ```
@@ -689,7 +689,7 @@ cat .git/hooks/pre-commit  # Should contain VERSATIL code
 versatil quality-gate pre-commit --verbose
 
 # Check coverage calculation
-pnpm test -- --coverage
+ppnpm test -- --coverage
 
 # Check configuration
 versatil config show | grep quality_gates
@@ -702,7 +702,7 @@ versatil config show | grep quality_gates
 rm -rf coverage/ .nyc_output/
 
 # 2. Re-run tests
-pnpm test -- --coverage
+ppnpm test -- --coverage
 
 # 3. Try gate again
 versatil quality-gate pre-commit

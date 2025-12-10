@@ -23,8 +23,8 @@ npx --yes --package=github:Nissimmiracles/versatil-sdlc-framework versatil-mcp
 ```bash
 git clone https://github.com/Nissimmiracles/versatil-sdlc-framework.git
 cd versatil-sdlc-framework
-pnpm install
-pnpm run build
+ppnpm install
+ppnpm build
 ```
 
 ## Verify Installation (1 minute)
@@ -147,7 +147,7 @@ node bin/versatil.js doctor
 
 # Common fixes:
 # - Ensure ~/.versatil directory exists
-# - Run pnpm install to get dependencies
+# - Run ppnpm install to get dependencies
 # - Check Node.js version (needs 18+)
 ```
 

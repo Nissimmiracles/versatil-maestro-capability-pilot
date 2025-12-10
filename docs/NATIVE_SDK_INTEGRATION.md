@@ -82,7 +82,7 @@ Next session reuses patterns → 40% faster
 
 **Session Activity**:
 - Edited `api/auth.ts` + `api/auth.test.ts`
-- Ran `pnpm test`
+- Ran `ppnpm test`
 - Used Marcus-Backend + Maria-QA
 
 **Learnings Captured**:
@@ -119,7 +119,7 @@ $ claude edit src/api/auth.test.ts
 # PostToolUse hook triggers
 🤖 Maria-QA: Test file edited - Quality validation recommended
    File: src/api/auth.test.ts
-   Suggestion: Run tests with `pnpm test src/api/auth.test.ts`
+   Suggestion: Run tests with `ppnpm test src/api/auth.test.ts`
 ```
 
 ### Example 2: Complete Task → Tests Run
@@ -134,18 +134,18 @@ $ claude edit src/api/auth.test.ts
 🤖 Maria-QA: Task completed with file changes - Running quality checks
    Source files changed: 2
    Recommendation: Run test suite to validate changes
-   💡 Quick check: pnpm test
+   💡 Quick check: ppnpm test
 ```
 
 ### Example 3: Build Succeeds → Quality Gates
 
 ```bash
 # Build command runs
-$ pnpm run build
+$ ppnpm build
 
 # PostToolUse hook detects build
 🏗️  Build command detected
-   Command: pnpm run build
+   Command: ppnpm build
    Exit code: 0
 
 ✅ Build succeeded
@@ -153,9 +153,9 @@ $ pnpm run build
 🤖 Maria-QA: Build completed - Quality validation recommended
    Post-Build Quality Gates:
    1. ✅ Build successful
-   2. 🧪 Run full test suite: pnpm test
-   3. 📊 Check test coverage: pnpm run test:coverage
-   4. 🔒 Run security audit: pnpm audit
+   2. 🧪 Run full test suite: ppnpm test
+   3. 📊 Check test coverage: pppnpm test:coverage
+   4. 🔒 Run security audit: ppnpm audit
 ```
 
 ### Example 4: Session Ends → Auto-Learning
@@ -288,7 +288,7 @@ Feature 5 (50 min, -60%)
 
 **Step 1**: Update to v6.6.0+
 ```bash
-npm install @versatil/sdlc-framework@latest
+pnpm install @versatil/sdlc-framework@latest
 ```
 
 **Step 2**: Settings already configured
@@ -312,7 +312,7 @@ echo "// test" >> src/test.test.ts
 
 **Already configured!** Just install VERSATIL:
 ```bash
-npm install @versatil/sdlc-framework
+pnpm install @versatil/sdlc-framework
 ```
 
 Everything works out-of-the-box with native SDK integration.

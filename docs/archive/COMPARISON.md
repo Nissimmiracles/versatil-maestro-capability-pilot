@@ -347,7 +347,7 @@ gantt
 
 ```bash
 # 1. Install VERSATIL
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 
 # 2. Initialize your project
 npx versatil init
@@ -382,7 +382,7 @@ versatil-mcp-setup --cursor
 
 ```bash
 # 1. Install VERSATIL
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 
 # 2. Initialize your project
 npx versatil init

@@ -3,7 +3,7 @@
 # Hook Compilation Script
 # Compiles TypeScript hooks to JavaScript for 5-10x performance improvement
 #
-# Usage: npm run build:hooks
+# Usage: pnpm build:hooks
 #
 
 set -e

@@ -42,7 +42,7 @@ This is a **major release** that transforms VERSATIL from a static framework int
   - `dist/team/team-context-manager.js`
   - `dist/rag/crg-retrieval-cache.js`
   - `dist/rag/cag-prompt-cache.js`
-- ✅ Integration test passed: `pnpm run context:test`
+- ✅ Integration test passed: `ppnpm context:test`
 - ✅ All E2E tests passing
 - ✅ Privacy isolation verified (100%)
 
@@ -101,7 +101,7 @@ This is a **major release** that transforms VERSATIL from a static framework int
 **Status**: Complete
 
 - ✅ Migration script created: `scripts/migrate-project-context.cjs` (362 lines)
-- ✅ NPM script added: `pnpm run context:migrate`
+- ✅ NPM script added: `ppnpm context:migrate`
 - ✅ Auto-backup functionality tested
 - ✅ Zero data loss guaranteed
 - ✅ Validation test passed
@@ -261,7 +261,7 @@ Each feature makes the next faster:
 ### New Users
 ```bash
 # 1. Install VERSATIL
-npm install @versatil/sdlc-framework
+pnpm install @versatil/sdlc-framework
 
 # 2. Auto-detection runs during install
 # Preferences saved to ~/.versatil/users/[your-id]/profile.json
@@ -275,13 +275,13 @@ npm install @versatil/sdlc-framework
 ### Existing Users
 ```bash
 # 1. Upgrade to v6.6.0
-npm install @versatil/sdlc-framework@latest
+pnpm install @versatil/sdlc-framework@latest
 
 # 2. Run migration (automatic backup)
-pnpm run context:migrate
+ppnpm context:migrate
 
 # 3. Validate system
-pnpm run context:test
+ppnpm context:test
 
 # 4. Start using context-aware agents!
 /plan "My next feature"
@@ -300,12 +300,12 @@ If any issues arise:
 
 2. **Downgrade version**:
    ```bash
-   npm install @versatil/sdlc-framework@6.5.0
+   pnpm install @versatil/sdlc-framework@6.5.0
    ```
 
 3. **Verify rollback**:
    ```bash
-   pnpm run doctor
+   ppnpm doctor
    ```
 
 **Backup Location**: `~/.versatil-backup-20251022-015410/`

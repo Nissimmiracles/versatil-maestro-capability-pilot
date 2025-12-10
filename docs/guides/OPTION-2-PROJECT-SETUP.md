@@ -339,7 +339,7 @@ Add a new endpoint, save.
 **Test 3: Run Tests**
 
 ```bash
-pnpm test
+ppnpm test
 ```
 
 **Expected:**
@@ -504,7 +504,7 @@ git clone <your-repo>
 cd <your-project>
 
 # 2. Install framework
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 
 # 3. Start daemon
 npx @versatil/sdlc-framework start --daemon

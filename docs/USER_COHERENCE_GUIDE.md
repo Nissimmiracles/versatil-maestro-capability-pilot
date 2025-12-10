@@ -160,7 +160,7 @@ npx versatil doctor --fix
 ```
 
 **Actions**:
-- **GraphRAG timeout**: Run `pnpm run rag:start`
+- **GraphRAG timeout**: Run `ppnpm rag:start`
 - **Vector store failed**: Check Supabase connection
 - **Router failed**: Reinstall framework
 - **Pattern search failed**: Check RAG configuration
@@ -186,9 +186,9 @@ npx versatil doctor --fix
 ```
 
 **Actions**:
-- **Critical vulnerabilities**: Run `pnpm audit fix` immediately
+- **Critical vulnerabilities**: Run `ppnpm audit fix` immediately
 - **High vulnerabilities**: Update dependencies
-- **Missing peers**: Run `npm install`
+- **Missing peers**: Run `pnpm install`
 - **Incompatible versions**: Update Node.js or TypeScript
 
 ---
@@ -260,10 +260,10 @@ The coherence checker can automatically fix many common issues.
 
 | Issue | Fix Action | Confidence | Duration |
 |-------|-----------|-----------|----------|
-| GraphRAG timeout | `pnpm run rag:start` | 85% | 1 min |
-| Outdated build | `pnpm run build` | 90% | 2 min |
-| Missing dependencies | `npm install` | 90% | 3 min |
-| Security vulnerabilities | `pnpm audit fix` | 95% | 1.5 min |
+| GraphRAG timeout | `ppnpm rag:start` | 85% | 1 min |
+| Outdated build | `ppnpm build` | 90% | 2 min |
+| Missing dependencies | `pnpm install` | 90% | 3 min |
+| Security vulnerabilities | `ppnpm audit fix` | 95% | 1.5 min |
 
 ### Manual Fixes Required
 
@@ -378,7 +378,7 @@ npx versatil doctor --trends
 npm view @versatil/sdlc-framework@7.9.0
 
 # Update
-npm install @versatil/sdlc-framework@latest
+pnpm install @versatil/sdlc-framework@latest
 
 # Verify
 npx versatil doctor
@@ -402,7 +402,7 @@ npx versatil doctor
 npx versatil doctor --fix
 
 # Or manually
-pnpm run rag:start
+ppnpm rag:start
 
 # Verify
 npx versatil doctor
@@ -425,10 +425,10 @@ npx versatil doctor
 npx versatil doctor --fix
 
 # Or manually
-pnpm audit fix
+ppnpm audit fix
 
 # If force needed
-pnpm audit fix --force
+ppnpm audit fix --force
 
 # Verify
 npx versatil doctor
@@ -450,7 +450,7 @@ npx versatil doctor
 **Action**:
 ```bash
 # Reinstall framework
-npm install @versatil/sdlc-framework
+pnpm install @versatil/sdlc-framework
 
 # Verify
 npx versatil doctor
@@ -468,7 +468,7 @@ See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for detailed troubleshooting guid
 
 **Solution**: Ensure `@versatil/sdlc-framework` is installed:
 ```bash
-npm install @versatil/sdlc-framework
+pnpm install @versatil/sdlc-framework
 ```
 
 ---

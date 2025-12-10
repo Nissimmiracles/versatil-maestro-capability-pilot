@@ -871,7 +871,7 @@ versatil agents --watch
 
 # 5. If all else fails: Reinstall
 npm uninstall -g @versatil/sdlc-framework
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 versatil init
 ```
 

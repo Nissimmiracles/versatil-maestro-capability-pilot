@@ -53,7 +53,7 @@ VERSATIL uses three complementary memory systems:
 ### Step 1: Setup Supabase (5-15 minutes)
 
 ```bash
-pnpm run rag:setup
+ppnpm rag:setup
 ```
 
 This interactive wizard will:
@@ -70,7 +70,7 @@ This interactive wizard will:
 ### Step 2: Seed Default Patterns (2 minutes)
 
 ```bash
-pnpm run rag:seed-defaults
+ppnpm rag:seed-defaults
 ```
 
 Seeds **~100 universal best practices**:
@@ -84,7 +84,7 @@ Seeds **~100 universal best practices**:
 ### Step 3: Verify Setup (30 seconds)
 
 ```bash
-pnpm run rag:test
+ppnpm rag:test
 ```
 
 Expected output:
@@ -121,7 +121,7 @@ Expected output:
    - Project URL: `https://YOUR_PROJECT.supabase.co`
    - Anon Key: `eyJhbG...` (public, safe to use)
    - Service Role Key: `eyJhbG...` (secret, keep private)
-5. Run `pnpm run rag:setup` and paste credentials
+5. Run `ppnpm rag:setup` and paste credentials
 
 **Cost**: Free tier is sufficient for most users
 
@@ -140,7 +140,7 @@ Expected output:
 
 **Setup**:
 1. Install Docker Desktop
-2. Run `pnpm run rag:setup`
+2. Run `ppnpm rag:setup`
 3. Choose "Local Supabase"
 4. Wizard runs `npx supabase start` automatically
 5. Credentials auto-saved to `~/.versatil/.env`
@@ -300,7 +300,7 @@ Update `.versatil/config.json`:
 **Who**: All users (including new users)
 **Content**: Generic best practices (React, security, testing, etc.)
 **Count**: ~100 patterns
-**Command**: `pnpm run rag:seed-defaults`
+**Command**: `ppnpm rag:seed-defaults`
 
 **When to run**:
 - ✅ After fresh install (runs automatically in postinstall)
@@ -312,7 +312,7 @@ Update `.versatil/config.json`:
 **Who**: Framework developers only
 **Content**: VERSATIL's actual implementation patterns
 **Count**: ~500 patterns
-**Command**: `pnpm run rag:seed-framework`
+**Command**: `ppnpm rag:seed-framework`
 
 **What gets extracted**:
 - OPERA agent implementations (`src/agents/opera/`)
@@ -333,7 +333,7 @@ Update `.versatil/config.json`:
 ### Quick Check
 
 ```bash
-pnpm run rag:test
+ppnpm rag:test
 ```
 
 Verifies:
@@ -347,7 +347,7 @@ Verifies:
 ### Detailed Report
 
 ```bash
-pnpm run rag:test --verbose
+ppnpm rag:test --verbose
 ```
 
 Shows sample patterns with:
@@ -359,7 +359,7 @@ Shows sample patterns with:
 ### Agent-Specific Check
 
 ```bash
-pnpm run rag:test --agent maria-qa
+ppnpm rag:test --agent maria-qa
 ```
 
 Shows patterns for specific agent only.
@@ -491,7 +491,7 @@ User_Project:
 
 **Solution**:
 ```bash
-pnpm run rag:setup
+ppnpm rag:setup
 ```
 
 Follow wizard to create `~/.versatil/.env` with credentials.
@@ -504,7 +504,7 @@ Follow wizard to create `~/.versatil/.env` with credentials.
 
 **Solution**:
 ```bash
-pnpm run rag:setup
+ppnpm rag:setup
 ```
 
 Enter real Supabase credentials.
@@ -529,7 +529,7 @@ cat ~/.versatil/.env
 # Unpause if needed (free tier auto-pauses after 1 week inactivity)
 
 # Re-run setup
-pnpm run rag:setup
+ppnpm rag:setup
 ```
 
 **Local Supabase**:
@@ -542,7 +542,7 @@ npx supabase stop
 npx supabase start
 
 # Update credentials
-pnpm run rag:setup
+ppnpm rag:setup
 ```
 
 ---
@@ -553,7 +553,7 @@ pnpm run rag:setup
 
 **Solution**:
 ```bash
-pnpm run rag:setup
+ppnpm rag:setup
 ```
 
 Wizard will run migrations automatically.
@@ -567,10 +567,10 @@ Wizard will run migrations automatically.
 **Solution**:
 ```bash
 # Seed defaults (universal patterns)
-pnpm run rag:seed-defaults
+ppnpm rag:seed-defaults
 
 # Verify
-pnpm run rag:test
+ppnpm rag:test
 ```
 
 ---
@@ -582,10 +582,10 @@ pnpm run rag:test
 **Solution**:
 ```bash
 # Re-run setup (will create function)
-pnpm run rag:setup
+ppnpm rag:setup
 
 # Verify
-pnpm run rag:test
+ppnpm rag:test
 ```
 
 ---
@@ -599,7 +599,7 @@ grep RAG_ENABLED ~/.versatil/.env
 # Should show: RAG_ENABLED=true
 
 # Verify patterns exist
-pnpm run rag:test
+ppnpm rag:test
 # Should show: Found 100+ patterns
 
 # Check agent logs
@@ -613,7 +613,7 @@ tail -f ~/.versatil/logs/agents.log
 echo "RAG_ENABLED=true" >> ~/.versatil/.env
 
 # Restart framework
-pnpm run build
+ppnpm build
 ```
 
 ---
@@ -697,7 +697,7 @@ RAG_EMBEDDING_MODEL=hash  # Local hash-based (free, fast, less accurate)
 
 **Restart**:
 ```bash
-pnpm run build
+ppnpm build
 ```
 
 ---
@@ -741,7 +741,7 @@ supabase.from('versatil_memories')
 "
 
 # Option 2: Re-seed defaults
-pnpm run rag:seed-defaults
+ppnpm rag:seed-defaults
 ```
 
 ---
@@ -750,17 +750,17 @@ pnpm run rag:seed-defaults
 
 **After RAG setup**:
 1. ✅ Use VERSATIL normally (agents will use RAG automatically)
-2. ✅ Monitor learning: `pnpm run context:stats`
-3. ✅ Verify growth: `pnpm run rag:test` (pattern count increases over time)
+2. ✅ Monitor learning: `ppnpm context:stats`
+3. ✅ Verify growth: `ppnpm rag:test` (pattern count increases over time)
 4. ✅ Enjoy faster development (40% improvement target)
 
 **For framework developers**:
 ```bash
 # Seed VERSATIL-specific patterns
-pnpm run rag:seed-framework
+ppnpm rag:seed-framework
 
 # Verify
-pnpm run rag:test --verbose
+ppnpm rag:test --verbose
 ```
 
 ---

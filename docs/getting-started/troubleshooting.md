@@ -38,7 +38,7 @@ versatil --version
 
 ```bash
 # Install globally with npm
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 
 # Verify installation
 versatil --version
@@ -65,7 +65,7 @@ versatil init
 
 ```bash
 # Install as dev dependency
-npm install --save-dev @versatil/sdlc-framework
+pnpm add -D @versatil/sdlc-framework
 
 # Add to package.json scripts
 {
@@ -77,8 +77,8 @@ npm install --save-dev @versatil/sdlc-framework
 }
 
 # Run via npm
-pnpm run versatil -- --version
-pnpm run versatil:init
+ppnpm versatil -- --version
+ppnpm versatil:init
 ```
 
 **Advantages**:
@@ -112,7 +112,7 @@ npx @versatil/sdlc-framework doctor
 
 **Symptoms**:
 ```bash
-$ npm install -g @versatil/sdlc-framework
+$ pnpm add -g @versatil/sdlc-framework
 # Installation succeeds
 
 $ versatil --version
@@ -123,7 +123,7 @@ $ versatil --version
 
 **Diagnosis**:
 ```bash
-# Find where npm installs global packages
+# Find where pnpm installs global packages
 npm config get prefix
 # Example output: /usr/local
 
@@ -187,7 +187,7 @@ versatil --version
 
 **Symptoms**:
 ```bash
-$ npm install -g @versatil/sdlc-framework
+$ pnpm add -g @versatil/sdlc-framework
 # EACCES: permission denied, mkdir '/usr/local/lib/node_modules/@versatil'
 ```
 
@@ -206,7 +206,7 @@ nvm install 20
 nvm use 20
 
 # Now install without sudo
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 ```
 
 #### Option B: Change npm Default Directory
@@ -223,14 +223,14 @@ echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
 source ~/.bashrc
 
 # Install without sudo
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 ```
 
 #### Option C: Use sudo (Not Recommended)
 
 ```bash
 # Only if you understand the security implications
-sudo npm install -g @versatil/sdlc-framework
+sudo pnpm add -g @versatil/sdlc-framework
 ```
 
 ---
@@ -288,7 +288,7 @@ pnpm update -g @versatil/sdlc-framework
 
 # Or uninstall and reinstall
 npm uninstall -g @versatil/sdlc-framework
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 
 # Verify
 versatil --version
@@ -300,7 +300,7 @@ versatil --version
 
 **Symptoms**:
 ```bash
-$ npm install -g @versatil/sdlc-framework
+$ pnpm add -g @versatil/sdlc-framework
 # npm ERR! network timeout
 # npm ERR! network This is a problem related to network connectivity
 ```
@@ -319,7 +319,7 @@ npm config get registry
 #### Option A: Retry with Increased Timeout
 
 ```bash
-npm install -g @versatil/sdlc-framework --fetch-timeout=60000
+pnpm add -g @versatil/sdlc-framework --fetch-timeout=60000
 ```
 
 #### Option B: Use Different Registry
@@ -327,7 +327,7 @@ npm install -g @versatil/sdlc-framework --fetch-timeout=60000
 ```bash
 # Try different npm registry
 npm config set registry https://registry.npmjs.org/
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 ```
 
 #### Option C: Use Proxy (if behind corporate firewall)
@@ -337,7 +337,7 @@ npm install -g @versatil/sdlc-framework
 npm config set proxy http://proxy.company.com:8080
 npm config set https-proxy http://proxy.company.com:8080
 
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 ```
 
 ---
@@ -346,7 +346,7 @@ npm install -g @versatil/sdlc-framework
 
 **Symptoms**:
 ```bash
-$ npm install -g @versatil/sdlc-framework
+$ pnpm add -g @versatil/sdlc-framework
 # npm ERR! engine Unsupported engine
 # npm ERR! Required: {"node":">=18.0.0"}
 ```
@@ -651,7 +651,7 @@ npm list -g @versatil/sdlc-framework
 # 1. Complete uninstall (see above)
 
 # 2. Reinstall
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 
 # 3. Verify installation
 versatil --version
@@ -679,7 +679,7 @@ npm pack @versatil/sdlc-framework
 # 2. Transfer .tgz file to offline machine
 
 # On offline machine:
-npm install -g versatil-sdlc-framework-4.1.0.tgz
+pnpm add -g versatil-sdlc-framework-4.1.0.tgz
 ```
 
 ### Create Local Registry Mirror
@@ -687,7 +687,7 @@ npm install -g versatil-sdlc-framework-4.1.0.tgz
 ```bash
 # For enterprise environments:
 # 1. Set up Verdaccio (private npm registry)
-npm install -g verdaccio
+pnpm add -g verdaccio
 verdaccio
 
 # 2. Configure npm to use local registry
@@ -697,7 +697,7 @@ npm config set registry http://localhost:4873
 npm publish @versatil/sdlc-framework --registry http://localhost:4873
 
 # 4. Install from local registry
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 ```
 
 ---
@@ -709,7 +709,7 @@ npm install -g @versatil/sdlc-framework
 FROM node:20-alpine
 
 # Install VERSATIL globally
-RUN npm install -g @versatil/sdlc-framework
+RUN pnpm add -g @versatil/sdlc-framework
 
 # Set working directory
 WORKDIR /app
@@ -753,7 +753,7 @@ jobs:
           node-version: '20'
 
       - name: Install VERSATIL
-        run: npm install -g @versatil/sdlc-framework
+        run: pnpm add -g @versatil/sdlc-framework
 
       - name: Verify Installation
         run: versatil --version
@@ -768,7 +768,7 @@ jobs:
 image: node:20
 
 before_script:
-  - npm install -g @versatil/sdlc-framework
+  - pnpm add -g @versatil/sdlc-framework
   - versatil --version
 
 test:
@@ -801,7 +801,7 @@ test:
 **Fix**: Reinstall package
 ```bash
 npm uninstall -g @versatil/sdlc-framework
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 ```
 
 ---
@@ -840,10 +840,10 @@ EOF
 
 ```bash
 # Global install (recommended)
-npm install -g @versatil/sdlc-framework
+pnpm add -g @versatil/sdlc-framework
 
 # Project install
-npm install --save-dev @versatil/sdlc-framework
+pnpm add -D @versatil/sdlc-framework
 
 # One-time use
 npx @versatil/sdlc-framework init

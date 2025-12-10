@@ -48,7 +48,7 @@
 4. Updated `package.json` to remove `.versatil/` from files array
 5. Fixed `dashboard:logs` script to reference `~/.versatil/logs/`
 
-**Verification**: `pnpm run validate:isolation` - PASSED ✅
+**Verification**: `ppnpm validate:isolation` - PASSED ✅
 
 ---
 
@@ -189,10 +189,10 @@
 
 **Mitigation Options**:
 1. **Short-term**: Accept risk (vulnerabilities are in dev dependencies and optional MCPs)
-2. **Medium-term**: `pnpm audit fix` (non-breaking fixes)
-3. **Long-term**: `pnpm audit fix --force` (breaking changes, requires testing)
+2. **Medium-term**: `ppnpm audit fix` (non-breaking fixes)
+3. **Long-term**: `ppnpm audit fix --force` (breaking changes, requires testing)
 
-**Recommendation**: Run `pnpm audit fix` for non-breaking fixes. Major version upgrades (n8n 0.167.0, blessed-contrib 1.0.11) should be tested separately.
+**Recommendation**: Run `ppnpm audit fix` for non-breaking fixes. Major version upgrades (n8n 0.167.0, blessed-contrib 1.0.11) should be tested separately.
 
 **Current Status**: ⚠️ "Security audit failed" (requires user decision on breaking changes)
 
@@ -293,7 +293,7 @@
 **Status**: ⚠️ Warning
 **Issue**: 35 vulnerabilities in transitive dependencies
 **Cause**: Outdated packages (n8n, blessed-contrib, langchain)
-**Action**: Run `pnpm audit fix` for non-breaking fixes
+**Action**: Run `ppnpm audit fix` for non-breaking fixes
 **Priority**: Medium
 **Estimated Time**: 30 minutes + testing
 
@@ -305,11 +305,11 @@ Run these commands to verify the fixes:
 
 ```bash
 # 1. Isolation Check
-pnpm run validate:isolation
+ppnpm validate:isolation
 # Expected: ✅ No critical issues
 
 # 2. Framework Health
-pnpm run doctor
+ppnpm doctor
 # Expected: 5/7 checks pass, 2 warnings
 
 # 3. Agent Validation
@@ -325,7 +325,7 @@ node -e "const fs = require('fs'); const s = JSON.parse(fs.readFileSync('.cursor
 # Expected: All true
 
 # 6. Build Check
-pnpm run build
+ppnpm build
 # Expected: Successful compilation
 ```
 
@@ -351,7 +351,7 @@ pnpm run build
 
 4. **Run Non-Breaking Security Fixes** (30 minutes)
    ```bash
-   pnpm audit fix
+   ppnpm audit fix
    ```
    - Fixes moderate/low vulnerabilities without breaking changes
    - Safe to run immediately
@@ -401,7 +401,7 @@ The VERSATIL Framework audit successfully identified and resolved **4 of 6 criti
 
 The 2 remaining warnings (test coverage, security vulnerabilities) are **non-blocking** and can be addressed through separate focused efforts. The framework is stable, functional, and ready for development use.
 
-**Next Steps**: Run `pnpm audit fix` and investigate test performance when time permits.
+**Next Steps**: Run `ppnpm audit fix` and investigate test performance when time permits.
 
 ---
 

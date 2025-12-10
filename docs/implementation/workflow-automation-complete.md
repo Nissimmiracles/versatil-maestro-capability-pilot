@@ -161,12 +161,12 @@ Complete high-priority tasks first to free up context budget.
 **Status**: **FULLY CONFIGURED ✅**
 
 **Test Suites**:
-- **Unit Tests**: `pnpm run test:unit` (Jest, 80%+ coverage required)
-- **Integration Tests**: `pnpm run test:integration` (Jest, API + Agent integration)
-- **E2E Tests**: `pnpm run test:e2e` (Playwright, 8 test projects)
+- **Unit Tests**: `pppnpm test:unit` (Jest, 80%+ coverage required)
+- **Integration Tests**: `pppnpm test:integration` (Jest, API + Agent integration)
+- **E2E Tests**: `pppnpm test:e2e` (Playwright, 8 test projects)
   - chromium-desktop, chromium-mobile, chromium-tablet
   - visual-regression (Percy), performance, accessibility, security
-- **Stress Tests**: `pnpm run test:stress` (Performance + load testing)
+- **Stress Tests**: `pppnpm test:stress` (Performance + load testing)
 
 **Quality Gates**:
 - ✅ 80%+ code coverage enforced
@@ -177,10 +177,10 @@ Complete high-priority tasks first to free up context budget.
 
 **Evidence**:
 ```bash
-$ pnpm run test:full
+$ pppnpm test:full
 
 > test:full
-> pnpm run test:unit && pnpm run test:integration && pnpm run test:e2e
+> pppnpm test:unit && pppnpm test:integration && pppnpm test:e2e
 
 ✅ Unit Tests: 127/130 passing (97.7%)
 ✅ Integration Tests: 45/45 passing (100%)
@@ -285,7 +285,7 @@ Marcus-Backend:
 **To Enable**:
 ```bash
 # Start daemon for automatic triggers
-pnpm run daemon:start
+ppnpm daemon:start
 
 # Or use hooks (already configured)
 # Hooks auto-activate on file edits, task completions, etc.
@@ -483,7 +483,7 @@ tail -f ~/.versatil/logs/hooks.log
 ### Test 2: Context Budget Tracking
 ```bash
 # 1. Run SessionCompass
-pnpm run session:compass
+ppnpm session:compass
 
 # 2. Check context status
 # Expected: Real-time token usage from ContextSentinel
@@ -502,7 +502,7 @@ pnpm run session:compass
 # (Use many tasks with high contextNeeded estimates)
 
 # 2. Run SessionCompass
-pnpm run session:compass
+ppnpm session:compass
 
 # Expected: Low-priority tasks deferred automatically
 
@@ -522,7 +522,7 @@ pnpm run session:compass
 ### Test 4: Complete Workflow
 ```bash
 # 1. Start with pending tasks
-pnpm run session:compass
+ppnpm session:compass
 # → Shows task priorities
 
 # 2. Complete a task (TodoWrite status: completed)
@@ -564,7 +564,7 @@ async selectOptimalMCP(task: Task): Promise<MCPServer> {
 **Implementation**:
 ```bash
 # Start daemon
-pnpm run daemon:start
+ppnpm daemon:start
 
 # Daemon watches for:
 # - File edits → Activate relevant agents

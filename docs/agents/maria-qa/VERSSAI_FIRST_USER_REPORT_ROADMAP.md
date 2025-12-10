@@ -118,9 +118,9 @@ versatil --help
 ```
 
 **Native Commands Available** (`.claude/commands/framework/`):
-- `/framework:doctor` - Comprehensive health audit (pnpm run doctor)
+- `/framework:doctor` - Comprehensive health audit (ppnpm doctor)
 - Parallel execution - Auto-enabled in daemon (Rule 1, no command needed)
-- Stress testing - Maria-QA automation (pnpm run test:stress)
+- Stress testing - Maria-QA automation (pppnpm test:stress)
 - `/framework:validate` - Quick validation check
 
 **Implementation Status**:
@@ -255,7 +255,7 @@ quality_gates:
   - `versatil-sdlc` (problematic - points to `dist/index-enhanced.js`)
   - `versatil-mcp` (MCP server)
   - `versatil-update`, `versatil-rollback`, `versatil-config`
-- After `npm install -g`, `versatil-sdlc` wasn't in PATH
+- After `pnpm add -g`, `versatil-sdlc` wasn't in PATH
 - No installation verification command
 
 **User Impact**:

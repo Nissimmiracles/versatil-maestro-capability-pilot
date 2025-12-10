@@ -197,7 +197,7 @@ CAG_ENABLED=true
 ### 2. Build Project
 
 ```bash
-pnpm run build
+ppnpm build
 ```
 
 ### 3. Verify Installation
@@ -242,7 +242,7 @@ console.log('Total Savings:', metrics.totalCostSavings);
 ### Dashboard Integration
 
 ```bash
-pnpm run dashboard
+ppnpm dashboard
 ```
 
 Look for **CAG Performance** section:

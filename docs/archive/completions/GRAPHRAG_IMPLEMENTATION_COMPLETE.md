@@ -60,7 +60,7 @@ GraphRAG Knowledge Graph Statistics:
 
 ## 🔍 Query Performance
 
-### Test Results (pnpm run rag:test:graph)
+### Test Results (ppnpm rag:test:graph)
 
 ```
 Query: "react components and UI"
@@ -184,7 +184,7 @@ Agent filter: marcus-backend
 
 ```bash
 # Migrate existing patterns to GraphRAG
-pnpm run rag:migrate:graph
+ppnpm rag:migrate:graph
 
 # Output:
 # ✓ Migrated: 21/21 patterns
@@ -196,7 +196,7 @@ pnpm run rag:migrate:graph
 
 ```bash
 # Test GraphRAG queries
-pnpm run rag:test:graph
+ppnpm rag:test:graph
 
 # Output:
 # ✓ Found 2 results for "react components and UI"

@@ -509,9 +509,9 @@ Stores:
 **Cause**: GraphRAG store not initialized or empty
 
 **Solution**:
-1. Check GraphRAG setup: `pnpm run graphrag:status`
+1. Check GraphRAG setup: `ppnpm graphrag:status`
 2. Fallback to Vector store automatically
-3. Seed initial data from git history: `pnpm run graphrag:seed`
+3. Seed initial data from git history: `ppnpm graphrag:seed`
 4. Verify network connectivity if using cloud GraphRAG
 
 ---
@@ -548,7 +548,7 @@ phases:
 Seed GraphRAG with past features:
 
 ```bash
-pnpm run graphrag:seed -- --from-date=2024-01-01 --repo=.
+ppnpm graphrag:seed -- --from-date=2024-01-01 --repo=.
 ```
 
 Analyzes:
@@ -562,7 +562,7 @@ Analyzes:
 Export todos to Jira/Linear/GitHub Issues:
 
 ```bash
-pnpm run todos:export -- --format=jira --sprint=current
+ppnpm todos:export -- --format=jira --sprint=current
 ```
 
 ---
@@ -579,7 +579,7 @@ A: Best for repeated patterns (CRUD, auth, dashboards). Unique features benefit 
 A: Yes, Vector store fallback works. GraphRAG preferred for offline use and no API quota.
 
 **Q: How do I export historical data?**
-A: `pnpm run rag:export -- --format=json --output=history.json`
+A: `ppnpm rag:export -- --format=json --output=history.json`
 
 **Q: Does /learn run automatically?**
 A: Not yet - manual after each feature. Automatic codification coming in v6.7.0.

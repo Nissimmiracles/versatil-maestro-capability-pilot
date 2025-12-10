@@ -55,7 +55,7 @@ The setup script will create the necessary tables and indexes:
 
 ```bash
 # Run automated setup (reads credentials from .env)
-pnpm run rag:setup
+ppnpm rag:setup
 ```
 
 **What this creates**:
@@ -76,7 +76,7 @@ Migrate your 20 existing patterns from local JSON to Supabase:
 
 ```bash
 # Run migration script
-pnpm run rag:migrate
+ppnpm rag:migrate
 
 # Expected output:
 # 🔄 Migrating 20 patterns from local storage to Supabase...
@@ -98,7 +98,7 @@ Verify everything works:
 
 ```bash
 # Test Supabase connection and vector search
-pnpm run rag:test
+ppnpm rag:test
 
 # Expected output:
 # 🔍 Testing Supabase RAG...

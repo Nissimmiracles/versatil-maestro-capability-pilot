@@ -206,9 +206,9 @@ Phase 2 of the Gap Remediation Roadmap is **COMPLETE**. All 13 high-priority gap
 **Lines**: Verified operational
 
 #### Commands Working
-- `npm run context:stats` - Dashboard with charts
-- `npm run context:report` - Markdown report
-- `npm run context:cleanup` - Remove old stats
+- `pnpm context:stats` - Dashboard with charts
+- `pnpm context:report` - Markdown report
+- `pnpm context:cleanup` - Remove old stats
 
 **Features**:
 - Tracks context clear events (timestamp, tokens, tools)

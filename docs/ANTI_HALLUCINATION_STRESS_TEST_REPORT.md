@@ -186,25 +186,25 @@ Comprehensive stress test suite created to validate the anti-hallucination syste
 
 ### Run Complete Suite
 ```bash
-pnpm run test:stress -- anti-hallucination-agents.stress.test.ts
+pppnpm test:stress -- anti-hallucination-agents.stress.test.ts
 ```
 
 ### Run Individual Tests
 ```bash
 # Test 1: Claim Extraction
-pnpm run test:stress -- -t "Verify 30 synthetic claims"
+pppnpm test:stress -- -t "Verify 30 synthetic claims"
 
 # Test 2: Framework Risk Detection
-pnpm run test:stress -- -t "Detect risk scores for 25 frameworks"
+pppnpm test:stress -- -t "Detect risk scores for 25 frameworks"
 
 # Test 3: CoVe Accuracy
-pnpm run test:stress -- -t "Verify 20 complex multi-part claims"
+pppnpm test:stress -- -t "Verify 20 complex multi-part claims"
 
 # Test 4: High-Load Parallel
-pnpm run test:stress -- -t "Process 100 claims in parallel"
+pppnpm test:stress -- -t "Process 100 claims in parallel"
 
 # Test 5: Hallucination Detection
-pnpm run test:stress -- -t "Detect 30 intentional hallucinations"
+pppnpm test:stress -- -t "Detect 30 intentional hallucinations"
 ```
 
 ### View Proof Log

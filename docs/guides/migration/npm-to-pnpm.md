@@ -22,7 +22,7 @@ Complete guide for migrating from npm to pnpm in VERSATIL v7.16+
 
 ```bash
 # Via npm (recommended)
-npm install -g pnpm@10.17.0
+pnpm add -g pnpm@10.17.0
 
 # Via Homebrew (macOS)
 brew install pnpm
@@ -73,7 +73,7 @@ npm cache clean --force
 
 ```bash
 # Install dependencies
-pnpm install
+ppnpm install
 
 # This creates:
 # - pnpm-lock.yaml (new lockfile)
@@ -127,25 +127,25 @@ But update documentation to use `pnpm`:
 
 ```markdown
 # Old
-npm install
-npm run build
+pnpm install
+pnpm build
 
 # New
-pnpm install
-pnpm run build
+ppnpm install
+ppnpm build
 ```
 
 ### Step 6: Verify Build
 
 ```bash
 # Build the project
-pnpm run build
+ppnpm build
 
 # Run tests
-pnpm test
+ppnpm test
 
 # Check for issues
-pnpm audit
+ppnpm audit
 ```
 
 ---
@@ -294,7 +294,7 @@ project/
 
 # Old (npm)
 - name: Install dependencies
-  run: npm ci
+  run: pnpm install --frozen-lockfile
 
 # New (pnpm)
 - name: Setup pnpm
@@ -303,7 +303,7 @@ project/
     version: 10.17.0
 
 - name: Install dependencies
-  run: pnpm install --frozen-lockfile
+  run: ppnpm install --frozen-lockfile
 ```
 
 ### GitLab CI
@@ -313,13 +313,13 @@ project/
 
 # Old
 before_script:
-  - npm ci
+  - pnpm install --frozen-lockfile
 
 # New
 before_script:
   - corepack enable
   - corepack prepare pnpm@10.17.0 --activate
-  - pnpm install --frozen-lockfile
+  - ppnpm install --frozen-lockfile
 ```
 
 ### Docker
@@ -328,13 +328,13 @@ before_script:
 # Old
 FROM node:20
 COPY package*.json ./
-RUN npm ci --only=production
+RUN pnpm install --frozen-lockfile --only=production
 
 # New
 FROM node:20
 RUN corepack enable && corepack prepare pnpm@10.17.0 --activate
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod
+RUN ppnpm install --frozen-lockfile --prod
 ```
 
 ---
@@ -376,9 +376,9 @@ After (pnpm):
 
 After migration, verify:
 
-- [ ] `pnpm install` completes successfully
-- [ ] `pnpm run build` works
-- [ ] `pnpm test` passes all tests
+- [ ] `ppnpm install` completes successfully
+- [ ] `ppnpm build` works
+- [ ] `ppnpm test` passes all tests
 - [ ] CI/CD pipeline updated
 - [ ] Team notified and onboarded
 - [ ] Documentation updated (README, CONTRIBUTING, etc.)
@@ -403,26 +403,26 @@ We've migrated to pnpm for 2-3x faster installs and better disk usage.
 ### Quick Start
 
 1. Install pnpm globally:
-   npm install -g pnpm@10.17.0
+   pnpm add -g pnpm@10.17.0
 
 2. Remove old npm files:
    rm -rf node_modules package-lock.json
 
 3. Install dependencies:
-   pnpm install
+   ppnpm install
 
 4. Use pnpm for all commands:
-   pnpm run build
-   pnpm test
+   ppnpm build
+   ppnpm test
    pnpm add <package>
 
 ### Cheat Sheet
 
 | npm | pnpm |
 |-----|------|
-| npm install | pnpm install |
-| npm run build | pnpm run build |
-| npm test | pnpm test |
+| pnpm install | ppnpm install |
+| pnpm build | ppnpm build |
+| pnpm test | ppnpm test |
 | npm add <pkg> | pnpm add <pkg> |
 | npm remove <pkg> | pnpm remove <pkg> |
 | npx <cmd> | pnpm exec <cmd> |
@@ -443,7 +443,7 @@ rm -rf node_modules
 cp package-lock.json.backup package-lock.json
 
 # 3. Reinstall with npm
-npm install
+pnpm install
 
 # 4. Remove packageManager field from package.json
 # (or set to "npm@10.0.0")

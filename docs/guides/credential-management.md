@@ -386,7 +386,7 @@ versatil credentials test
 4. Copy base URL and API key
 
 **Option 2: Self-hosted**
-1. Install n8n: `npm install -g n8n`
+1. Install n8n: `pnpm add -g n8n`
 2. Run: `n8n start`
 3. Access at `http://localhost:5678`
 4. Go to **Settings** → **API** → **Create API Key**

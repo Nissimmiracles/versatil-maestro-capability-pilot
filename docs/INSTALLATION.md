@@ -14,7 +14,7 @@ Choose your installation path based on how you want to use VERSATIL:
 **Requirements**: Node.js 18+
 
 **Why npx?**
-- ⚡ Fast: 2-3 min vs 10-15 min npm install
+- ⚡ Fast: 2-3 min vs 10-15 min pnpm install
 - ✅ Simple: One command, no global install
 - 🔒 Clean: No dependencies in your project
 - 🚀 Always latest: Pin to specific versions
@@ -159,13 +159,13 @@ cd versatil-sdlc-framework
 ### Step 2: Install Dependencies
 
 ```bash
-pnpm install
-pnpm run build
+ppnpm install
+ppnpm build
 ```
 
 **Time**: 10-15 minutes (downloads ~1-2GB dependencies)
 
-**Note**: The framework uses pnpm@10.17.0 for development. Install pnpm: `npm install -g pnpm`
+**Note**: The framework uses pnpm@10.17.0 for development. Install pnpm: `pnpm add -g pnpm`
 
 ### Step 3: Verify Build
 
@@ -186,7 +186,7 @@ For global CLI tool access (not typical for MCP use):
 ### Prerequisites
 
 - **Node.js** 18.0.0+ ([download](https://nodejs.org))
-- **pnpm** 10.17.0+ (`npm install -g pnpm`)
+- **pnpm** 10.17.0+ (`pnpm add -g pnpm`)
 - **Git** (for cloning repository)
 
 ### Step 1: Clone and Install
@@ -197,8 +197,8 @@ git clone https://github.com/Nissimmiracles/versatil-sdlc-framework.git
 cd versatil-sdlc-framework
 
 # Install dependencies and build
-pnpm install
-pnpm run build
+ppnpm install
+ppnpm build
 
 # Link globally
 npm link
@@ -324,7 +324,7 @@ After installation, verify these items:
 
 #### 1. Framework Health
 ```bash
-pnpm run doctor  # (Cursor path)
+ppnpm doctor  # (Cursor path)
 versatil doctor  # (CLI path)
 
 # Should show:
@@ -335,13 +335,13 @@ versatil doctor  # (CLI path)
 
 #### 2. Build Status
 ```bash
-pnpm run build  # (Cursor path)
+ppnpm build  # (Cursor path)
 # No TypeScript errors
 ```
 
 #### 3. Test Suite
 ```bash
-pnpm test  # (Cursor path)
+ppnpm test  # (Cursor path)
 versatil test  # (CLI path)
 
 # All tests should pass
@@ -372,7 +372,7 @@ tail -f ~/.versatil/logs/agent-activation.log
 
 ## Troubleshooting
 
-### Issue: npm install fails
+### Issue: pnpm install fails
 
 **Symptoms**: Package installation errors, network timeouts
 
@@ -385,7 +385,7 @@ npm cache clean --force
 rm -rf node_modules package-lock.json
 
 # Reinstall
-npm install --verbose
+pnpm install --verbose
 ```
 
 ---
@@ -436,12 +436,12 @@ versatil-daemon restart
 **Solution**:
 ```bash
 # Install Playwright browsers
-pnpm run playwright:install
+ppnpm playwright:install
 
 # Run tests individually
-pnpm run test:unit           # Should pass
-pnpm run test:integration    # May require setup
-pnpm run test:e2e           # Requires Playwright
+pppnpm test:unit           # Should pass
+pppnpm test:integration    # May require setup
+pppnpm test:e2e           # Requires Playwright
 ```
 
 ---
@@ -513,7 +513,7 @@ pnpm run test:e2e           # Requires Playwright
 - [ ] Repository cloned or npm package installed
 - [ ] Dependencies installed successfully
 - [ ] Build completed without errors
-- [ ] Health check passes (`pnpm run doctor` or `versatil doctor`)
+- [ ] Health check passes (`ppnpm doctor` or `versatil doctor`)
 - [ ] MCP server running <500ms (Cursor path only)
 - [ ] Agents can be invoked manually
 - [ ] Tests pass

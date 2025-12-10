@@ -196,7 +196,7 @@ Expected_Feedback:
 - ✅ Learning codification: Pattern extraction + dual storage
 - ✅ Hooks: Call real implementations (async, non-blocking)
 - ✅ 18 agents: All core agents + sub-agents supported
-- ✅ CLI tools: `activate-agent`, `codify-learnings` available globally (after npm install)
+- ✅ CLI tools: `activate-agent`, `codify-learnings` available globally (after pnpm install)
 
 ### Expected Compounding Effect (After Full Implementation)
 - **First feature**: Manual coding (baseline time)

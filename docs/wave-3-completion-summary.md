@@ -132,7 +132,7 @@ async provideFeedback(taskId, feedback): Promise<void>
 
 ### TypeScript Compilation
 ```bash
-✅ pnpm run build
+✅ ppnpm build
    No type errors
    All imports resolved
    Build time: ~3 seconds
@@ -161,12 +161,12 @@ Individual test files execute successfully:
 Run tests in smaller batches or categories:
 ```bash
 # By module
-pnpm test src/mcp/mcp-health-monitor.test.ts
-pnpm test src/mcp/mcp-task-executor.test.ts
+ppnpm test src/mcp/mcp-health-monitor.test.ts
+ppnpm test src/mcp/mcp-task-executor.test.ts
 
 # By category
-pnpm test tests/integration/
-pnpm test src/agents/opera/
+ppnpm test tests/integration/
+ppnpm test src/agents/opera/
 ```
 
 ---

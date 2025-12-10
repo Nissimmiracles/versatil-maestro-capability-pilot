@@ -455,7 +455,7 @@ Add health check to your CI/CD pipeline:
 
 1. **Pre-install the package**:
    ```bash
-   npm install -g @jzone-mcp/antd-components-mcp
+   pnpm add -g @jzone-mcp/antd-components-mcp
    ```
 
 2. **Increase timeout** (see Configuration section above)

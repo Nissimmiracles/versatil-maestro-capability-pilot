@@ -157,7 +157,7 @@ After implementing each agent's methods:
 
 ```bash
 # Run tests for specific agent
-pnpm test src/agents/opera/marcus-backend/sub-agents/marcus-rails.test.ts
+ppnpm test src/agents/opera/marcus-backend/sub-agents/marcus-rails.test.ts
 
 # Should see failures decrease
 ```
@@ -285,7 +285,7 @@ Divide work across team members:
 1. **Test Individual Methods**
    ```bash
    # Run single test
-   pnpm test -t "should detect ActiveRecord models"
+   ppnpm test -t "should detect ActiveRecord models"
    ```
 
 2. **Iterative Development**
@@ -375,7 +375,7 @@ Track progress daily:
 
 ```bash
 # Run tests and count failures
-pnpm test 2>&1 | grep "Tests.*failed" | tee -a progress.log
+ppnpm test 2>&1 | grep "Tests.*failed" | tee -a progress.log
 ```
 
 **Target Progress:**

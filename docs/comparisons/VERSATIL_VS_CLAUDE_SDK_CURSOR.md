@@ -285,7 +285,7 @@ if (coverage < 80%) {
 
 **2. Security Scanning (Marcus-Backend)**:
 - **OWASP Top 10 compliance** (automatic scan)
-- **Dependency vulnerabilities** (pnpm audit)
+- **Dependency vulnerabilities** (ppnpm audit)
 - **SQL injection protection** (parameterized queries)
 - **XSS/CSRF prevention** (security headers)
 - **API rate limiting** (DDoS protection)
@@ -901,4 +901,4 @@ Do I work in a TEAM?
 
 VERSATIL doesn't replace Claude SDK + Cursor - it **supercharges them** with enterprise-grade capabilities for **FREE**.
 
-**Try it**: `npm install @versatil/sdlc-framework`
+**Try it**: `pnpm install @versatil/sdlc-framework`

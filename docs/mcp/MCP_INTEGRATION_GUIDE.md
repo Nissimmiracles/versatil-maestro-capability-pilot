@@ -52,22 +52,22 @@ VERSATIL integrates **12 MCP servers** across 5 categories (including **Pattern 
 7. **@google-cloud/vertexai** (v1.10.0)
    - Google Cloud AI/ML services
    - **Used by**: Dr.AI-ML
-   - **Install**: `npm install @google-cloud/vertexai`
+   - **Install**: `pnpm install @google-cloud/vertexai`
 
 8. **@sentry/node** (v8.0.0)
    - Error monitoring and tracking
    - **Used by**: Marcus-Backend
-   - **Install**: `npm install @sentry/node`
+   - **Install**: `pnpm install @sentry/node`
 
 9. **n8n** (v1.0.0)
    - Workflow automation
    - **Used by**: Sarah-PM
-   - **Install**: `npm install n8n`
+   - **Install**: `pnpm install n8n`
 
 10. **semgrep** (v1.0.0)
     - Security scanning and code analysis
     - **Used by**: Marcus-Backend
-    - **Install**: `npm install semgrep`
+    - **Install**: `pnpm install semgrep`
 
 ### Community MCPs (External)
 11. **@jzone-mcp/antd-components-mcp**
@@ -201,7 +201,7 @@ const websocketSetup = await setupWebSocket({
   rooms: true
 });
 console.log(websocketSetup.next_steps);
-// Output: ['Install: npm install socket.io socket.io-client', 'Create src/websocket/socket-server.ts', ...]
+// Output: ['Install: pnpm install socket.io socket.io-client', 'Create src/websocket/socket-server.ts', ...]
 
 // Quick setup for Stripe/PayPal payments
 const paymentSetup = await setupPayment({
@@ -344,7 +344,7 @@ await oliverMCP.websocketSetup({ port: 3001, auth: true });
 ### Run Comprehensive Test Suite
 
 ```bash
-pnpm run test:mcp-integration
+pppnpm test:mcp-integration
 ```
 
 **Output**:

@@ -11,9 +11,9 @@
 # - Displays live debugging dashboard
 #
 # Usage:
-#   npm run watch-and-test              # Watch all frontend files
-#   npm run watch-and-test -- src/      # Watch specific directory
-#   npm run watch-and-test -- --help    # Show help
+#   pnpm watch-and-test              # Watch all frontend files
+#   pnpm watch-and-test -- src/      # Watch specific directory
+#   pnpm watch-and-test -- --help    # Show help
 #
 # @version 1.0.0
 # @since v7.14.0
@@ -41,9 +41,9 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
   echo "Watch and Test Script - Continuous Frontend Testing"
   echo ""
   echo "Usage:"
-  echo "  npm run watch-and-test              # Watch all frontend files"
-  echo "  npm run watch-and-test -- src/      # Watch specific directory"
-  echo "  npm run watch-and-test -- --help    # Show this help"
+  echo "  pnpm watch-and-test              # Watch all frontend files"
+  echo "  pnpm watch-and-test -- src/      # Watch specific directory"
+  echo "  pnpm watch-and-test -- --help    # Show this help"
   echo ""
   echo "Environment Variables:"
   echo "  BROWSER_ERROR_CAPTURE=true|false    # Enable real-time error capture"
@@ -109,7 +109,7 @@ check_dev_server() {
   else
     echo -e "${YELLOW}⚠️  Dev server not running${NC}"
     echo -e "${YELLOW}   Starting dev server...${NC}"
-    npm run dev &
+    pnpm dev &
     DEV_SERVER_PID=$!
 
     # Wait for server to start
@@ -160,7 +160,7 @@ run_browser_check() {
   # Run E2E tests
   if [ "$TEST_ON_CHANGE" = "true" ]; then
     echo -e "${YELLOW}⏳ Running E2E tests...${NC}"
-    npm run test:e2e -- --project=context-validation --headed=false --reporter=line
+    pnpm test:e2e -- --project=context-validation --headed=false --reporter=line
 
     if [ $? -eq 0 ]; then
       echo -e "${GREEN}✅ All tests passed${NC}"

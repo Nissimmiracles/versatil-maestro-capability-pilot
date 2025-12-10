@@ -346,7 +346,7 @@ versatil-credentials setup
 # Paste credentials when prompted
 
 # 3. Verify
-pnpm run mcp:health
+ppnpm mcp:health
 
 # 4. Backup and delete global
 mv ~/.versatil/.env ~/.versatil/.env.backup

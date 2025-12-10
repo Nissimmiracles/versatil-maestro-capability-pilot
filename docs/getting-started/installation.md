@@ -26,7 +26,7 @@ Complete installation and setup guide for the VERSATIL SDLC Framework v6.4.0.
 
 ```bash
 # Install globally for system-wide access
-npm install -g versatil-sdlc-framework
+pnpm add -g versatil-sdlc-framework
 
 # Verify installation
 versatil --version
@@ -48,16 +48,16 @@ git clone https://github.com/versatil-platform/versatil-sdlc-framework.git
 cd versatil-sdlc-framework
 
 # Install dependencies
-npm install
+pnpm install
 
 # Build the framework
-pnpm run build
+ppnpm build
 
 # Link for global usage (optional)
 npm link
 
 # Test installation
-pnpm test
+ppnpm test
 ```
 
 ### Method 3: NPX (No Installation)
@@ -319,7 +319,7 @@ versatil test mcp --tool=chrome
 ```bash
 # Solution: Reinstall globally
 npm uninstall -g versatil-sdlc-framework
-npm install -g versatil-sdlc-framework
+pnpm add -g versatil-sdlc-framework
 ```
 
 **Issue**: Agents not auto-activating

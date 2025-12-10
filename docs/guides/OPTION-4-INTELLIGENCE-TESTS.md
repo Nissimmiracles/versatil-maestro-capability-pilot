@@ -724,7 +724,7 @@ git commit -m "Add config"
 **Test 43: Detect outdated dependencies**
 ```bash
 # Add vulnerable dependency
-npm install express@4.16.0  # Old version with known CVEs
+pnpm install express@4.16.0  # Old version with known CVEs
 
 # Try to commit package-lock.json
 git add package-lock.json
@@ -734,7 +734,7 @@ git commit -m "Add express"
 # Expected output:
 # 🚨 Security Gate: FAILED
 # Vulnerability: CVE-2022-24999 (express@4.16.0)
-# Fix: npm install express@latest
+# Fix: pnpm install express@latest
 ```
 
 **Test 44: OWASP Top 10 validation**
@@ -797,10 +797,10 @@ npx @versatil/sdlc-framework quality perf-test \
 **Test 47: Bundle size validation**
 ```bash
 # Add large dependency
-npm install moment  # ~70KB
+pnpm install moment  # ~70KB
 
 # Build and check bundle
-pnpm run build
+ppnpm build
 npx @versatil/sdlc-framework quality bundle-size \
   --max-size 500
 

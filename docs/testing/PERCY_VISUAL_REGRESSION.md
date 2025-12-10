@@ -86,7 +86,7 @@ Percy dependencies are already in `package.json`:
 ```
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 4. Percy Configuration
@@ -236,16 +236,16 @@ test('Dashboard - Mobile Menu', async ({ page }) => {
 
 ```bash
 # Run all Percy visual tests
-pnpm run test:visual:percy
+pppnpm test:visual:percy
 
 # Run component tests only
-pnpm run test:visual:percy:components
+pppnpm test:visual:percy:components
 
 # Run responsive tests only
-pnpm run test:visual:percy:responsive
+pppnpm test:visual:percy:responsive
 
 # Dry run (no snapshots uploaded)
-pnpm run test:visual:percy:dry-run
+pppnpm test:visual:percy:dry-run
 ```
 
 ### First Run (Baseline Creation)
@@ -255,7 +255,7 @@ pnpm run test:visual:percy:dry-run
 export PERCY_TOKEN=your_token_here
 
 # Run tests to create baseline
-pnpm run test:visual:percy
+pppnpm test:visual:percy
 ```
 
 **Output**:
@@ -270,7 +270,7 @@ pnpm run test:visual:percy
 ### Subsequent Runs (Comparison)
 
 ```bash
-pnpm run test:visual:percy
+pppnpm test:visual:percy
 ```
 
 Percy will:
@@ -302,7 +302,7 @@ visual-regression:
         node-version: '20'
 
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: ppnpm install --frozen-lockfile
 
     - name: Install Playwright browsers
       run: npx playwright install --with-deps chromium
@@ -312,7 +312,7 @@ visual-regression:
         PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
         PERCY_BRANCH: ${{ github.head_ref || github.ref_name }}
         PERCY_PULL_REQUEST: ${{ github.event.pull_request.number }}
-      run: pnpm run test:visual:percy
+      run: pppnpm test:visual:percy
 ```
 
 ### GitHub Secrets Setup
@@ -373,7 +373,7 @@ async activateWithVisualTesting(context: AgentActivationContext) {
       type: 'visual-regression',
       message: 'UI component changed. Run Percy visual regression.',
       priority: 'medium',
-      action: 'pnpm run test:visual:percy:components'
+      action: 'pppnpm test:visual:percy:components'
     });
   }
 
@@ -392,10 +392,10 @@ Maria-QA triggers Percy when:
 
 ```bash
 # Trigger Percy for specific component
-pnpm run test:visual:percy:components
+pppnpm test:visual:percy:components
 
 # Trigger Percy for responsive layouts
-pnpm run test:visual:percy:responsive
+pppnpm test:visual:percy:responsive
 ```
 
 ---
@@ -706,7 +706,7 @@ steps:
     env:
       PERCY_PARALLEL_TOTAL: 4
       PERCY_PARALLEL_NONCE: ${{ github.run_id }}
-    run: pnpm run test:visual:percy -- --shard=${{ matrix.shard }}/4
+    run: pppnpm test:visual:percy -- --shard=${{ matrix.shard }}/4
 ```
 
 ### Custom Widths
@@ -767,7 +767,7 @@ await percy.snapshotThemes('Dashboard');
 Percy includes basic accessibility checks (contrast, font size).
 
 For comprehensive accessibility testing, use:
-- **WCAG 2.1 AA tests**: `pnpm run test:accessibility`
+- **WCAG 2.1 AA tests**: `pppnpm test:accessibility`
 - **axe-core integration**: `tests/accessibility/wcag-2.1-aa-enforcement.a11y.spec.ts`
 
 ---

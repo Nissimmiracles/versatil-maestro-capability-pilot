@@ -33,7 +33,7 @@ All MCP integrations are **production-ready**:
 
 ### 1. Install VERSATIL Framework
 ```bash
-npm install -g versatil-sdlc-framework
+pnpm add -g versatil-sdlc-framework
 ```
 
 ### 2. Configure Claude Desktop

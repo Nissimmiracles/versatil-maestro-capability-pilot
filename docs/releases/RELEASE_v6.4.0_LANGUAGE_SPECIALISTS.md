@@ -425,10 +425,10 @@ Each sub-agent includes:
 **Quick Start**:
 ```bash
 # 1. Install VERSATIL OPERA v6.4.0
-npm install -g versatil-sdlc-framework@6.4.0
+pnpm add -g versatil-sdlc-framework@6.4.0
 
 # 2. Initialize project
-pnpm run init  # Auto-detects tech stack
+ppnpm init  # Auto-detects tech stack
 
 # 3. Use language-specific agents
 /marcus-node-backend "Review my Express routes"

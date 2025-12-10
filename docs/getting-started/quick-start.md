@@ -23,14 +23,14 @@ By the end of this guide, you'll have:
 
 ### Option A: NPM (Recommended)
 ```bash
-npm install -g versatil-sdlc-framework@latest
+pnpm add -g versatil-sdlc-framework@latest
 ```
 
 ### Option B: From Source
 ```bash
 git clone https://github.com/Nissimmiracles/versatil-sdlc-framework.git
 cd versatil-sdlc-framework
-npm install && pnpm run build
+pnpm install && ppnpm build
 ```
 
 **✓ Installation complete!** You now have access to the `versatil` command globally.

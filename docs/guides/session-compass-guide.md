@@ -57,16 +57,16 @@ Session Compass is the **Session Opening Hook** component of the VERSATIL Pulse 
 
 ```bash
 # Brief summary (recommended for first test)
-pnpm run session:compass:brief
+ppnpm session:compass:brief
 
 # Full overview
-pnpm run session:compass
+ppnpm session:compass
 
 # JSON output
-pnpm run session:compass -- --json
+ppnpm session:compass -- --json
 
 # Watch mode (refresh every 60s)
-pnpm run session:compass:watch
+ppnpm session:compass:watch
 ```
 
 ### 2. Add to Cursor Hooks (Automatic on Project Open)
@@ -79,7 +79,7 @@ pnpm run session:compass:watch
   "hooks": {
     "afterWorkspaceOpen": [
       {
-        "command": "pnpm run session:compass:brief",
+        "command": "ppnpm session:compass:brief",
         "description": "Show session overview on project open"
       }
     ]
@@ -284,13 +284,13 @@ Phases:
 
 ```bash
 # Full overview (default)
-pnpm run session:compass
+ppnpm session:compass
 
 # Brief summary (recommended for quick checks)
-pnpm run session:compass:brief
+ppnpm session:compass:brief
 
 # Watch mode (refresh every 60 seconds)
-pnpm run session:compass:watch
+ppnpm session:compass:watch
 ```
 
 ### Direct Script Execution
@@ -442,7 +442,7 @@ node scripts/session-compass.cjs --help
   "hooks": {
     "afterWorkspaceOpen": [
       {
-        "command": "pnpm run session:compass:brief",
+        "command": "ppnpm session:compass:brief",
         "description": "Show session overview on project open"
       }
     ]
@@ -472,13 +472,13 @@ Shows full session overview.
 
 ```bash
 # After opening terminal
-pnpm run session:compass:brief
+ppnpm session:compass:brief
 ```
 
 **Add alias** (optional):
 ```bash
 # In ~/.bashrc or ~/.zshrc
-alias compass="pnpm run session:compass:brief"
+alias compass="ppnpm session:compass:brief"
 ```
 
 ### 4. Watch Mode (Background Monitoring)
@@ -487,7 +487,7 @@ alias compass="pnpm run session:compass:brief"
 
 ```bash
 # Start watch mode
-pnpm run session:compass:watch
+ppnpm session:compass:watch
 
 # Opens continuous dashboard refreshing every 60s
 # Press Ctrl+C to stop
@@ -576,7 +576,7 @@ VERSATIL SDLC FW/
 - `DiagramGenerator` - Gantt charts
 
 **Build**:
-- TypeScript compilation: `pnpm run build`
+- TypeScript compilation: `ppnpm build`
 - Fallback to mock data if not built
 
 ---
@@ -589,12 +589,12 @@ Session Compass works **without building TypeScript** by using mock data:
 
 ```bash
 # No build - uses mock data
-pnpm run session:compass:brief
-# Output: (Using mock data - run 'pnpm run build' for real-time data)
+ppnpm session:compass:brief
+# Output: (Using mock data - run 'ppnpm build' for real-time data)
 
 # After build - uses real data
-pnpm run build
-pnpm run session:compass:brief
+ppnpm build
+ppnpm session:compass:brief
 # Output: Real-time data from all 7 sources
 ```
 
@@ -642,7 +642,7 @@ setInterval(async () => {
 
 **Fix**:
 ```bash
-pnpm run build
+ppnpm build
 ```
 
 **Why**: SessionCompass is written in TypeScript but CLI script is CommonJS. Must compile first.
@@ -664,11 +664,11 @@ pnpm run build
 **Fix**:
 ```bash
 # Check if ContextSentinel is active
-pnpm run monitor
+ppnpm monitor
 
 # Restart framework
-pnpm run build
-pnpm run session:compass
+ppnpm build
+ppnpm session:compass
 ```
 
 ### Git Status Not Showing
@@ -867,9 +867,9 @@ console.log(summary);
 ## See Also
 
 - **VERSATIL Pulse Guide**: `docs/guides/usage-tracking-integration.md` (Phase 1)
-- **Session Summaries**: `pnpm run session:summary` (historical tracking)
-- **Context Stats**: `pnpm run context:stats` (context management)
-- **Monitoring Dashboard**: `pnpm run dashboard` (real-time framework health)
+- **Session Summaries**: `ppnpm session:summary` (historical tracking)
+- **Context Stats**: `ppnpm context:stats` (context management)
+- **Monitoring Dashboard**: `ppnpm dashboard` (real-time framework health)
 - **Claude Commands**: `.claude/commands/context.md` (/context command)
 
 ---

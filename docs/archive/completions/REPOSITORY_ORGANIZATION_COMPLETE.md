@@ -496,7 +496,7 @@ Check daemon log for: `⏰ Next repository analysis: YYYY-MM-DDTHH:MM:SS.SSSZ`
 
 ### Build Status
 ```bash
-pnpm run build
+ppnpm build
 # ✅ Success - No TypeScript errors
 ```
 

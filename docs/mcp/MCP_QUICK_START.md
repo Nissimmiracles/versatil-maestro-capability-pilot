@@ -25,7 +25,7 @@ Before starting, ensure you have:
 **Best for**: Most users, fastest setup
 
 ```bash
-pnpm run mcp:setup
+ppnpm mcp:setup
 ```
 
 Follow interactive prompts. **Time**: 15-30 minutes.
@@ -57,7 +57,7 @@ These 3 MCPs are **required** for core framework functionality.
    ```
 3. Validate:
    ```bash
-   pnpm run mcp:health -- --filter=github
+   ppnpm mcp:health -- --filter=github
    ```
 
 **Success Criteria**: ✅ GitHub MCP: Healthy (< 500ms)
@@ -73,7 +73,7 @@ These 3 MCPs are **required** for core framework functionality.
 **Setup**:
 1. Install Playwright browsers:
    ```bash
-   pnpm run playwright:install
+   ppnpm playwright:install
    ```
 2. Add to `~/.versatil/.env`:
    ```bash
@@ -83,7 +83,7 @@ These 3 MCPs are **required** for core framework functionality.
    ```
 3. Validate:
    ```bash
-   pnpm run mcp:health -- --filter=playwright
+   ppnpm mcp:health -- --filter=playwright
    ```
 
 **Success Criteria**: ✅ Playwright MCP: Healthy (< 1000ms)
@@ -107,11 +107,11 @@ These 3 MCPs are **required** for core framework functionality.
    ```
 4. Run migrations:
    ```bash
-   pnpm run migrate:vector-store
+   ppnpm migrate:vector-store
    ```
 5. Validate:
    ```bash
-   pnpm run mcp:health -- --filter=supabase
+   ppnpm mcp:health -- --filter=supabase
    ```
 
 **Success Criteria**: ✅ Supabase MCP: Healthy (< 500ms)
@@ -133,7 +133,7 @@ These MCPs significantly enhance framework capabilities.
 2. Already configured in `.cursor/mcp_config.json`
 3. Validate:
    ```bash
-   pnpm run mcp:health -- --filter=gitmcp
+   ppnpm mcp:health -- --filter=gitmcp
    ```
 
 **Success Criteria**: ✅ GitMCP: Healthy (< 200ms)
@@ -155,7 +155,7 @@ These MCPs significantly enhance framework capabilities.
    ```
 3. Validate:
    ```bash
-   pnpm run mcp:health -- --filter=semgrep
+   ppnpm mcp:health -- --filter=semgrep
    ```
 
 **Success Criteria**: ✅ Semgrep MCP: Healthy (< 2000ms)
@@ -180,7 +180,7 @@ These MCPs significantly enhance framework capabilities.
    ```
 4. Validate:
    ```bash
-   pnpm run mcp:health -- --filter=sentry
+   ppnpm mcp:health -- --filter=sentry
    ```
 
 **Success Criteria**: ✅ Sentry MCP: Healthy (< 1000ms)
@@ -192,7 +192,7 @@ These MCPs significantly enhance framework capabilities.
 Run comprehensive health check:
 
 ```bash
-pnpm run mcp:health
+ppnpm mcp:health
 ```
 
 **Expected Output**:
@@ -230,7 +230,7 @@ Verify MCPs work with OPERA agents:
 
 ```bash
 # Run E2E tests
-pnpm run test:e2e
+pppnpm test:e2e
 
 # Expected: Tests run in Chromium browser
 ```
@@ -239,7 +239,7 @@ pnpm run test:e2e
 
 ```bash
 # Security scan
-pnpm run security:scan
+ppnpm security:scan
 
 # Expected: Semgrep finds 0 high-severity issues
 ```
@@ -248,7 +248,7 @@ pnpm run security:scan
 
 ```bash
 # Query RAG memory
-pnpm run test:supabase
+pppnpm test:supabase
 
 # Expected: Vector search returns relevant code patterns
 ```
@@ -271,7 +271,7 @@ versatil-daemon status
 
 ```bash
 # Comprehensive health check
-pnpm run doctor
+ppnpm doctor
 
 # Expected: 100% health score
 ```
@@ -352,16 +352,16 @@ cat .cursor/mcp_config.json | jq '.mcpServers | keys'
 
 ```bash
 # Install Playwright browsers
-pnpm run playwright:install
+ppnpm playwright:install
 
 # Run Supabase migrations
-pnpm run migrate:vector-store
+ppnpm migrate:vector-store
 ```
 
 ### 5. Validate
 
 ```bash
-pnpm run mcp:health
+ppnpm mcp:health
 ```
 
 ---
@@ -372,10 +372,10 @@ After setup, you should have:
 
 - [ ] ✅ 3 critical MCPs healthy (GitHub, Playwright, Supabase)
 - [ ] ✅ 3 high-priority MCPs healthy (GitMCP, Semgrep, Sentry)
-- [ ] ✅ Framework health score ≥ 90% (`pnpm run doctor`)
+- [ ] ✅ Framework health score ≥ 90% (`ppnpm doctor`)
 - [ ] ✅ Proactive daemon running (`versatil-daemon status`)
-- [ ] ✅ Test suite passing (`pnpm run test:integration`)
-- [ ] ✅ Credentials isolated to `~/.versatil/.env` (`pnpm run validate:isolation`)
+- [ ] ✅ Test suite passing (`pppnpm test:integration`)
+- [ ] ✅ Credentials isolated to `~/.versatil/.env` (`ppnpm validate:isolation`)
 
 **Total setup time**: 30-48 minutes
 
@@ -415,11 +415,11 @@ Configure remaining MCPs as needed:
 
 ```bash
 # Install globally
-npm install -g @modelcontextprotocol/server-github
+pnpm add -g @modelcontextprotocol/server-github
 
 # Or clear cache and retry
 npm cache clean --force
-pnpm run mcp:setup
+ppnpm mcp:setup
 ```
 
 ### "Missing credentials"

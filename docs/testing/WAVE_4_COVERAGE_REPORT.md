@@ -124,7 +124,7 @@ Wave 4 implementation achieves **good coverage** across all core orchestration f
 1. Check if tests are in the test suite
 2. Verify test imports are correct
 3. Ensure test file naming matches Vitest patterns
-4. Run `pnpm test tests/integration/progressive-validation-integration.test.ts` to verify
+4. Run `ppnpm test tests/integration/progressive-validation-integration.test.ts` to verify
 
 ---
 
@@ -151,19 +151,19 @@ Wave 4 implementation achieves **good coverage** across all core orchestration f
 ### Run Wave 4 Tests Only
 ```bash
 # E2E Tests
-pnpm test tests/e2e/wave-execution-e2e.test.ts
+ppnpm test tests/e2e/wave-execution-e2e.test.ts
 
 # Integration Tests
-pnpm test tests/integration/wave-execution-integration.test.ts
+ppnpm test tests/integration/wave-execution-integration.test.ts
 
 # Both
-pnpm test tests/e2e/wave-execution-e2e.test.ts tests/integration/wave-execution-integration.test.ts
+ppnpm test tests/e2e/wave-execution-e2e.test.ts tests/integration/wave-execution-integration.test.ts
 ```
 
 ### Run Coverage for Wave 4
 ```bash
 # Full coverage report
-pnpm run test:coverage
+pppnpm test:coverage
 
 # Wave 4 specific (recommended)
 vitest run tests/e2e/wave-execution-e2e.test.ts tests/integration/wave-execution-integration.test.ts --coverage

@@ -185,7 +185,7 @@ await orchestrator.startWorkflow({
 
 **Run Tests**:
 ```bash
-pnpm test -- tests/workflows/every-workflow-orchestrator.test.ts
+ppnpm test -- tests/workflows/every-workflow-orchestrator.test.ts
 ```
 
 **Expected Output**:

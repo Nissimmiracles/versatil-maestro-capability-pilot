@@ -181,7 +181,7 @@ The hooks infrastructure is documented in CLAUDE.md:
 ## Acceptance Criteria
 
 ✅ All shell scripts executable (`chmod +x`)
-✅ Hooks config created on `npm install`
+✅ Hooks config created on `pnpm install`
 ✅ Isolation validation blocks violations
 ✅ Security checks prevent destructive operations
 ✅ Stop hook stores session learnings to RAG

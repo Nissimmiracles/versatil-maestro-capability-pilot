@@ -34,7 +34,7 @@ Metadata (~15 tokens) → SKILL.md (~500 tokens) → references (~2,000 tokens)
 git pull origin main
 
 # Install dependencies (if any new)
-npm install
+pnpm install
 
 # Verify version
 npx versatil --version
@@ -130,7 +130,7 @@ If issues arise, rollback is simple:
 ```bash
 # Rollback to v6.6.0
 git checkout v6.6.0
-npm install
+pnpm install
 
 # Or disable Skills temporarily
 mv .claude/skills .claude/skills.backup

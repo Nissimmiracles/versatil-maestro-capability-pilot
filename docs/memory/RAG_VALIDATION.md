@@ -174,13 +174,13 @@ describe('RAG Pattern Storage Tests', () => {
 
 ```bash
 # All storage tests
-pnpm run test:unit -- tests/memory/rag-pattern-storage.test.ts
+pppnpm test:unit -- tests/memory/rag-pattern-storage.test.ts
 
 # With coverage
-pnpm run test:coverage -- tests/memory/rag-pattern-storage.test.ts
+pppnpm test:coverage -- tests/memory/rag-pattern-storage.test.ts
 
 # Watch mode
-pnpm run test:watch -- tests/memory/rag-pattern-storage.test.ts
+pppnpm test:watch -- tests/memory/rag-pattern-storage.test.ts
 ```
 
 ### 2. Retrieval Tests
@@ -234,10 +234,10 @@ describe('RAG Pattern Retrieval Tests', () => {
 
 ```bash
 # All retrieval tests
-pnpm run test:unit -- tests/memory/rag-retrieval.test.ts
+pppnpm test:unit -- tests/memory/rag-retrieval.test.ts
 
 # Specific test suite
-pnpm run test:unit -- tests/memory/rag-retrieval.test.ts -t "Performance"
+pppnpm test:unit -- tests/memory/rag-retrieval.test.ts -t "Performance"
 ```
 
 ### 3. End-to-End Workflow Tests
@@ -295,10 +295,10 @@ Phase_9_Data_Integrity:
 
 ```bash
 # Full end-to-end suite
-pnpm run test:integration -- tests/integration/rag-pattern-storage-e2e.test.ts
+pppnpm test:integration -- tests/integration/rag-pattern-storage-e2e.test.ts
 
 # With verbose output
-pnpm run test:integration -- tests/integration/rag-pattern-storage-e2e.test.ts --verbose
+pppnpm test:integration -- tests/integration/rag-pattern-storage-e2e.test.ts --verbose
 ```
 
 ### Test Coverage Goals
@@ -516,11 +516,11 @@ fi
 
 ```bash
 # Run performance benchmarks
-pnpm run test:unit -- tests/memory/rag-pattern-storage.test.ts -t "Performance"
-pnpm run test:unit -- tests/memory/rag-retrieval.test.ts -t "Performance"
+pppnpm test:unit -- tests/memory/rag-pattern-storage.test.ts -t "Performance"
+pppnpm test:unit -- tests/memory/rag-retrieval.test.ts -t "Performance"
 
 # With detailed output
-pnpm run test:unit -- tests/memory/rag-retrieval.test.ts -t "p95" --verbose
+pppnpm test:unit -- tests/memory/rag-retrieval.test.ts -t "p95" --verbose
 ```
 
 ### Scalability
@@ -734,11 +734,11 @@ test-rag:
       with:
         node-version: '18'
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: ppnpm install --frozen-lockfile
     - name: Run RAG tests
       run: |
-        pnpm run test:unit -- tests/memory/rag-pattern-storage.test.ts
-        pnpm run test:unit -- tests/memory/rag-retrieval.test.ts
+        pppnpm test:unit -- tests/memory/rag-pattern-storage.test.ts
+        pppnpm test:unit -- tests/memory/rag-retrieval.test.ts
     - name: Validate RAG integrity
       run: node scripts/validate-rag-integrity.cjs --report=rag-integrity.json
     - name: Upload coverage

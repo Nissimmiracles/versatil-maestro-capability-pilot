@@ -8,7 +8,7 @@ Complete guide to installing and running VERSATIL MCP Server using npx (no insta
 
 ## 🚀 Why npx?
 
-| Feature | npx | npm install |
+| Feature | npx | pnpm install |
 |---------|-----|-------------|
 | **Installation Time** | 2-3 min | 10-15 min |
 | **Disk Space** | Cached (~200MB) | 1-2GB per project |
@@ -17,7 +17,7 @@ Complete guide to installing and running VERSATIL MCP Server using npx (no insta
 | **Version Control** | Pin to any tag/commit | Requires package.json |
 | **MCP Use Case** | ✅ Perfect | ⚠️ Overkill |
 
-**Recommendation**: Use npx for MCP servers. Use `git clone + npm install` only for framework development.
+**Recommendation**: Use npx for MCP servers. Use `git clone + pnpm install` only for framework development.
 
 ---
 
@@ -386,8 +386,8 @@ If you see "Boundary violation" errors:
 | Method | First Run | Subsequent | Disk Space |
 |--------|-----------|------------|------------|
 | **npx (recommended)** | 2-3 min | <1 sec | ~200MB cached |
-| npm install (GitHub) | 10-15 min | N/A | 1-2GB per project |
-| git clone + npm install | 12-18 min | N/A | 2-3GB |
+| pnpm install (GitHub) | 10-15 min | N/A | 1-2GB per project |
+| git clone + pnpm install | 12-18 min | N/A | 2-3GB |
 
 ### Startup Time (v7.16.1)
 
@@ -404,13 +404,13 @@ If you see "Boundary violation" errors:
 
 ## Comparison with Other Methods
 
-### vs npm install
+### vs pnpm install
 
-❌ **npm install @versatil/sdlc-framework**
+❌ **pnpm install @versatil/sdlc-framework**
 - Package not published to npm registry
 - Last published: v7.10.2 (outdated)
 
-❌ **npm install git+https://github.com/...**
+❌ **pnpm install git+https://github.com/...**
 - 10-15 minutes installation
 - 1-2GB per project
 - Adds to package.json dependencies

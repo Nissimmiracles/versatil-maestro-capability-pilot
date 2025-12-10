@@ -786,7 +786,7 @@ async function customMCPSelection() {
 Oliver-MCP is included in VERSATIL SDLC Framework v6.4.1+:
 
 ```bash
-npm install @versatil/sdlc-framework@latest
+pnpm install @versatil/sdlc-framework@latest
 ```
 
 ### Step 2: Import and Initialize
@@ -951,10 +951,10 @@ The framework includes comprehensive unit tests for Oliver-MCP:
 
 ```bash
 # Run Oliver-MCP tests
-pnpm test tests/unit/mcp/oliver-mcp-orchestrator.test.ts
+ppnpm test tests/unit/mcp/oliver-mcp-orchestrator.test.ts
 
 # Run with coverage
-pnpm run test:coverage
+pppnpm test:coverage
 ```
 
 ### Test Categories

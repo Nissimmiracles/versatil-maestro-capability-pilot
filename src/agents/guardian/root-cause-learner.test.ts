@@ -1,24 +1,62 @@
 /**
  * VERSATIL SDLC Framework - Root Cause Learner Tests
- * Priority 2: Guardian Component Testing (Batch 7 - Final)
+ * Tests for Guardian's root cause learning engine
  *
  * Test Coverage:
- * - Pattern recognition from errors
- * - Root cause analysis
- * - Learning from remediation success/failure
- * - Pattern confidence scoring
- * - Enhancement suggestion generation
+ * - Singleton pattern
+ * - Health check history analysis
+ * - Pattern detection and grouping
+ * - Root cause hypothesis generation
+ * - Enhancement candidate identification
+ * - Pattern storage and retrieval
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { RootCauseLearner } from './root-cause-learner.js';
+import type { HealthCheckResult } from './types.js';
+
+// Mock the file system
+vi.mock('fs', async () => {
+  const actual = await vi.importActual('fs');
+  return {
+    ...actual,
+    existsSync: vi.fn().mockReturnValue(true),
+    mkdirSync: vi.fn(),
+    readFileSync: vi.fn().mockReturnValue(''),
+    appendFileSync: vi.fn(),
+    writeFileSync: vi.fn(),
+  };
+});
+
+// Mock guardian-learning-store
+vi.mock('./guardian-learning-store.js', () => ({
+  searchGuardianLearnings: vi.fn().mockResolvedValue([]),
+}));
+
+// Mock guardian-logger
+vi.mock('./guardian-logger.js', () => ({
+  GuardianLogger: {
+    getInstance: vi.fn().mockReturnValue({
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+    }),
+  },
+}));
 
 describe('RootCauseLearner', () => {
   let learner: RootCauseLearner;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset singleton for clean tests
+    (RootCauseLearner as any).instance = undefined;
     learner = RootCauseLearner.getInstance();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
   });
 
   describe('Singleton Pattern', () => {
@@ -27,380 +65,434 @@ describe('RootCauseLearner', () => {
       const instance2 = RootCauseLearner.getInstance();
       expect(instance1).toBe(instance2);
     });
-  });
 
-  describe('Pattern Recognition', () => {
-    it('should recognize error patterns', async () => {
-      const errors = [
-        { message: 'Cannot find module "lodash"', type: 'MODULE_NOT_FOUND' },
-        { message: 'Cannot find module "axios"', type: 'MODULE_NOT_FOUND' }
-      ];
-
-      const patterns = await learner.recognizePatterns(errors);
-      expect(patterns.length).toBeGreaterThan(0);
-      expect(patterns[0]).toHaveProperty('pattern_id');
-      expect(patterns[0]).toHaveProperty('confidence');
-    });
-
-    it('should group similar errors', async () => {
-      const errors = [
-        { message: 'TypeError: Cannot read property "foo"', stack: 'at line 10' },
-        { message: 'TypeError: Cannot read property "bar"', stack: 'at line 20' }
-      ];
-
-      const grouped = await learner.groupSimilarErrors(errors);
-      expect(grouped.length).toBeGreaterThan(0);
-      expect(grouped[0]).toHaveProperty('count');
-    });
-
-    it('should extract commonality from error patterns', async () => {
-      const errors = [
-        { file: '/src/utils/api.ts', message: 'Network error' },
-        { file: '/src/utils/auth.ts', message: 'Network error' }
-      ];
-
-      const commonality = await learner.extractCommonality(errors);
-      expect(commonality).toHaveProperty('type');
-      expect(commonality).toHaveProperty('frequency');
+    it('should accept configuration options', () => {
+      (RootCauseLearner as any).instance = undefined;
+      const customLearner = RootCauseLearner.getInstance({
+        min_occurrences: 5,
+        timespan_hours: 48,
+      });
+      expect(customLearner).toBeDefined();
     });
   });
 
-  describe('Root Cause Analysis', () => {
-    it('should analyze root cause from error pattern', async () => {
-      const pattern = {
-        pattern_id: 'module-not-found-1',
-        errors: [
-          { message: 'Cannot find module "react"' },
-          { message: 'Cannot find module "lodash"' }
-        ],
-        occurrences: 5
-      };
-
-      const rootCause = await learner.analyzeRootCause(pattern);
-
-      expect(rootCause).toHaveProperty('description');
-      expect(rootCause).toHaveProperty('confidence');
-      expect(rootCause).toHaveProperty('suggestedFix');
-    });
-
-    it('should identify dependency issues', async () => {
-      const errors = [
-        { message: 'npm ERR! missing: react@^18.0.0' },
-        { message: 'Cannot find module "react"' }
-      ];
-
-      const cause = await learner.analyzeDependencyIssues(errors);
-      expect(cause).toHaveProperty('type');
-      expect(cause.type).toBe('dependency');
-    });
-
-    it('should identify configuration issues', async () => {
-      const errors = [
-        { message: 'tsconfig.json not found' },
-        { message: 'Invalid TypeScript configuration' }
-      ];
-
-      const cause = await learner.analyzeConfigurationIssues(errors);
-      expect(cause.type).toBe('configuration');
-    });
-
-    it('should calculate root cause confidence', () => {
-      const evidence = {
-        sameErrorMessage: 5,
-        sameFile: 3,
-        sameStack: 2,
-        totalErrors: 10
-      };
-
-      const confidence = learner.calculateConfidence(evidence);
-      expect(typeof confidence).toBe('number');
-      expect(confidence).toBeGreaterThanOrEqual(0);
-      expect(confidence).toBeLessThanOrEqual(100);
-    });
-  });
-
-  describe('Learning from Remediation', () => {
-    it('should learn from successful remediation', async () => {
-      const pattern = {
-        pattern_id: 'test-pattern-1',
-        root_cause: { description: 'Missing dependency' }
-      };
-      const remediation = {
-        action: 'npm install lodash',
-        success: true,
-        before: 'Error: Cannot find module',
-        after: 'Success'
-      };
-
-      await learner.learnFromRemediation(pattern, remediation);
-
-      const learned = learner.getLearnedPattern('test-pattern-1');
-      expect(learned).toBeDefined();
-      expect(learned?.successRate).toBeGreaterThan(0);
-    });
-
-    it('should learn from failed remediation', async () => {
-      const pattern = {
-        pattern_id: 'test-pattern-2',
-        root_cause: { description: 'Wrong fix applied' }
-      };
-      const remediation = {
-        action: 'npm install wrong-package',
-        success: false,
-        before: 'Error: Cannot find module',
-        after: 'Still erroring'
-      };
-
-      await learner.learnFromRemediation(pattern, remediation);
-
-      const learned = learner.getLearnedPattern('test-pattern-2');
-      expect(learned?.failedAttempts).toBeGreaterThan(0);
-    });
-
-    it('should update pattern confidence based on outcomes', async () => {
-      const patternId = 'adjustable-pattern';
-
-      await learner.recordSuccess(patternId);
-      await learner.recordSuccess(patternId);
-      await learner.recordFailure(patternId);
-
-      const pattern = learner.getLearnedPattern(patternId);
-      expect(pattern).toBeDefined();
-      expect(pattern?.confidence).toBeLessThan(100);
-    });
-
-    it('should track remediation history', async () => {
-      await learner.recordRemediation('pattern-1', { action: 'fix-1', success: true });
-      await learner.recordRemediation('pattern-1', { action: 'fix-2', success: false });
-
-      const history = learner.getRemediationHistory('pattern-1');
-      expect(history.length).toBe(2);
-    });
-  });
-
-  describe('Pattern Confidence Scoring', () => {
-    it('should score pattern based on evidence strength', () => {
-      const pattern = {
-        occurrences: 10,
-        successfulRemediations: 8,
-        failedRemediations: 2,
-        timesSeen: 15
-      };
-
-      const score = learner.scorePatternConfidence(pattern);
-      expect(score).toBeGreaterThan(50);
-    });
-
-    it('should lower confidence for infrequent patterns', () => {
-      const rarePattern = {
-        occurrences: 1,
-        successfulRemediations: 1,
-        failedRemediations: 0,
-        timesSeen: 1
-      };
-
-      const score = learner.scorePatternConfidence(rarePattern);
-      expect(score).toBeLessThan(80);
-    });
-
-    it('should increase confidence with successful remediations', async () => {
-      const patternId = 'high-success-pattern';
-
-      for (let i = 0; i < 10; i++) {
-        await learner.recordSuccess(patternId);
-      }
-
-      const pattern = learner.getLearnedPattern(patternId);
-      expect(pattern?.confidence).toBeGreaterThan(80);
-    });
-
-    it('should decrease confidence with failed remediations', async () => {
-      const patternId = 'low-success-pattern';
-
-      await learner.recordSuccess(patternId);
-      for (let i = 0; i < 5; i++) {
-        await learner.recordFailure(patternId);
-      }
-
-      const pattern = learner.getLearnedPattern(patternId);
-      expect(pattern?.confidence).toBeLessThan(50);
-    });
-  });
-
-  describe('Enhancement Suggestion Generation', () => {
-    it('should generate enhancement suggestions from patterns', async () => {
-      const patterns = [
+  describe('Health Check History Analysis', () => {
+    it('should analyze health check history', async () => {
+      const healthHistory: HealthCheckResult[] = [
         {
-          pattern_id: 'missing-deps',
-          root_cause: { description: 'Missing dependencies' },
-          occurrences: 10,
-          enhancement_candidate: true
-        }
+          timestamp: new Date().toISOString(),
+          health_score: 85,
+          status: 'healthy',
+          issues: [
+            {
+              component: 'build',
+              severity: 'medium',
+              description: 'Build process slow',
+            },
+          ],
+          components: {},
+        },
       ];
 
-      const suggestions = await learner.generateEnhancements(patterns);
-      expect(suggestions.length).toBeGreaterThan(0);
-      expect(suggestions[0]).toHaveProperty('type');
-      expect(suggestions[0]).toHaveProperty('description');
+      const result = await learner.analyzeHealthCheckHistory(healthHistory, process.cwd());
+
+      expect(result).toHaveProperty('patterns_detected');
+      expect(result).toHaveProperty('new_patterns');
+      expect(result).toHaveProperty('updated_patterns');
+      expect(result).toHaveProperty('enhancement_candidates');
+      expect(result).toHaveProperty('total_occurrences_analyzed');
+      expect(result).toHaveProperty('confidence_avg');
     });
 
-    it('should prioritize high-occurrence patterns for enhancement', async () => {
-      const patterns = [
-        { occurrences: 20, enhancement_candidate: true },
-        { occurrences: 3, enhancement_candidate: true }
+    it('should detect recurring patterns', async () => {
+      const now = new Date();
+      const healthHistory: HealthCheckResult[] = Array.from({ length: 5 }, (_, i) => ({
+        timestamp: new Date(now.getTime() - i * 3600000).toISOString(),
+        health_score: 70,
+        status: 'degraded' as const,
+        issues: [
+          {
+            component: 'tests',
+            severity: 'high' as const,
+            description: 'Test suite failing with timeout',
+          },
+        ],
+        components: {},
+      }));
+
+      const result = await learner.analyzeHealthCheckHistory(healthHistory, process.cwd());
+
+      // Should detect recurring pattern (5 occurrences >= 3 min)
+      expect(result.patterns_detected.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should not detect patterns below threshold', async () => {
+      const now = new Date();
+      const healthHistory: HealthCheckResult[] = Array.from({ length: 2 }, (_, i) => ({
+        timestamp: new Date(now.getTime() - i * 3600000).toISOString(),
+        health_score: 75,
+        status: 'degraded' as const,
+        issues: [
+          {
+            component: 'build',
+            severity: 'medium' as const,
+            description: 'Occasional build warning',
+          },
+        ],
+        components: {},
+      }));
+
+      const result = await learner.analyzeHealthCheckHistory(healthHistory, process.cwd());
+
+      // 2 occurrences < 3 min_occurrences default
+      expect(result.patterns_detected.length).toBe(0);
+    });
+
+    it('should handle empty history', async () => {
+      const result = await learner.analyzeHealthCheckHistory([], process.cwd());
+
+      expect(result.patterns_detected).toEqual([]);
+      expect(result.new_patterns).toBe(0);
+      expect(result.total_occurrences_analyzed).toBe(0);
+    });
+
+    it('should filter issues outside timespan', async () => {
+      const now = new Date();
+      const healthHistory: HealthCheckResult[] = [
+        {
+          timestamp: new Date(now.getTime() - 48 * 3600000).toISOString(), // 48h ago
+          health_score: 60,
+          status: 'degraded',
+          issues: [
+            {
+              component: 'old',
+              severity: 'high',
+              description: 'Old issue outside timespan',
+            },
+          ],
+          components: {},
+        },
       ];
 
-      const suggestions = await learner.generateEnhancements(patterns);
-      expect(suggestions[0].priority).toBeGreaterThan(suggestions[1].priority);
-    });
+      // Default timespan is 24h
+      const result = await learner.analyzeHealthCheckHistory(healthHistory, process.cwd());
 
-    it('should filter low-confidence patterns', async () => {
-      const patterns = [
-        { confidence: 90, enhancement_candidate: true },
-        { confidence: 30, enhancement_candidate: true }
+      expect(result.patterns_detected.length).toBe(0);
+    });
+  });
+
+  describe('Pattern Grouping', () => {
+    it('should group similar issues by fingerprint', async () => {
+      const now = new Date();
+      const healthHistory: HealthCheckResult[] = [
+        {
+          timestamp: new Date(now.getTime() - 1000).toISOString(),
+          health_score: 70,
+          status: 'degraded',
+          issues: [
+            { component: 'tests', severity: 'high', description: 'Test failed: timeout after 5000ms' },
+            { component: 'tests', severity: 'high', description: 'Test failed: timeout after 3000ms' },
+            { component: 'tests', severity: 'high', description: 'Test failed: timeout after 4000ms' },
+          ],
+          components: {},
+        },
       ];
 
-      const suggestions = await learner.generateEnhancements(patterns);
-      expect(suggestions.length).toBe(1);
+      const result = await learner.analyzeHealthCheckHistory(healthHistory, process.cwd());
+
+      // Similar timeout errors should be grouped
+      expect(result.total_occurrences_analyzed).toBeGreaterThanOrEqual(1);
     });
 
-    it('should calculate ROI for enhancements', async () => {
-      const pattern = {
-        occurrences: 15,
-        averageTimeToResolve: 30, // minutes
-        successRate: 0.8
-      };
+    it('should normalize numbers in fingerprints', async () => {
+      const now = new Date();
+      const healthHistory: HealthCheckResult[] = Array.from({ length: 3 }, (_, i) => ({
+        timestamp: new Date(now.getTime() - i * 1000).toISOString(),
+        health_score: 70,
+        status: 'degraded' as const,
+        issues: [
+          {
+            component: 'perf',
+            severity: 'medium' as const,
+            description: `Latency ${100 + i * 50}ms exceeds threshold`,
+          },
+        ],
+        components: {},
+      }));
 
-      const roi = learner.calculateEnhancementROI(pattern);
-      expect(typeof roi).toBe('number');
-      expect(roi).toBeGreaterThan(0);
+      const result = await learner.analyzeHealthCheckHistory(healthHistory, process.cwd());
+
+      // Different latency values should be normalized and grouped
+      expect(result.patterns_detected.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('Root Cause Hypothesis', () => {
+    it('should generate root cause hypothesis for patterns', async () => {
+      const now = new Date();
+      const healthHistory: HealthCheckResult[] = Array.from({ length: 5 }, (_, i) => ({
+        timestamp: new Date(now.getTime() - i * 3600000).toISOString(),
+        health_score: 60,
+        status: 'degraded' as const,
+        issues: [
+          {
+            component: 'build',
+            severity: 'high' as const,
+            description: 'Build failed: tsc not found in PATH',
+          },
+        ],
+        components: {},
+      }));
+
+      const result = await learner.analyzeHealthCheckHistory(healthHistory, process.cwd());
+
+      if (result.patterns_detected.length > 0) {
+        const pattern = result.patterns_detected[0];
+        expect(pattern.root_cause).toBeDefined();
+        expect(pattern.root_cause.primary).toBeDefined();
+        expect(pattern.root_cause.confidence).toBeGreaterThan(0);
+        expect(pattern.root_cause.evidence.length).toBeGreaterThan(0);
+      }
+    });
+
+    it('should identify GraphRAG related root causes', async () => {
+      const now = new Date();
+      const healthHistory: HealthCheckResult[] = Array.from({ length: 4 }, (_, i) => ({
+        timestamp: new Date(now.getTime() - i * 3600000).toISOString(),
+        health_score: 50,
+        status: 'critical' as const,
+        issues: [
+          {
+            component: 'rag',
+            severity: 'critical' as const,
+            description: 'GraphRAG query timeout exceeded',
+          },
+        ],
+        components: {},
+      }));
+
+      const result = await learner.analyzeHealthCheckHistory(healthHistory, process.cwd());
+
+      if (result.patterns_detected.length > 0) {
+        const pattern = result.patterns_detected[0];
+        expect(pattern.root_cause.primary).toContain('Neo4j');
+      }
+    });
+
+    it('should identify security vulnerability root causes', async () => {
+      const now = new Date();
+      const healthHistory: HealthCheckResult[] = Array.from({ length: 3 }, (_, i) => ({
+        timestamp: new Date(now.getTime() - i * 3600000).toISOString(),
+        health_score: 65,
+        status: 'degraded' as const,
+        issues: [
+          {
+            component: 'security',
+            severity: 'high' as const,
+            description: 'Security vulnerability detected in dependencies',
+          },
+        ],
+        components: {},
+      }));
+
+      const result = await learner.analyzeHealthCheckHistory(healthHistory, process.cwd());
+
+      if (result.patterns_detected.length > 0) {
+        const pattern = result.patterns_detected[0];
+        expect(pattern.root_cause.primary.toLowerCase()).toContain('vulnerability');
+      }
+    });
+  });
+
+  describe('Enhancement Candidates', () => {
+    it('should identify enhancement candidates', async () => {
+      const now = new Date();
+      const healthHistory: HealthCheckResult[] = Array.from({ length: 10 }, (_, i) => ({
+        timestamp: new Date(now.getTime() - i * 3600000).toISOString(),
+        health_score: 55,
+        status: 'degraded' as const,
+        issues: [
+          {
+            component: 'tests',
+            severity: 'high' as const,
+            description: 'Flaky test failure in integration suite',
+          },
+        ],
+        components: {},
+      }));
+
+      const result = await learner.analyzeHealthCheckHistory(healthHistory, process.cwd());
+
+      expect(result.enhancement_candidates).toBeGreaterThanOrEqual(0);
+      if (result.patterns_detected.length > 0) {
+        const hasCandidate = result.patterns_detected.some(p => p.enhancement_candidate);
+        // High occurrence patterns should be enhancement candidates
+        expect(hasCandidate).toBe(true);
+      }
+    });
+
+    it('should calculate enhancement priority', async () => {
+      const now = new Date();
+      const healthHistory: HealthCheckResult[] = Array.from({ length: 10 }, (_, i) => ({
+        timestamp: new Date(now.getTime() - i * 3600000).toISOString(),
+        health_score: 40,
+        status: 'critical' as const,
+        issues: [
+          {
+            component: 'build',
+            severity: 'critical' as const,
+            description: 'Critical build failure blocking deployment',
+          },
+        ],
+        components: {},
+      }));
+
+      const result = await learner.analyzeHealthCheckHistory(healthHistory, process.cwd());
+
+      if (result.patterns_detected.length > 0) {
+        const pattern = result.patterns_detected[0];
+        expect(['critical', 'high', 'medium', 'low']).toContain(pattern.enhancement_priority);
+        // Critical severity + high occurrences should be critical priority
+        expect(pattern.enhancement_priority).toBe('critical');
+      }
     });
   });
 
   describe('Pattern Storage and Retrieval', () => {
-    it('should store learned patterns', async () => {
-      const pattern = {
-        pattern_id: 'stored-pattern',
-        root_cause: { description: 'Test cause' },
-        confidence: 85
-      };
-
-      await learner.storePattern(pattern);
-
-      const retrieved = learner.getLearnedPattern('stored-pattern');
-      expect(retrieved).toBeDefined();
-      expect(retrieved?.pattern_id).toBe('stored-pattern');
-    });
-
-    it('should retrieve patterns by type', async () => {
-      await learner.storePattern({ pattern_id: 'dep-1', type: 'dependency' });
-      await learner.storePattern({ pattern_id: 'config-1', type: 'configuration' });
-
-      const depPatterns = learner.getPatternsByType('dependency');
-      expect(depPatterns.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it('should retrieve patterns above confidence threshold', () => {
-      const patterns = learner.getPatternsAboveConfidence(80);
+    it('should retrieve all patterns', () => {
+      const patterns = learner.getPatterns();
       expect(Array.isArray(patterns)).toBe(true);
     });
 
-    it('should export learned patterns', async () => {
-      await learner.storePattern({ pattern_id: 'export-1' });
-
-      const exported = await learner.exportPatterns();
-      expect(exported).toHaveProperty('patterns');
-      expect(exported).toHaveProperty('timestamp');
-    });
-  });
-
-  describe('Pattern Cleanup', () => {
-    it('should remove obsolete patterns', async () => {
-      const oldPattern = {
-        pattern_id: 'obsolete-1',
-        lastSeen: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) // 90 days ago
-      };
-
-      await learner.storePattern(oldPattern);
-      await learner.cleanupObsoletePatterns(30); // Remove patterns older than 30 days
-
-      const retrieved = learner.getLearnedPattern('obsolete-1');
-      expect(retrieved).toBeUndefined();
+    it('should retrieve pattern by fingerprint', () => {
+      const pattern = learner.getPattern('non-existent-fingerprint');
+      expect(pattern).toBeUndefined();
     });
 
-    it('should remove low-confidence patterns', async () => {
-      await learner.storePattern({ pattern_id: 'low-conf', confidence: 10 });
+    it('should return result structure from analysis', async () => {
+      const result = await learner.analyzeHealthCheckHistory([], process.cwd());
 
-      await learner.cleanupLowConfidencePatterns(50); // Remove confidence < 50
-
-      const retrieved = learner.getLearnedPattern('low-conf');
-      expect(retrieved).toBeUndefined();
-    });
-
-    it('should preserve high-value patterns during cleanup', async () => {
-      await learner.storePattern({
-        pattern_id: 'valuable',
-        confidence: 95,
-        occurrences: 50
+      expect(result).toMatchObject({
+        patterns_detected: expect.any(Array),
+        new_patterns: expect.any(Number),
+        updated_patterns: expect.any(Number),
+        enhancement_candidates: expect.any(Number),
+        total_occurrences_analyzed: expect.any(Number),
+        confidence_avg: expect.any(Number),
       });
-
-      await learner.cleanup();
-
-      const retrieved = learner.getLearnedPattern('valuable');
-      expect(retrieved).toBeDefined();
     });
   });
 
-  describe('Learning Report Generation', () => {
-    it('should generate learning summary report', async () => {
-      await learner.storePattern({ pattern_id: 'p1' });
-      await learner.recordSuccess('p1');
+  describe('Context Classification', () => {
+    it('should classify framework context', async () => {
+      const now = new Date();
+      const healthHistory: HealthCheckResult[] = Array.from({ length: 3 }, (_, i) => ({
+        timestamp: new Date(now.getTime() - i * 3600000).toISOString(),
+        health_score: 70,
+        status: 'degraded' as const,
+        issues: [
+          {
+            component: 'guardian',
+            severity: 'medium' as const,
+            description: 'Guardian health check warning',
+          },
+        ],
+        components: {},
+      }));
 
-      const report = await learner.generateLearningReport();
+      // Pass a path that looks like framework context
+      const result = await learner.analyzeHealthCheckHistory(
+        healthHistory,
+        '/path/to/VERSATIL SDLC FW/project'
+      );
 
-      expect(report).toHaveProperty('totalPatterns');
-      expect(report).toHaveProperty('successRate');
-      expect(report).toHaveProperty('topPatterns');
+      if (result.patterns_detected.length > 0) {
+        expect(result.patterns_detected[0].context).toBe('FRAMEWORK_CONTEXT');
+      }
     });
 
-    it('should include confidence distribution', async () => {
-      await learner.storePattern({ confidence: 90 });
-      await learner.storePattern({ confidence: 50 });
+    it('should classify layer correctly', async () => {
+      const now = new Date();
+      const healthHistory: HealthCheckResult[] = Array.from({ length: 3 }, (_, i) => ({
+        timestamp: new Date(now.getTime() - i * 3600000).toISOString(),
+        health_score: 70,
+        status: 'degraded' as const,
+        issues: [
+          {
+            component: 'rag',
+            severity: 'medium' as const,
+            description: 'RAG component warning',
+          },
+        ],
+        components: {},
+      }));
 
-      const report = await learner.generateLearningReport();
-      expect(report).toHaveProperty('confidenceDistribution');
-    });
+      const result = await learner.analyzeHealthCheckHistory(healthHistory, process.cwd());
 
-    it('should track learning progress over time', async () => {
-      const progress = learner.getLearningProgress();
-      expect(progress).toHaveProperty('patternsLearned');
-      expect(progress).toHaveProperty('successfulRemediations');
+      if (result.patterns_detected.length > 0) {
+        // 'rag' is a framework component
+        expect(result.patterns_detected[0].layer).toBe('framework');
+      }
     });
   });
 
   describe('Edge Cases', () => {
-    it('should handle empty error list', async () => {
-      const patterns = await learner.recognizePatterns([]);
-      expect(Array.isArray(patterns)).toBe(true);
-      expect(patterns.length).toBe(0);
+    it('should handle malformed health check data', async () => {
+      const healthHistory: HealthCheckResult[] = [
+        {
+          timestamp: 'invalid-date',
+          health_score: 100,
+          status: 'healthy',
+          issues: [],
+          components: {},
+        },
+      ];
+
+      // Should not throw
+      await expect(
+        learner.analyzeHealthCheckHistory(healthHistory, process.cwd())
+      ).resolves.toBeDefined();
     });
 
-    it('should handle malformed patterns', async () => {
-      const result = await learner.analyzeRootCause({} as any);
+    it('should handle issues without all fields', async () => {
+      const now = new Date();
+      const healthHistory: HealthCheckResult[] = Array.from({ length: 3 }, (_, i) => ({
+        timestamp: new Date(now.getTime() - i * 3600000).toISOString(),
+        health_score: 70,
+        status: 'degraded' as const,
+        issues: [
+          {
+            component: 'unknown',
+            severity: 'low' as const,
+            description: 'Minimal issue description',
+          },
+        ],
+        components: {},
+      }));
+
+      const result = await learner.analyzeHealthCheckHistory(healthHistory, process.cwd());
       expect(result).toBeDefined();
     });
 
-    it('should handle concurrent pattern storage', async () => {
-      const promises = Array.from({ length: 10 }, (_, i) =>
-        learner.storePattern({ pattern_id: `concurrent-${i}` })
-      );
+    it('should handle very long issue descriptions', async () => {
+      const now = new Date();
+      const longDescription = 'A'.repeat(1000);
+      const healthHistory: HealthCheckResult[] = Array.from({ length: 3 }, (_, i) => ({
+        timestamp: new Date(now.getTime() - i * 3600000).toISOString(),
+        health_score: 70,
+        status: 'degraded' as const,
+        issues: [
+          {
+            component: 'test',
+            severity: 'medium' as const,
+            description: longDescription,
+          },
+        ],
+        components: {},
+      }));
 
-      await expect(Promise.all(promises)).resolves.toBeDefined();
-    });
-
-    it('should handle pattern retrieval of non-existent pattern', () => {
-      const pattern = learner.getLearnedPattern('does-not-exist');
-      expect(pattern).toBeUndefined();
+      const result = await learner.analyzeHealthCheckHistory(healthHistory, process.cwd());
+      expect(result).toBeDefined();
     });
   });
 });

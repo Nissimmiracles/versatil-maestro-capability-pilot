@@ -18,6 +18,8 @@ describe('ContextVerifier', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset singleton to ensure clean state between tests
+    ContextVerifier.resetInstance();
     verifier = ContextVerifier.getInstance();
   });
 

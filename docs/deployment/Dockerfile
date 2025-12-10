@@ -56,12 +56,15 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
+# Enable corepack for pnpm
+RUN corepack enable pnpm
+
 # Copy package files
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml ./
 COPY tsconfig.json ./
 
 # Install Node.js dependencies
-RUN npm ci --only=production
+RUN pnpm install --frozen-lockfile --prod
 
 # Copy framework source
 COPY src/ ./src/
@@ -69,7 +72,7 @@ COPY scripts/ ./scripts/
 COPY .claude/ ./.claude/
 
 # Build TypeScript
-RUN npm run build
+RUN pnpm build
 
 # Expose framework ports
 EXPOSE 3000 8080 9090

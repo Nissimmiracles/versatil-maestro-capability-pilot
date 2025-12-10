@@ -4,14 +4,17 @@
 # Build stage
 FROM node:18-alpine AS builder
 
+# Enable corepack for pnpm
+RUN corepack enable pnpm
+
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml ./
 COPY tsconfig.json ./
 
 # Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN pnpm install --frozen-lockfile --prod
 
 # Copy source code
 COPY src/ ./src/
@@ -21,7 +24,7 @@ COPY .cursorrules ./
 COPY CLAUDE.md ./
 
 # Build the application
-RUN npm run build
+RUN pnpm build
 
 # Production stage
 FROM node:18-alpine AS production

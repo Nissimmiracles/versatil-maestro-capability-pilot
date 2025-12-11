@@ -157,6 +157,10 @@ export declare class PerformanceMonitor extends EventEmitter {
      */
     start(): void;
     /**
+     * Stop monitoring (for server integration)
+     */
+    stop(): void;
+    /**
      * Get Prometheus-compatible metrics
      */
     getPrometheusMetrics(): string;

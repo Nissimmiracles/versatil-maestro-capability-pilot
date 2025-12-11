@@ -51,6 +51,14 @@ export class AdaptiveLearningEngine extends EventEmitter {
         this.logger.info('Adaptive learning stopped', {}, 'adaptive-learning');
     }
     /**
+     * Clear all learning data (useful for testing)
+     */
+    clearData() {
+        this.interactions.clear();
+        this.patterns.clear();
+        this.adaptations.clear();
+    }
+    /**
      * Record a user interaction with an agent
      */
     recordInteraction(interaction) {
@@ -333,15 +341,33 @@ export class AdaptiveLearningEngine extends EventEmitter {
             successRate: pattern.successRate
         }, 'adaptive-learning');
     }
-    // Additional helper methods would be implemented here...
+    // Additional helper methods
     groupByFileType(interactions) {
         const groups = new Map();
-        // Implementation...
+        for (const interaction of interactions) {
+            const fileType = interaction.context.fileType || 'unknown';
+            if (!groups.has(fileType)) {
+                groups.set(fileType, []);
+            }
+            groups.get(fileType).push(interaction);
+        }
         return groups;
     }
     calculateConfidence(interactions) {
-        // Implementation based on interaction quality and outcomes
-        return 0.8;
+        if (interactions.length === 0)
+            return 0;
+        // Confidence is based on:
+        // 1. Sample size (more interactions = higher confidence)
+        // 2. Consistency of outcomes
+        // 3. User verification rate
+        const sampleSizeScore = Math.min(interactions.length / 20, 1) * 0.4;
+        const verifiedCount = interactions.filter(i => i.context.issue?.userVerified).length;
+        const verificationScore = (verifiedCount / interactions.length) * 0.3;
+        const outcomes = interactions.filter(i => i.outcome);
+        const consistencyScore = outcomes.length > 0
+            ? (outcomes.filter(i => i.outcome?.problemSolved).length / outcomes.length) * 0.3
+            : 0.15;
+        return Math.min(sampleSizeScore + verificationScore + consistencyScore, 1);
     }
     calculateSuccessRate(interactions) {
         const successful = interactions.filter(i => i.outcome?.problemSolved);
@@ -354,44 +380,339 @@ export class AdaptiveLearningEngine extends EventEmitter {
         return interactions.map(i => i.context.issue?.type).filter(Boolean);
     }
     extractUserPreferences(interactions) {
-        // Analyze user behavior patterns to extract preferences
-        return {};
+        const preferences = {};
+        // Analyze severity preferences
+        const severityPreferences = {};
+        for (const interaction of interactions) {
+            const severity = interaction.context.issue?.severity;
+            if (severity) {
+                severityPreferences[severity] = (severityPreferences[severity] || 0) + 1;
+            }
+        }
+        if (Object.keys(severityPreferences).length > 0) {
+            preferences['preferredSeverityLevel'] = Object.entries(severityPreferences)
+                .sort(([, a], [, b]) => b - a)[0][0];
+        }
+        // Analyze suggestion follow-through to determine alert preferences
+        const followedSuggestions = interactions.filter(i => i.context.suggestion?.wasFollowed);
+        const ignoredSuggestions = interactions.filter(i => i.context.suggestion && !i.context.suggestion.wasFollowed);
+        if (followedSuggestions.length + ignoredSuggestions.length > 5) {
+            preferences['alertPreferences'] = {
+                followRate: followedSuggestions.length / (followedSuggestions.length + ignoredSuggestions.length),
+                preferredTypes: this.getMostCommonSuggestionTypes(followedSuggestions)
+            };
+        }
+        return preferences;
+    }
+    getMostCommonSuggestionTypes(interactions) {
+        const typeCounts = {};
+        for (const interaction of interactions) {
+            const type = interaction.context.suggestion?.type;
+            if (type) {
+                typeCounts[type] = (typeCounts[type] || 0) + 1;
+            }
+        }
+        return Object.entries(typeCounts)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 3)
+            .map(([type]) => type);
     }
     generateAgentImprovements(interactions) {
-        return ['Improve detection accuracy for this file type'];
+        const improvements = [];
+        const successRate = this.calculateSuccessRate(interactions);
+        if (successRate < 0.7) {
+            improvements.push('Improve detection accuracy - current success rate below 70%');
+        }
+        const avgSatisfaction = interactions
+            .filter(i => i.outcome?.userSatisfaction)
+            .reduce((sum, i) => sum + (i.outcome?.userSatisfaction || 0), 0) /
+            (interactions.filter(i => i.outcome?.userSatisfaction).length || 1);
+        if (avgSatisfaction < 3.5) {
+            improvements.push('Focus on user satisfaction - consider more actionable suggestions');
+        }
+        const fileTypes = [...new Set(interactions.map(i => i.context.fileType).filter(Boolean))];
+        if (fileTypes.length > 0) {
+            improvements.push(`Optimize for common file types: ${fileTypes.slice(0, 3).join(', ')}`);
+        }
+        return improvements.length > 0 ? improvements : ['Continue current detection patterns'];
     }
     generateDetectionRules(interactions) {
-        return ['Add specialized rules for successful patterns'];
+        const rules = [];
+        // Find patterns in successful detections
+        const successfulByFileType = this.groupByFileType(interactions.filter(i => i.outcome?.problemSolved));
+        for (const [fileType, fileInteractions] of successfulByFileType) {
+            if (fileInteractions.length >= 3) {
+                const issueTypes = [...new Set(fileInteractions.map(i => i.context.issue?.type).filter(Boolean))];
+                if (issueTypes.length > 0) {
+                    rules.push(`Prioritize ${issueTypes[0]} detection in ${fileType} files`);
+                }
+            }
+        }
+        return rules.length > 0 ? rules : ['Maintain current detection rules'];
     }
     generateSuggestionTypes(interactions) {
-        return ['Prioritize suggestion types that users follow'];
+        const suggestionTypes = [];
+        // Analyze which suggestion types users follow
+        const followedByType = {};
+        const totalByType = {};
+        for (const interaction of interactions) {
+            const type = interaction.context.suggestion?.type;
+            if (type) {
+                totalByType[type] = (totalByType[type] || 0) + 1;
+                if (interaction.context.suggestion?.wasFollowed) {
+                    followedByType[type] = (followedByType[type] || 0) + 1;
+                }
+            }
+        }
+        // Prioritize types with high follow-through
+        for (const [type, total] of Object.entries(totalByType)) {
+            const followed = followedByType[type] || 0;
+            if (total >= 3 && followed / total > 0.5) {
+                suggestionTypes.push(`Prioritize ${type} suggestions (${Math.round(followed / total * 100)}% follow rate)`);
+            }
+        }
+        return suggestionTypes.length > 0 ? suggestionTypes : ['Balance suggestion types evenly'];
     }
     extractFileTypes(interactions) {
-        return interactions.map(i => i.context.fileType).filter(Boolean);
+        return [...new Set(interactions.map(i => i.context.fileType).filter(Boolean))];
     }
     generateAntiPatterns(interactions) {
-        return ['Exclude patterns that cause false positives'];
+        const antiPatterns = [];
+        // Group false positives by context
+        const falsePositives = interactions.filter(i => i.context.issue?.wasAccurate === false);
+        const byFileType = this.groupByFileType(falsePositives);
+        for (const [fileType, fps] of byFileType) {
+            if (fps.length >= 2) {
+                const issueTypes = [...new Set(fps.map(i => i.context.issue?.type).filter(Boolean))];
+                antiPatterns.push(`Reduce ${issueTypes[0] || 'detections'} in ${fileType} files`);
+            }
+        }
+        const byIssueType = {};
+        for (const fp of falsePositives) {
+            const type = fp.context.issue?.type;
+            if (type) {
+                byIssueType[type] = (byIssueType[type] || 0) + 1;
+            }
+        }
+        for (const [type, count] of Object.entries(byIssueType)) {
+            if (count >= 3) {
+                antiPatterns.push(`Review ${type} detection logic - ${count} false positives`);
+            }
+        }
+        return antiPatterns.length > 0 ? antiPatterns : ['No significant false positive patterns detected'];
     }
     analyzeSuggestionEffectiveness(interactions) {
-        return { lowFollowThroughSuggestions: [], highFollowThroughSuggestions: [] };
+        const suggestionStats = {};
+        for (const interaction of interactions) {
+            const suggestion = interaction.context.suggestion;
+            if (suggestion) {
+                const type = suggestion.type;
+                if (!suggestionStats[type]) {
+                    suggestionStats[type] = { followed: 0, total: 0 };
+                }
+                suggestionStats[type].total++;
+                if (suggestion.wasFollowed) {
+                    suggestionStats[type].followed++;
+                }
+            }
+        }
+        const lowFollowThroughSuggestions = [];
+        const highFollowThroughSuggestions = [];
+        let totalFollowed = 0;
+        let totalSuggestions = 0;
+        for (const [type, stats] of Object.entries(suggestionStats)) {
+            totalFollowed += stats.followed;
+            totalSuggestions += stats.total;
+            if (stats.total >= 3) {
+                const rate = stats.followed / stats.total;
+                if (rate < 0.3) {
+                    lowFollowThroughSuggestions.push(type);
+                }
+                else if (rate > 0.7) {
+                    highFollowThroughSuggestions.push(type);
+                }
+            }
+        }
+        return {
+            lowFollowThroughSuggestions,
+            highFollowThroughSuggestions,
+            overallFollowRate: totalSuggestions > 0 ? totalFollowed / totalSuggestions : 0
+        };
     }
     analyzeDetectionAccuracy(interactions) {
-        return { falsePositiveRate: 0.1, falsePositivePatterns: [] };
+        const detectionsWithVerification = interactions.filter(i => i.context.issue?.wasAccurate !== undefined);
+        if (detectionsWithVerification.length === 0) {
+            return { falsePositiveRate: 0, falsePositivePatterns: [], truePositiveRate: 1 };
+        }
+        const falsePositives = detectionsWithVerification.filter(i => i.context.issue?.wasAccurate === false);
+        const truePositives = detectionsWithVerification.filter(i => i.context.issue?.wasAccurate === true);
+        // Identify patterns in false positives
+        const falsePositivePatterns = [];
+        const fpByFileType = {};
+        const fpByIssueType = {};
+        for (const fp of falsePositives) {
+            if (fp.context.fileType) {
+                fpByFileType[fp.context.fileType] = (fpByFileType[fp.context.fileType] || 0) + 1;
+            }
+            if (fp.context.issue?.type) {
+                fpByIssueType[fp.context.issue.type] = (fpByIssueType[fp.context.issue.type] || 0) + 1;
+            }
+        }
+        for (const [fileType, count] of Object.entries(fpByFileType)) {
+            if (count >= 2) {
+                falsePositivePatterns.push(`${fileType}:high_fp_rate`);
+            }
+        }
+        for (const [issueType, count] of Object.entries(fpByIssueType)) {
+            if (count >= 2) {
+                falsePositivePatterns.push(`${issueType}:unreliable`);
+            }
+        }
+        return {
+            falsePositiveRate: falsePositives.length / detectionsWithVerification.length,
+            falsePositivePatterns,
+            truePositiveRate: truePositives.length / detectionsWithVerification.length
+        };
     }
     calculateTopPerformingAgents() {
-        return [];
+        const agentStats = [];
+        for (const [agentId, interactions] of this.interactions) {
+            if (interactions.length >= 5) {
+                const successRate = this.calculateSuccessRate(interactions);
+                agentStats.push({ agentId, successRate });
+            }
+        }
+        return agentStats
+            .sort((a, b) => b.successRate - a.successRate)
+            .slice(0, 5);
     }
     reinforceSuccessfulBehavior(interaction) {
-        // Implement reinforcement learning
+        // Record the successful pattern for future reference
+        const patternKey = `${interaction.agentId}_${interaction.context.fileType}_success`;
+        if (!this.patterns.has(patternKey)) {
+            const newPattern = {
+                id: patternKey,
+                agentId: interaction.agentId,
+                pattern: `Successful ${interaction.actionType} pattern`,
+                confidence: 0.5,
+                usageCount: 1,
+                successRate: 1,
+                context: {
+                    fileTypes: interaction.context.fileType ? [interaction.context.fileType] : [],
+                    projectTypes: interaction.context.projectType ? [interaction.context.projectType] : [],
+                    commonIssues: interaction.context.issue?.type ? [interaction.context.issue.type] : [],
+                    userPreferences: {}
+                },
+                recommendations: {
+                    agentImprovements: [],
+                    detectionRules: [],
+                    suggestionTypes: []
+                }
+            };
+            this.patterns.set(patternKey, newPattern);
+        }
+        else {
+            const pattern = this.patterns.get(patternKey);
+            pattern.usageCount++;
+            pattern.confidence = Math.min(pattern.confidence + 0.05, 1);
+        }
     }
     adjustForFalsePositive(interaction) {
-        // Implement negative feedback learning
+        // Record the false positive for learning
+        const patternKey = `${interaction.agentId}_${interaction.context.fileType}_fp`;
+        if (!this.patterns.has(patternKey)) {
+            const newPattern = {
+                id: patternKey,
+                agentId: interaction.agentId,
+                pattern: `False positive pattern in ${interaction.context.fileType || 'unknown'} files`,
+                confidence: 0.3,
+                usageCount: 1,
+                successRate: 0,
+                context: {
+                    fileTypes: interaction.context.fileType ? [interaction.context.fileType] : [],
+                    projectTypes: interaction.context.projectType ? [interaction.context.projectType] : [],
+                    commonIssues: interaction.context.issue?.type ? [interaction.context.issue.type] : [],
+                    userPreferences: {}
+                },
+                recommendations: {
+                    agentImprovements: ['Review detection criteria'],
+                    detectionRules: ['Add exclusion for this pattern'],
+                    suggestionTypes: []
+                }
+            };
+            this.patterns.set(patternKey, newPattern);
+        }
+        else {
+            const pattern = this.patterns.get(patternKey);
+            pattern.usageCount++;
+            // Increase confidence that this is a problematic pattern
+            pattern.confidence = Math.min(pattern.confidence + 0.1, 1);
+        }
     }
     async createRollbackData(agentId) {
-        return {};
+        // Capture current state for potential rollback
+        const agentAdaptations = this.adaptations.get(agentId) || [];
+        const agentPatterns = Array.from(this.patterns.values())
+            .filter(p => p.agentId === agentId);
+        return {
+            timestamp: Date.now(),
+            agentId,
+            adaptationsCount: agentAdaptations.length,
+            patternsSnapshot: agentPatterns.map(p => ({
+                id: p.id,
+                confidence: p.confidence,
+                successRate: p.successRate
+            })),
+            configSnapshot: {
+                minInteractionsForPattern: this.learningConfig.minInteractionsForPattern,
+                confidenceThreshold: this.learningConfig.confidenceThreshold
+            }
+        };
     }
     async applyAdaptationChanges(agentId, adaptation) {
-        // Apply changes to the agent's configuration/behavior
+        // Apply the adaptation based on type
+        switch (adaptation.adaptationType) {
+            case 'detection_rule':
+                // Would update agent's detection rules configuration
+                this.logger.info(`Applying detection rule changes for ${agentId}`, {
+                    changes: adaptation.changes
+                }, 'adaptive-learning');
+                break;
+            case 'suggestion_algorithm':
+                // Would update suggestion prioritization
+                this.logger.info(`Applying suggestion algorithm changes for ${agentId}`, {
+                    changes: adaptation.changes
+                }, 'adaptive-learning');
+                break;
+            case 'priority_weighting':
+                // Would update priority weights
+                this.logger.info(`Applying priority weighting changes for ${agentId}`, {
+                    changes: adaptation.changes
+                }, 'adaptive-learning');
+                break;
+            case 'context_awareness':
+                // Would update context-aware behavior
+                this.logger.info(`Applying context awareness changes for ${agentId}`, {
+                    changes: adaptation.changes
+                }, 'adaptive-learning');
+                break;
+        }
+        // Save adaptation to persistent storage
+        const adaptationsFile = path.join(this.dataPath, 'applied_adaptations.json');
+        let appliedAdaptations = [];
+        if (fs.existsSync(adaptationsFile)) {
+            try {
+                appliedAdaptations = JSON.parse(fs.readFileSync(adaptationsFile, 'utf8'));
+            }
+            catch {
+                // File corrupted, start fresh
+            }
+        }
+        appliedAdaptations.push({
+            ...adaptation,
+            appliedAt: Date.now()
+        });
+        fs.writeFileSync(adaptationsFile, JSON.stringify(appliedAdaptations, null, 2));
     }
 }
 // Export singleton instance

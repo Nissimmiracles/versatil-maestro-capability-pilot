@@ -1,0 +1,30 @@
+{"claim":"Created auth.ts with 150 lines","category":"FileCreation","verified":true,"confidence":90,"timestamp":1765494359259,"verificationTime":9}
+{"claim":"Created config.json with 25 lines","category":"FileCreation","verified":true,"confidence":90,"timestamp":1765494359266,"verificationTime":6}
+{"claim":"Created utils.py with 200 lines","category":"FileCreation","verified":true,"confidence":90,"timestamp":1765494359272,"verificationTime":6}
+{"claim":"Created server.go with 300 lines","category":"FileCreation","verified":true,"confidence":90,"timestamp":1765494359280,"verificationTime":7}
+{"claim":"Created component.tsx with 180 lines","category":"FileCreation","verified":true,"confidence":90,"timestamp":1765494359285,"verificationTime":4}
+{"claim":"Modified package.json line 42","category":"FileEdit","verified":true,"confidence":70,"timestamp":1765494359285,"verificationTime":0}
+{"claim":"Updated README.md with 3 sections","category":"FileEdit","verified":true,"confidence":70,"timestamp":1765494359286,"verificationTime":0}
+{"claim":"Changed tsconfig.json compiler options","category":"FileEdit","verified":true,"confidence":70,"timestamp":1765494359286,"verificationTime":0}
+{"claim":"Fixed bug in index.ts line 127","category":"FileEdit","verified":true,"confidence":70,"timestamp":1765494359286,"verificationTime":0}
+{"claim":"Refactored database.ts to use async/await","category":"FileEdit","verified":true,"confidence":70,"timestamp":1765494359286,"verificationTime":0}
+{"claim":"Committed 8 files with message \"feat: add authentication\"","category":"GitCommit","verified":true,"confidence":100,"timestamp":1765494359335,"verificationTime":49}
+{"claim":"Created commit abc123 with 3 changed files","category":"GitCommit","verified":true,"confidence":100,"timestamp":1765494359373,"verificationTime":38}
+{"claim":"Pushed changes to remote origin/main","category":"GitCommit","verified":true,"confidence":70,"timestamp":1765494359373,"verificationTime":0}
+{"claim":"Merged feature branch with 15 commits","category":"GitCommit","verified":true,"confidence":90,"timestamp":1765494359408,"verificationTime":35}
+{"claim":"Tagged release v1.2.3 at commit def456","category":"GitCommit","verified":true,"confidence":100,"timestamp":1765494359436,"verificationTime":28}
+{"claim":"npm test passed with 47 tests","category":"CommandExecution","verified":true,"confidence":70,"timestamp":1765494359436,"verificationTime":0}
+{"claim":"Build completed in 2.3 seconds","category":"CommandExecution","verified":true,"confidence":70,"timestamp":1765494359437,"verificationTime":0}
+{"claim":"Linting found 0 errors","category":"CommandExecution","verified":true,"confidence":70,"timestamp":1765494359437,"verificationTime":0}
+{"claim":"Type checking passed with no issues","category":"CommandExecution","verified":true,"confidence":70,"timestamp":1765494359437,"verificationTime":0}
+{"claim":"Deployed to production successfully","category":"CommandExecution","verified":true,"confidence":70,"timestamp":1765494359437,"verificationTime":0}
+{"claim":"Test coverage is 87%","category":"DataAssertion","verified":true,"confidence":70,"timestamp":1765494359437,"verificationTime":0}
+{"claim":"Database has 1,247 records","category":"DataAssertion","verified":true,"confidence":70,"timestamp":1765494359438,"verificationTime":0}
+{"claim":"API response contains user data","category":"DataAssertion","verified":false,"confidence":50,"timestamp":1765494359438,"verificationTime":0}
+{"claim":"Configuration loaded 12 environment variables","category":"DataAssertion","verified":true,"confidence":70,"timestamp":1765494359438,"verificationTime":0}
+{"claim":"Cache hit rate is 94.5%","category":"DataAssertion","verified":true,"confidence":70,"timestamp":1765494359438,"verificationTime":0}
+{"claim":"API responded in 127ms","category":"Metric","verified":true,"confidence":70,"timestamp":1765494359439,"verificationTime":0}
+{"claim":"Memory usage increased by 15MB","category":"Metric","verified":true,"confidence":70,"timestamp":1765494359439,"verificationTime":0}
+{"claim":"Request throughput: 50 req/sec","category":"Metric","verified":true,"confidence":70,"timestamp":1765494359439,"verificationTime":0}
+{"claim":"Query execution took 234ms","category":"Metric","verified":true,"confidence":70,"timestamp":1765494359439,"verificationTime":0}
+{"claim":"Bundle size reduced to 128KB","category":"Metric","verified":true,"confidence":70,"timestamp":1765494359439,"verificationTime":0}

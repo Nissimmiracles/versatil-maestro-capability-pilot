@@ -81,6 +81,10 @@ export declare class AdaptiveLearningEngine extends EventEmitter {
      */
     stopLearning(): void;
     /**
+     * Clear all learning data (useful for testing)
+     */
+    clearData(): void;
+    /**
      * Record a user interaction with an agent
      */
     recordInteraction(interaction: UserInteraction): void;
@@ -133,6 +137,7 @@ export declare class AdaptiveLearningEngine extends EventEmitter {
     private extractProjectTypes;
     private extractCommonIssues;
     private extractUserPreferences;
+    private getMostCommonSuggestionTypes;
     private generateAgentImprovements;
     private generateDetectionRules;
     private generateSuggestionTypes;

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 /**
  * Tests for Adaptive Learning Engine
  */
@@ -5,12 +6,12 @@
 import { AdaptiveLearningEngine, UserInteraction } from '../../src/intelligence/adaptive-learning';
 
 // Mock VERSATILLogger
-jest.mock('../../src/utils/logger', () => ({
-  VERSATILLogger: jest.fn().mockImplementation(() => ({
-    info: jest.fn(),
-    debug: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn()
+vi.mock('../../src/utils/logger', () => ({
+  VERSATILLogger: vi.fn().mockImplementation(() => ({
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn()
   }))
 }));
 

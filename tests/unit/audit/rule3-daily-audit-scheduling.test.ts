@@ -5,7 +5,7 @@
  * Tests cron scheduling, immediate audits on issues, graceful shutdown, and PID management
  */
 
-import { describe, it, expect, beforeEach, afterEach, jest } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach, jest } from 'vitest';
 import { DailyAuditDaemon, DaemonConfig, DaemonStatus } from '../../../src/audit/daily-audit-daemon';
 import { DailyAuditSystem, AuditStatus, IssueSeverity } from '../../../src/audit/daily-audit-system';
 import fs from 'fs-extra';
@@ -13,24 +13,24 @@ import path from 'path';
 import os from 'os';
 
 // Mock node-cron
-jest.mock('node-cron', () => ({
-  schedule: jest.fn((schedule, callback, options) => ({
-    stop: jest.fn(),
-    start: jest.fn(),
-    destroy: jest.fn()
+vi.mock('node-cron', () => ({
+  schedule: vi.fn((schedule, callback, options) => ({
+    stop: vi.fn(),
+    start: vi.fn(),
+    destroy: vi.fn()
   })),
-  validate: jest.fn(() => true)
+  validate: vi.fn(() => true)
 }));
 
 // Mock Claude Agent SDK
-jest.mock('@anthropic-ai/claude-agent-sdk', () => ({
-  query: jest.fn(),
-  AgentDefinition: jest.fn()
+vi.mock('@anthropic-ai/claude-agent-sdk', () => ({
+  query: vi.fn(),
+  AgentDefinition: vi.fn()
 }));
 
 // Mock versatil-query to avoid SDK import issues
-jest.mock('../../../src/agents/sdk/versatil-query', () => ({
-  executeWithSDK: jest.fn(async () => new Map())
+vi.mock('../../../src/agents/sdk/versatil-query', () => ({
+  executeWithSDK: vi.fn(async () => new Map())
 }));
 
 describe('Rule 3: Daily Audit Scheduling', () => {
@@ -203,7 +203,7 @@ describe('Rule 3: Daily Audit Scheduling', () => {
     it('should run immediate audit on demand', async () => {
       await daemon.start();
 
-      const auditStartListener = jest.fn();
+      const auditStartListener = vi.fn();
       daemon.on('audit:immediate:completed', auditStartListener);
 
       const result = await daemon.runImmediateAudit('Manual trigger');
@@ -217,7 +217,7 @@ describe('Rule 3: Daily Audit Scheduling', () => {
       await daemon.start();
 
       // Mock a critical issue detection
-      const criticalAuditListener = jest.fn();
+      const criticalAuditListener = vi.fn();
       daemon.on('audit:immediate:completed', criticalAuditListener);
 
       await daemon.runImmediateAudit('Critical issue detected');
@@ -288,7 +288,7 @@ describe('Rule 3: Daily Audit Scheduling', () => {
       await daemon.start();
 
       // Simulate SIGTERM
-      const shutdownListener = jest.fn();
+      const shutdownListener = vi.fn();
       daemon.on('daemon:stopped', shutdownListener);
 
       await daemon.stop();
@@ -299,7 +299,7 @@ describe('Rule 3: Daily Audit Scheduling', () => {
     it('should execute shutdown handlers', async () => {
       await daemon.start();
 
-      const shutdownHandler = jest.fn(async () => {
+      const shutdownHandler = vi.fn(async () => {
         // Cleanup task
       });
 
@@ -327,7 +327,7 @@ describe('Rule 3: Daily Audit Scheduling', () => {
       // Mock audit system to fail
       const auditSystem = (daemon as any).auditSystem;
       const originalRunAudit = auditSystem.runDailyAudit.bind(auditSystem);
-      auditSystem.runDailyAudit = jest.fn().mockRejectedValue(new Error('Mock audit failure'));
+      auditSystem.runDailyAudit = vi.fn().mockRejectedValue(new Error('Mock audit failure'));
 
       try {
         await daemon.runImmediateAudit();
@@ -345,13 +345,13 @@ describe('Rule 3: Daily Audit Scheduling', () => {
     it('should emit error events on audit failures', async () => {
       await daemon.start();
 
-      const errorListener = jest.fn();
+      const errorListener = vi.fn();
       daemon.on('audit:immediate:failed', errorListener);
 
       // Mock audit system to fail
       const auditSystem = (daemon as any).auditSystem;
       const originalRunAudit = auditSystem.runDailyAudit.bind(auditSystem);
-      auditSystem.runDailyAudit = jest.fn().mockRejectedValue(new Error('Mock failure'));
+      auditSystem.runDailyAudit = vi.fn().mockRejectedValue(new Error('Mock failure'));
 
       try {
         await daemon.runImmediateAudit();
@@ -368,7 +368,7 @@ describe('Rule 3: Daily Audit Scheduling', () => {
 
   describe('Event Emission', () => {
     it('should emit daemon:started event', async () => {
-      const startListener = jest.fn();
+      const startListener = vi.fn();
       daemon.on('daemon:started', startListener);
 
       await daemon.start();
@@ -384,7 +384,7 @@ describe('Rule 3: Daily Audit Scheduling', () => {
     it('should emit daemon:stopped event', async () => {
       await daemon.start();
 
-      const stopListener = jest.fn();
+      const stopListener = vi.fn();
       daemon.on('daemon:stopped', stopListener);
 
       await daemon.stop();
@@ -401,7 +401,7 @@ describe('Rule 3: Daily Audit Scheduling', () => {
     it('should emit audit:scheduled:completed event', async () => {
       await daemon.start();
 
-      const scheduledListener = jest.fn();
+      const scheduledListener = vi.fn();
       daemon.on('audit:scheduled:completed', scheduledListener);
 
       // Trigger scheduled audit manually
@@ -459,7 +459,7 @@ describe('Rule 3: Daily Audit Scheduling', () => {
     it('should trigger immediate audit on critical issues', async () => {
       await daemon.start();
 
-      const immediateListener = jest.fn();
+      const immediateListener = vi.fn();
       daemon.on('audit:immediate:completed', immediateListener);
 
       // Simulate critical issue detection
@@ -506,7 +506,7 @@ describe('Rule 3: Daily Audit Scheduling', () => {
       // Trigger an error by mocking
       const auditSystem = (daemon as any).auditSystem;
       const originalRunAudit = auditSystem.runDailyAudit.bind(auditSystem);
-      auditSystem.runDailyAudit = jest.fn().mockRejectedValue(new Error('Test error'));
+      auditSystem.runDailyAudit = vi.fn().mockRejectedValue(new Error('Test error'));
 
       try {
         await daemon.runImmediateAudit();

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 /**
  * VERSATIL SDLC Framework - Configuration Wizard Tests
  * Comprehensive test suite for the interactive configuration wizard
@@ -13,9 +14,9 @@ import * as readline from 'readline';
 import { EventEmitter } from 'events';
 
 // Mock readline module
-jest.mock('readline');
+vi.mock('readline');
 
-// Create shared mock functions that will be assigned in jest.mock
+// Create shared mock functions that will be assigned in vi.mock
 let mockGetDefaultPreferences: jest.Mock;
 let mockSavePreferences: jest.Mock;
 let mockGetPreferences: jest.Mock;
@@ -23,7 +24,7 @@ let mockGetSummary: jest.Mock;
 let mockResetToDefaults: jest.Mock;
 
 // Mock PreferenceManager
-jest.mock('../../../src/config/preference-manager', () => {
+vi.mock('../../../src/config/preference-manager', () => {
   const mockPreferences: UserPreferences = {
     updateBehavior: 'notify',
     updateChannel: 'stable',
@@ -52,22 +53,22 @@ jest.mock('../../../src/config/preference-manager', () => {
 
   // Create mock functions inside the factory
   const mockFns = {
-    getDefaultPreferences: jest.fn().mockReturnValue(mockPreferences),
-    savePreferences: jest.fn().mockResolvedValue(undefined),
-    getPreferences: jest.fn().mockResolvedValue(mockPreferences),
-    getSummary: jest.fn().mockResolvedValue('Mock preferences summary'),
-    resetToDefaults: jest.fn().mockResolvedValue(undefined)
+    getDefaultPreferences: vi.fn().mockReturnValue(mockPreferences),
+    savePreferences: vi.fn().mockResolvedValue(undefined),
+    getPreferences: vi.fn().mockResolvedValue(mockPreferences),
+    getSummary: vi.fn().mockResolvedValue('Mock preferences summary'),
+    resetToDefaults: vi.fn().mockResolvedValue(undefined)
   };
 
   return {
-    PreferenceManager: jest.fn().mockImplementation(() => mockFns),
+    PreferenceManager: vi.fn().mockImplementation(() => mockFns),
     // Export mocks so they can be accessed
     __mockFunctions: mockFns
   };
 });
 
 // Don't mock ConfigProfileManager - use real implementation
-// jest.mock() removed - ConfigProfileManager has no external dependencies
+// vi.mock() removed - ConfigProfileManager has no external dependencies
 
 /**
  * Mock readline Interface
@@ -137,7 +138,7 @@ describe('ConfigWizard', () => {
 
   beforeEach(() => {
     // Clear all mock calls
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Create mock readline interface
     mockRl = new MockReadlineInterface();
@@ -146,7 +147,7 @@ describe('ConfigWizard', () => {
     (readline.createInterface as jest.Mock).mockReturnValue(mockRl);
 
     // Spy on console.log to suppress output during tests
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation();
 
     // Create wizard instance
     wizard = new ConfigWizard();

@@ -2,7 +2,7 @@
  * Unit tests for DocsProgressTracker
  */
 
-import { describe, it, expect, beforeEach, jest } from 'vitest';
+import { vi, describe, it, expect, beforeEach, jest } from 'vitest';
 import { DocsProgressTracker, ProgressEvent, ProgressCallback } from '../../src/mcp/docs-progress-tracker.js';
 
 describe('DocsProgressTracker', () => {
@@ -127,7 +127,7 @@ describe('DocsProgressTracker', () => {
   describe('subscribe and unsubscribe', () => {
     it('should notify callback on progress update', () => {
       const opId = tracker.startOperation('test');
-      const mockCallback = jest.fn<ProgressCallback>();
+      const mockCallback = vi.fn<ProgressCallback>();
 
       tracker.subscribe(opId, mockCallback);
       tracker.reportProgress(opId, 'phase1', 1, 10, 'Test');
@@ -145,8 +145,8 @@ describe('DocsProgressTracker', () => {
 
     it('should support multiple callbacks', () => {
       const opId = tracker.startOperation('test');
-      const callback1 = jest.fn<ProgressCallback>();
-      const callback2 = jest.fn<ProgressCallback>();
+      const callback1 = vi.fn<ProgressCallback>();
+      const callback2 = vi.fn<ProgressCallback>();
 
       tracker.subscribe(opId, callback1);
       tracker.subscribe(opId, callback2);
@@ -158,7 +158,7 @@ describe('DocsProgressTracker', () => {
 
     it('should unsubscribe callback', () => {
       const opId = tracker.startOperation('test');
-      const callback = jest.fn<ProgressCallback>();
+      const callback = vi.fn<ProgressCallback>();
 
       tracker.subscribe(opId, callback);
       tracker.unsubscribe(opId, callback);
@@ -169,7 +169,7 @@ describe('DocsProgressTracker', () => {
 
     it('should not throw on unsubscribe non-existent callback', () => {
       const opId = tracker.startOperation('test');
-      const callback = jest.fn<ProgressCallback>();
+      const callback = vi.fn<ProgressCallback>();
 
       expect(() => {
         tracker.unsubscribe(opId, callback);
@@ -178,7 +178,7 @@ describe('DocsProgressTracker', () => {
 
     it('should clear callbacks on complete', () => {
       const opId = tracker.startOperation('test');
-      const callback = jest.fn<ProgressCallback>();
+      const callback = vi.fn<ProgressCallback>();
 
       tracker.subscribe(opId, callback);
       tracker.completeOperation(opId);

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 /**
  * Tests for VERSATIL Server and Health Endpoints
  */
@@ -7,9 +8,9 @@ import express from 'express';
 import { createServer } from '../src/server';
 
 // Mock dependencies
-jest.mock('../src/analytics/performance-monitor', () => ({
+vi.mock('../src/analytics/performance-monitor', () => ({
   performanceMonitor: {
-    getPerformanceDashboard: jest.fn(() => ({
+    getPerformanceDashboard: vi.fn(() => ({
       system: {
         overallHealth: 95,
         uptime: 3600000,
@@ -31,9 +32,9 @@ jest.mock('../src/analytics/performance-monitor', () => ({
         }
       ]
     })),
-    recordAgentExecution: jest.fn(),
-    start: jest.fn(),
-    getPrometheusMetrics: jest.fn(() => `
+    recordAgentExecution: vi.fn(),
+    start: vi.fn(),
+    getPrometheusMetrics: vi.fn(() => `
 # HELP versatil_agent_activations_total Total number of agent activations
 # TYPE versatil_agent_activations_total counter
 versatil_agent_activations_total{agent="enhanced-maria"} 100
@@ -41,13 +42,13 @@ versatil_agent_activations_total{agent="enhanced-maria"} 100
   }
 }));
 
-jest.mock('../src/agents/agent-registry', () => ({
-  AgentRegistry: jest.fn().mockImplementation(() => ({
-    getAllAgents: jest.fn(() => new Map([
+vi.mock('../src/agents/agent-registry', () => ({
+  AgentRegistry: vi.fn().mockImplementation(() => ({
+    getAllAgents: vi.fn(() => new Map([
       ['enhanced-maria', { id: 'enhanced-maria', specialization: 'QA Lead' }],
       ['enhanced-james', { id: 'enhanced-james', specialization: 'Frontend Specialist' }]
     ])),
-    getAgentMetadata: jest.fn(() => new Map([
+    getAgentMetadata: vi.fn(() => new Map([
       ['enhanced-maria', {
         id: 'enhanced-maria',
         name: 'Enhanced Maria',
@@ -58,9 +59,9 @@ jest.mock('../src/agents/agent-registry', () => ({
   }))
 }));
 
-jest.mock('../src/intelligence/intelligence-dashboard', () => ({
+vi.mock('../src/intelligence/intelligence-dashboard', () => ({
   intelligenceDashboard: {
-    getDashboardData: jest.fn(() => ({
+    getDashboardData: vi.fn(() => ({
       systemOverview: {
         totalAgentsWrapped: 3,
         learningEnabled: true,
@@ -89,7 +90,7 @@ jest.mock('../src/intelligence/intelligence-dashboard', () => ({
         learningEffectiveness: 0.78
       }
     })),
-    getSystemHealth: jest.fn(() => ({
+    getSystemHealth: vi.fn(() => ({
       status: 'healthy',
       issues: [],
       recommendations: [],

@@ -14,7 +14,7 @@
  */
 
 import { join } from 'path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ActivationTracker, getActivationTracker, resetActivationTracker } from '../../src/agents/activation-tracker.js';
 import { AgentActivationContext } from '../../src/agents/core/base-agent.js';
 import { ProactiveAgentOrchestrator } from '../../src/orchestration/proactive-agent-orchestrator.js';
@@ -102,7 +102,7 @@ describe('Auto-Activation Test Suite', () => {
         'it("test", () => {})',
         'expect(value).toBe(true)',
         'test("example", () => {})',
-        'jest.fn()',
+        'vi.fn()',
         'vitest.mock()'
       ];
 

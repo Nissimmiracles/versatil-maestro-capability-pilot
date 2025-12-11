@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 /**
  * Test Suite: PreferenceManager
  * Tests for v3.0.0 user preference management
@@ -10,7 +11,7 @@ import * as path from 'path';
 import * as os from 'os';
 
 // Mock fs module
-jest.mock('fs/promises');
+vi.mock('fs/promises');
 
 const mockFs = fs as jest.Mocked<typeof fs>;
 
@@ -19,7 +20,7 @@ describe('PreferenceManager', () => {
   let mockPreferencesFile: string;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     preferenceManager = new PreferenceManager();
     mockPreferencesFile = path.join(os.homedir(), '.versatil', 'preferences.json');

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 /**
  * Tests for Agent Intelligence Manager
  */
@@ -6,15 +7,15 @@ import { AgentIntelligenceManager, IntelligentAgentWrapper } from '../../src/int
 import { BaseAgent, AgentActivationContext, AgentResponse } from '../../src/agents/core/base-agent';
 
 // Mock dependencies
-jest.mock('../../src/intelligence/usage-analytics', () => ({
+vi.mock('../../src/intelligence/usage-analytics', () => ({
   usageAnalytics: {
-    startTracking: jest.fn(),
-    stopTracking: jest.fn(),
-    trackAgentActivation: jest.fn(() => 'test-activation-id'),
-    trackPerformance: jest.fn(),
-    trackSuggestion: jest.fn(),
-    trackFalsePositive: jest.fn(),
-    getAnalyticsDashboard: jest.fn(() => ({
+    startTracking: vi.fn(),
+    stopTracking: vi.fn(),
+    trackAgentActivation: vi.fn(() => 'test-activation-id'),
+    trackPerformance: vi.fn(),
+    trackSuggestion: vi.fn(),
+    trackFalsePositive: vi.fn(),
+    getAnalyticsDashboard: vi.fn(() => ({
       totalEvents: 100,
       agentUsage: [],
       topFileTypes: [],
@@ -25,12 +26,12 @@ jest.mock('../../src/intelligence/usage-analytics', () => ({
   }
 }));
 
-jest.mock('../../src/intelligence/adaptive-learning', () => ({
+vi.mock('../../src/intelligence/adaptive-learning', () => ({
   adaptiveLearning: {
-    startLearning: jest.fn(),
-    recordInteraction: jest.fn(),
-    on: jest.fn(),
-    getLearningInsights: jest.fn(() => ({
+    startLearning: vi.fn(),
+    recordInteraction: vi.fn(),
+    on: vi.fn(),
+    getLearningInsights: vi.fn(() => ({
       totalPatterns: 5,
       adaptationsProposed: 3,
       learningEffectiveness: 0.8,
@@ -40,11 +41,11 @@ jest.mock('../../src/intelligence/adaptive-learning', () => ({
   }
 }));
 
-jest.mock('../../src/utils/logger', () => ({
-  VERSATILLogger: jest.fn().mockImplementation(() => ({
-    info: jest.fn(),
-    debug: jest.fn(),
-    error: jest.fn()
+vi.mock('../../src/utils/logger', () => ({
+  VERSATILLogger: vi.fn().mockImplementation(() => ({
+    info: vi.fn(),
+    debug: vi.fn(),
+    error: vi.fn()
   }))
 }));
 
@@ -180,7 +181,7 @@ describe('AgentIntelligenceManager', () => {
 
     it('should handle activation errors gracefully', async () => {
       const errorAgent = new TestAgent();
-      errorAgent.activate = jest.fn().mockRejectedValue(new Error('Test error'));
+      errorAgent.activate = vi.fn().mockRejectedValue(new Error('Test error'));
 
       const wrappedAgent = intelligenceManager.wrapAgent(errorAgent);
 

@@ -56,12 +56,43 @@ export interface ContextVerificationResult {
  */
 export declare function verifyContextIssue(issue: HealthIssue, workingDir: string, userId?: string, teamId?: string, projectId?: string, resolvedContext?: any): Promise<ContextVerificationResult>;
 /**
+ * Context switch event
+ */
+interface ContextSwitchEvent {
+    from: 'FRAMEWORK_CONTEXT' | 'PROJECT_CONTEXT';
+    to: 'FRAMEWORK_CONTEXT' | 'PROJECT_CONTEXT';
+    timestamp: string;
+}
+/**
+ * Context state for persistence
+ */
+interface ContextState {
+    currentContext: 'FRAMEWORK_CONTEXT' | 'PROJECT_CONTEXT';
+    history: ContextSwitchEvent[];
+    timestamp: string;
+}
+/**
+ * File operation record
+ */
+interface FileOperation {
+    path: string;
+    operation: 'read' | 'write';
+    context: 'FRAMEWORK_CONTEXT' | 'PROJECT_CONTEXT';
+    isFrameworkFile: boolean;
+    timestamp: string;
+}
+/**
  * ContextVerifier Class (Singleton)
  * Wraps the functional context verification API in a class for testing
  */
 export declare class ContextVerifier {
     private static instance;
     private currentContext;
+    private contextHistory;
+    private contextSwitchListeners;
+    private fileOperations;
+    private unauthorizedAttempts;
+    private contextLeakWarnings;
     private constructor();
     /**
      * Get singleton instance
@@ -76,9 +107,88 @@ export declare class ContextVerifier {
      */
     setContext(context: 'FRAMEWORK_CONTEXT' | 'PROJECT_CONTEXT'): void;
     /**
+     * Switch context with event tracking
+     */
+    switchContext(context: 'FRAMEWORK_CONTEXT' | 'PROJECT_CONTEXT'): void;
+    /**
+     * Get context switch history
+     */
+    getContextHistory(): ContextSwitchEvent[];
+    /**
+     * Register context switch listener
+     */
+    onContextSwitch(listener: (event: ContextSwitchEvent) => void): void;
+    /**
      * Detect context from file path
      */
     detectContextFromPath(filePath: string): 'FRAMEWORK_CONTEXT' | 'PROJECT_CONTEXT';
+    /**
+     * Check if file is a framework file
+     */
+    isFrameworkFile(filePath: string): boolean;
+    /**
+     * Validate file operation based on current context
+     */
+    validateFileOperation(filePath: string, operation: 'read' | 'write', options?: {
+        allowFrameworkModification?: boolean;
+    }): boolean;
+    /**
+     * Get unauthorized modification attempts
+     */
+    getUnauthorizedAttempts(): Array<{
+        path: string;
+        operation: string;
+        timestamp: string;
+    }>;
+    /**
+     * Detect context leak
+     */
+    detectContextLeak(): boolean;
+    /**
+     * Get mixed context operations
+     */
+    getMixedContextOperations(): FileOperation[];
+    /**
+     * Get context leak warnings
+     */
+    getContextLeakWarnings(): Array<{
+        message: string;
+        timestamp: string;
+    }>;
+    /**
+     * Clear context leak warnings
+     */
+    clearContextLeakWarnings(): void;
+    /**
+     * Validate agent activation based on context
+     */
+    validateAgentActivation(agentName: string, options?: {
+        taskType?: string;
+    }): boolean;
+    /**
+     * Save context state
+     */
+    saveContextState(): Promise<void>;
+    /**
+     * Get current context state
+     */
+    getContextState(): ContextState;
+    /**
+     * Restore context state
+     */
+    restoreContextState(state: ContextState): Promise<void>;
+    /**
+     * Generate validation report
+     */
+    generateValidationReport(): {
+        contextSwitches: number;
+        violations: Array<{
+            path: string;
+            operation: string;
+        }>;
+        mixedOperations: number;
+        recommendations: string[];
+    };
     /**
      * Verify context issue (delegates to functional API)
      */
@@ -91,11 +201,8 @@ export declare class ContextVerifier {
         reason?: string;
     };
     /**
-     * Detect context leaks
-     */
-    detectContextLeak(sourceContext: string, targetContext: string, operation: string): boolean;
-    /**
      * Reset singleton (for testing)
      */
     static resetInstance(): void;
 }
+export {};

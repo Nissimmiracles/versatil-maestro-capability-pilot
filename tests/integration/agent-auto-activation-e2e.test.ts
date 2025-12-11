@@ -15,7 +15,7 @@
  * @version 1.0.0
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { join } from 'path';
 import { writeFile, unlink, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -82,7 +82,7 @@ describe('LoginForm', () => {
   });
 
   it('should call onSubmit when form is submitted', () => {
-    const onSubmit = jest.fn();
+    const onSubmit = vi.fn();
     render(<LoginForm onSubmit={onSubmit} />);
     // ... test implementation
   });

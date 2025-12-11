@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 /**
  * Pattern Search Service - Unit Tests
  * Tests for historical pattern search and analysis
@@ -6,10 +7,10 @@
 import { PatternSearchService, HistoricalPattern, PatternSearchQuery } from '../../src/rag/pattern-search';
 
 // Mock GraphRAG store
-jest.mock('../../src/lib/graphrag-store', () => ({
+vi.mock('../../src/lib/graphrag-store', () => ({
   graphRAGStore: {
-    initialize: jest.fn().mockResolvedValue(undefined),
-    query: jest.fn().mockResolvedValue([
+    initialize: vi.fn().mockResolvedValue(undefined),
+    query: vi.fn().mockResolvedValue([
       {
         pattern: {
           id: 'pattern-1',
@@ -57,10 +58,10 @@ jest.mock('../../src/lib/graphrag-store', () => ({
 }));
 
 // Mock Vector store
-jest.mock('../../src/rag/enhanced-vector-memory-store', () => ({
-  EnhancedVectorMemoryStore: jest.fn().mockImplementation(() => ({
-    initialize: jest.fn().mockResolvedValue(undefined),
-    search: jest.fn().mockResolvedValue({
+vi.mock('../../src/rag/enhanced-vector-memory-store', () => ({
+  EnhancedVectorMemoryStore: vi.fn().mockImplementation(() => ({
+    initialize: vi.fn().mockResolvedValue(undefined),
+    search: vi.fn().mockResolvedValue({
       documents: [
         {
           id: 'doc-1',
@@ -96,7 +97,7 @@ describe('PatternSearchService', () => {
 
   beforeEach(() => {
     service = new PatternSearchService();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('searchSimilarFeatures', () => {

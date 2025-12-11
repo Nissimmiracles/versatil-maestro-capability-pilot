@@ -777,6 +777,11 @@ function generateContextFix(issue, verifications) {
 export class ContextVerifier {
     constructor() {
         this.currentContext = 'PROJECT_CONTEXT';
+        this.contextHistory = [];
+        this.contextSwitchListeners = [];
+        this.fileOperations = [];
+        this.unauthorizedAttempts = [];
+        this.contextLeakWarnings = [];
         // Private constructor for singleton
     }
     /**
@@ -801,14 +806,45 @@ export class ContextVerifier {
         this.currentContext = context;
     }
     /**
+     * Switch context with event tracking
+     */
+    switchContext(context) {
+        const previousContext = this.currentContext;
+        this.currentContext = context;
+        const event = {
+            from: previousContext,
+            to: context,
+            timestamp: new Date().toISOString()
+        };
+        this.contextHistory.push(event);
+        // Notify listeners
+        this.contextSwitchListeners.forEach(listener => listener(event));
+    }
+    /**
+     * Get context switch history
+     */
+    getContextHistory() {
+        return [...this.contextHistory];
+    }
+    /**
+     * Register context switch listener
+     */
+    onContextSwitch(listener) {
+        this.contextSwitchListeners.push(listener);
+    }
+    /**
      * Detect context from file path
      */
     detectContextFromPath(filePath) {
+        if (!filePath)
+            return 'PROJECT_CONTEXT';
         // Check if path contains framework identifiers
         const frameworkIdentifiers = [
             'versatil-sdlc-framework',
             'versatil-sdlc-fw',
+            'versatil-framework',
             '@versatil/sdlc-framework',
+            '@versatil',
             '/src/agents/guardian/',
             '/src/agents/opera/',
             '/src/intelligence/',
@@ -816,6 +852,152 @@ export class ContextVerifier {
         ];
         const isFramework = frameworkIdentifiers.some(id => filePath.includes(id));
         return isFramework ? 'FRAMEWORK_CONTEXT' : 'PROJECT_CONTEXT';
+    }
+    /**
+     * Check if file is a framework file
+     */
+    isFrameworkFile(filePath) {
+        return this.detectContextFromPath(filePath) === 'FRAMEWORK_CONTEXT';
+    }
+    /**
+     * Validate file operation based on current context
+     */
+    validateFileOperation(filePath, operation, options) {
+        const isFramework = this.isFrameworkFile(filePath);
+        // Record the operation
+        this.fileOperations.push({
+            path: filePath,
+            operation,
+            context: this.currentContext,
+            isFrameworkFile: isFramework,
+            timestamp: new Date().toISOString()
+        });
+        // Read operations are always allowed
+        if (operation === 'read') {
+            return true;
+        }
+        // Write to framework files in PROJECT_CONTEXT
+        if (isFramework && this.currentContext === 'PROJECT_CONTEXT') {
+            // Warn about cross-context operation
+            console.warn(`Cross-context operation: Attempting to write to framework file ${filePath} from PROJECT_CONTEXT`);
+            // Record unauthorized attempt
+            this.unauthorizedAttempts.push({
+                path: filePath,
+                operation,
+                timestamp: new Date().toISOString()
+            });
+            // Allow if explicit flag is set
+            if (options?.allowFrameworkModification) {
+                return true;
+            }
+            return false;
+        }
+        // All other operations allowed
+        return true;
+    }
+    /**
+     * Get unauthorized modification attempts
+     */
+    getUnauthorizedAttempts() {
+        return [...this.unauthorizedAttempts];
+    }
+    /**
+     * Detect context leak
+     */
+    detectContextLeak() {
+        // Check if there are mixed context operations
+        const frameworkOps = this.fileOperations.filter(op => op.isFrameworkFile && op.operation === 'write');
+        const projectOps = this.fileOperations.filter(op => !op.isFrameworkFile && op.operation === 'write');
+        return frameworkOps.length > 0 && projectOps.length > 0;
+    }
+    /**
+     * Get mixed context operations
+     */
+    getMixedContextOperations() {
+        return this.fileOperations.filter(op => (op.isFrameworkFile && op.context === 'PROJECT_CONTEXT') ||
+            (!op.isFrameworkFile && op.context === 'FRAMEWORK_CONTEXT'));
+    }
+    /**
+     * Get context leak warnings
+     */
+    getContextLeakWarnings() {
+        return [...this.contextLeakWarnings];
+    }
+    /**
+     * Clear context leak warnings
+     */
+    clearContextLeakWarnings() {
+        this.contextLeakWarnings = [];
+    }
+    /**
+     * Validate agent activation based on context
+     */
+    validateAgentActivation(agentName, options) {
+        // OPERA agents are allowed in any context
+        const operaAgents = ['alex-ba', 'james-frontend', 'marcus-backend', 'maria-qa', 'sarah-pm', 'dana-database', 'dr-ai-ml', 'oliver-mcp'];
+        if (operaAgents.includes(agentName)) {
+            return true;
+        }
+        // Iris-Guardian in FRAMEWORK_CONTEXT is always allowed
+        if (agentName === 'iris-guardian' && this.currentContext === 'FRAMEWORK_CONTEXT') {
+            return true;
+        }
+        // Iris-Guardian in PROJECT_CONTEXT for framework health tasks
+        if (agentName === 'iris-guardian' && this.currentContext === 'PROJECT_CONTEXT') {
+            if (options?.taskType === 'framework-health-check') {
+                return true;
+            }
+            // User feature requests in PROJECT_CONTEXT - restricted
+            return false;
+        }
+        // Default: allow
+        return true;
+    }
+    /**
+     * Save context state
+     */
+    async saveContextState() {
+        // In-memory save (actual implementation would persist to disk)
+        // State is already stored in instance variables
+    }
+    /**
+     * Get current context state
+     */
+    getContextState() {
+        return {
+            currentContext: this.currentContext,
+            history: [...this.contextHistory],
+            timestamp: new Date().toISOString()
+        };
+    }
+    /**
+     * Restore context state
+     */
+    async restoreContextState(state) {
+        this.currentContext = state.currentContext;
+        this.contextHistory = state.history || [];
+    }
+    /**
+     * Generate validation report
+     */
+    generateValidationReport() {
+        const violations = this.unauthorizedAttempts.map(a => ({
+            path: a.path,
+            operation: a.operation
+        }));
+        const recommendations = [];
+        if (violations.length > 0) {
+            recommendations.push('Avoid modifying framework files from project context');
+        }
+        if (this.getMixedContextOperations().length > 0) {
+            recommendations.push('Consider separating framework and project operations');
+        }
+        return {
+            contextSwitches: this.contextHistory.length,
+            violations,
+            mixedOperations: this.getMixedContextOperations().length,
+            recommendations
+        };
     }
     /**
      * Verify context issue (delegates to functional API)
@@ -835,13 +1017,6 @@ export class ContextVerifier {
             };
         }
         return { allowed: true };
-    }
-    /**
-     * Detect context leaks
-     */
-    detectContextLeak(sourceContext, targetContext, operation) {
-        // Context leak occurs when project code tries to modify framework
-        return sourceContext === 'PROJECT_CONTEXT' && targetContext === 'FRAMEWORK_CONTEXT' && operation.includes('modify');
     }
     /**
      * Reset singleton (for testing)

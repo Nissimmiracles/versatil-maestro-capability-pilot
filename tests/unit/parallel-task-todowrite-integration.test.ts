@@ -10,7 +10,7 @@
  * - Statusline formatting
  */
 
-import { describe, it, expect, beforeEach, jest } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import ParallelTaskManager, {
   Task,
   TaskType,

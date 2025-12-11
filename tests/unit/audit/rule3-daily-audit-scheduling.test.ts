@@ -5,7 +5,7 @@
  * Tests cron scheduling, immediate audits on issues, graceful shutdown, and PID management
  */
 
-import { vi, describe, it, expect, beforeEach, afterEach, jest } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { DailyAuditDaemon, DaemonConfig, DaemonStatus } from '../../../src/audit/daily-audit-daemon';
 import { DailyAuditSystem, AuditStatus, IssueSeverity } from '../../../src/audit/daily-audit-system';
 import fs from 'fs-extra';

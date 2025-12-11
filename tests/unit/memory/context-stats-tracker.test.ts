@@ -13,7 +13,7 @@
  * - Concurrent operations
  */
 
-import { describe, it, expect, beforeEach, afterEach, jest } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
@@ -22,7 +22,6 @@ import {
   getGlobalContextTracker,
   ContextClearEvent,
   MemoryOperation,
-  ContractEvent,
   ContextStatistics
 } from '../../../src/memory/context-stats-tracker.js';
 

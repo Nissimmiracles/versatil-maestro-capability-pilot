@@ -7,12 +7,12 @@ import { AdaptiveLearningEngine, UserInteraction } from '../../src/intelligence/
 
 // Mock VERSATILLogger
 vi.mock('../../src/utils/logger', () => ({
-  VERSATILLogger: vi.fn().mockImplementation(() => ({
-    info: vi.fn(),
-    debug: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn()
-  }))
+  VERSATILLogger: class {
+    info = vi.fn();
+    debug = vi.fn();
+    warn = vi.fn();
+    error = vi.fn();
+  }
 }));
 
 describe('AdaptiveLearningEngine', () => {
@@ -190,7 +190,7 @@ describe('AdaptiveLearningEngine', () => {
       learningEngine.startLearning();
     });
 
-    it('should propose adaptations for low-performing patterns', () => {
+    it('should propose adaptations for low-performing patterns', async () => {
       // Create pattern with low success rate
       const pattern = {
         id: 'pattern-1',

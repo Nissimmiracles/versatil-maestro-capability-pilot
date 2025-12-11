@@ -2,66 +2,68 @@
  * Tests for UpdateManager - Framework Update System
  * Tests for v3.0.0 Update Manager with backup, rollback, and update capabilities
  *
- * FIXED: Using __mocks__ directory for proper mock hoisting
+ * FIXED: Converted to Vitest
  */
 
+import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from 'vitest';
 import { UpdateManager, UpdateConfig, UpdateHistory } from '../../src/update/update-manager';
 import { GitHubReleaseChecker, ReleaseInfo, UpdateCheckResult } from '../../src/update/github-release-checker';
 import * as path from 'path';
 import * as os from 'os';
 
-// Enable manual mocks from __mocks__ directory
-jest.mock('child_process');
-jest.mock('util');
-
-// Import mockExecAsync from our manual mock (this works because __mocks__ is hoisted)
-import { mockExecAsync } from '../__mocks__/child_process';
-
 // Mock fs/promises
-jest.mock('fs/promises', () => ({
-  mkdir: jest.fn(),
-  writeFile: jest.fn(),
-  readFile: jest.fn(),
-  readdir: jest.fn()
+vi.mock('fs/promises', () => ({
+  mkdir: vi.fn(),
+  writeFile: vi.fn(),
+  readFile: vi.fn(),
+  readdir: vi.fn()
 }));
 
-// Mock GitHubReleaseChecker with factory
-var sharedMockInstance = {
-  checkForUpdate: jest.fn(),
-  getLatestRelease: jest.fn(),
-  getReleaseByTag: jest.fn(),
-  getAllReleases: jest.fn(),
-  getReleaseByVersion: jest.fn(),
-  getReleasesBetween: jest.fn(),
-  clearCache: jest.fn()
+// Mock child_process and util
+const mockExecAsync = vi.fn();
+vi.mock('child_process', () => ({
+  exec: vi.fn()
+}));
+vi.mock('util', () => ({
+  promisify: () => mockExecAsync
+}));
+
+// Mock GitHubReleaseChecker
+const sharedMockInstance = {
+  checkForUpdate: vi.fn(),
+  getLatestRelease: vi.fn(),
+  getReleaseByTag: vi.fn(),
+  getAllReleases: vi.fn(),
+  getReleaseByVersion: vi.fn(),
+  getReleasesBetween: vi.fn(),
+  clearCache: vi.fn()
 };
 
-jest.mock('../../src/update/github-release-checker', () => ({
-  GitHubReleaseChecker: jest.fn().mockImplementation(() => sharedMockInstance),
+vi.mock('../../src/update/github-release-checker', () => ({
+  GitHubReleaseChecker: vi.fn().mockImplementation(() => sharedMockInstance),
   GitHubReleaseError: class GitHubReleaseError extends Error {}
 }));
 
-describe('UpdateManager', () => {
-  let updateManager;
-  let versatilHome;
-  let updateHistoryFile;
+// Import mocked fs after mocking
+import * as fs from 'fs/promises';
 
-  // Get references to mocked modules
-  const fs = require('fs/promises');
-  const { exec } = require('child_process');
+describe('UpdateManager', () => {
+  let updateManager: UpdateManager;
+  let versatilHome: string;
+  let updateHistoryFile: string;
 
   beforeEach(() => {
     // Clear all mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Setup fs mocks
-    (fs.mkdir as jest.Mock).mockResolvedValue(undefined);
-    (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
-    (fs.readFile as jest.Mock).mockResolvedValue('[]');
-    (fs.readdir as jest.Mock).mockResolvedValue([]);
+    (fs.mkdir as Mock).mockResolvedValue(undefined);
+    (fs.writeFile as Mock).mockResolvedValue(undefined);
+    (fs.readFile as Mock).mockResolvedValue('[]');
+    (fs.readdir as Mock).mockResolvedValue([]);
 
     // Setup mockExecAsync (promise-based) with smart command handling
-    mockExecAsync.mockImplementation((cmd) => {
+    mockExecAsync.mockImplementation((cmd: string) => {
       if (cmd.includes('tar -czf') || cmd.includes('tar -xzf')) {
         return Promise.resolve({ stdout: '', stderr: '' });
       } else if (cmd.includes('npm update')) {
@@ -70,7 +72,7 @@ describe('UpdateManager', () => {
         // Extract version from npm update command or return default
         const updateMatch = (mockExecAsync.mock.calls || [])
           .flat()
-          .find((call) => typeof call === 'string' && call.includes('npm update'))
+          .find((call: any) => typeof call === 'string' && call.includes('npm update'))
           ?.match(/@(\d+\.\d+\.\d+)/);
         const version = updateMatch ? updateMatch[1] : '3.0.0';
         return Promise.resolve({ stdout: version, stderr: '' });
@@ -92,13 +94,13 @@ describe('UpdateManager', () => {
     });
 
     // Suppress console output during tests
-    jest.spyOn(console, 'log').mockImplementation();
-    jest.spyOn(console, 'error').mockImplementation();
-    jest.spyOn(console, 'warn').mockImplementation();
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('1. checkForUpdates - no updates available', () => {
@@ -203,10 +205,6 @@ describe('UpdateManager', () => {
 
   describe('3. installUpdate - successful installation', () => {
     it('should successfully install an update with backup', async () => {
-      const currentVersion = '2.5.0';
-      const targetVersion = '3.0.0';
-
-      // Mock update check
       const mockCheckResult = {
         hasUpdate: true,
         currentVersion: '2.5.0',
@@ -215,8 +213,7 @@ describe('UpdateManager', () => {
       };
       sharedMockInstance.checkForUpdate.mockResolvedValue(mockCheckResult);
 
-      // Mock backup creation and update commands
-      mockExecAsync.mockImplementation((cmd) => {
+      mockExecAsync.mockImplementation((cmd: string) => {
         if (cmd.includes('tar -czf')) {
           return Promise.resolve({ stdout: '', stderr: '' });
         } else if (cmd.includes('npm update')) {
@@ -227,17 +224,17 @@ describe('UpdateManager', () => {
         return Promise.resolve({ stdout: '', stderr: '' });
       });
 
-      const result = await updateManager.update(currentVersion);
+      const result = await updateManager.update('2.5.0');
 
       expect(result).toBe(true);
-      expect((fs.mkdir as jest.Mock)).toHaveBeenCalled();
+      expect(fs.mkdir as Mock).toHaveBeenCalled();
       expect(mockExecAsync).toHaveBeenCalledWith(
         expect.stringContaining('tar -czf')
       );
       expect(mockExecAsync).toHaveBeenCalledWith(
         expect.stringContaining('npm update -g versatil-sdlc-framework@3.0.0')
       );
-      expect((fs.writeFile as jest.Mock)).toHaveBeenCalled();
+      expect(fs.writeFile as Mock).toHaveBeenCalled();
     });
 
     it('should skip backup if backupBeforeUpdate is false', async () => {
@@ -252,7 +249,7 @@ describe('UpdateManager', () => {
       };
       sharedMockInstance.checkForUpdate.mockResolvedValue(mockCheckResult);
 
-      mockExecAsync.mockImplementation((cmd) => {
+      mockExecAsync.mockImplementation((cmd: string) => {
         if (cmd.includes('npm update')) {
           return Promise.resolve({ stdout: 'Updated', stderr: '' });
         } else if (cmd.includes('versatil --version')) {
@@ -263,9 +260,8 @@ describe('UpdateManager', () => {
 
       await managerNoBackup.update('2.5.0');
 
-      // Should not call tar command for backup
       const tarCalls = mockExecAsync.mock.calls.filter(
-        call => call[0].includes('tar -czf')
+        (call: any[]) => call[0].includes('tar -czf')
       );
       expect(tarCalls.length).toBe(0);
     });
@@ -278,7 +274,7 @@ describe('UpdateManager', () => {
       };
       sharedMockInstance.checkForUpdate.mockResolvedValue(mockCheckResult);
 
-      mockExecAsync.mockImplementation((cmd) => {
+      mockExecAsync.mockImplementation((cmd: string) => {
         if (cmd.includes('npm update')) {
           return Promise.resolve({ stdout: 'Updated', stderr: '' });
         } else if (cmd.includes('versatil --version')) {
@@ -289,7 +285,7 @@ describe('UpdateManager', () => {
 
       await updateManager.update('2.5.0');
 
-      expect((fs.writeFile as jest.Mock)).toHaveBeenCalledWith(
+      expect(fs.writeFile as Mock).toHaveBeenCalledWith(
         updateHistoryFile,
         expect.stringContaining('"success": true')
       );
@@ -317,7 +313,7 @@ describe('UpdateManager', () => {
       };
       sharedMockInstance.checkForUpdate.mockResolvedValue(mockCheckResult);
 
-      mockExecAsync.mockImplementation((cmd) => {
+      mockExecAsync.mockImplementation((cmd: string) => {
         if (cmd.includes('npm update')) {
           return Promise.reject(new Error('ECONNREFUSED: Connection refused'));
         }
@@ -327,7 +323,7 @@ describe('UpdateManager', () => {
       const result = await updateManager.update('2.5.0');
 
       expect(result).toBe(false);
-      expect((fs.writeFile as jest.Mock)).toHaveBeenCalledWith(
+      expect(fs.writeFile as Mock).toHaveBeenCalledWith(
         updateHistoryFile,
         expect.stringContaining('"success": false')
       );
@@ -341,7 +337,7 @@ describe('UpdateManager', () => {
       };
       sharedMockInstance.checkForUpdate.mockResolvedValue(mockCheckResult);
 
-      mockExecAsync.mockImplementation((cmd) => {
+      mockExecAsync.mockImplementation((cmd: string) => {
         if (cmd.includes('tar -czf')) {
           return Promise.reject(new Error('Backup failed'));
         } else if (cmd.includes('npm update')) {
@@ -357,7 +353,6 @@ describe('UpdateManager', () => {
       expect(console.warn).toHaveBeenCalledWith(
         expect.stringContaining('Backup failed')
       );
-      // Update should still proceed
       expect(mockExecAsync).toHaveBeenCalledWith(
         expect.stringContaining('npm update')
       );
@@ -373,11 +368,10 @@ describe('UpdateManager', () => {
       };
       sharedMockInstance.checkForUpdate.mockResolvedValue(mockCheckResult);
 
-      mockExecAsync.mockImplementation((cmd) => {
+      mockExecAsync.mockImplementation((cmd: string) => {
         if (cmd.includes('npm update')) {
           return Promise.resolve({ stdout: 'Updated', stderr: '' });
         } else if (cmd.includes('versatil --version')) {
-          // Return wrong version
           return Promise.resolve({ stdout: '2.9.9', stderr: '' });
         }
         return Promise.resolve({ stdout: '', stderr: '' });
@@ -399,11 +393,10 @@ describe('UpdateManager', () => {
       };
       sharedMockInstance.checkForUpdate.mockResolvedValue(mockCheckResult);
 
-      mockExecAsync.mockImplementation((cmd) => {
+      mockExecAsync.mockImplementation((cmd: string) => {
         if (cmd.includes('npm update')) {
           return Promise.resolve({ stdout: 'Updated', stderr: '' });
         } else if (cmd.includes('versatil --version')) {
-          // Return version with v prefix
           return Promise.resolve({ stdout: 'v3.0.0\n', stderr: '' });
         }
         return Promise.resolve({ stdout: '', stderr: '' });
@@ -419,9 +412,9 @@ describe('UpdateManager', () => {
     it('should rollback to previous version from backup', async () => {
       const backupFile = path.join(versatilHome, 'backups', 'versatil-v2.5.0-2025-10-03T12-00-00.tar.gz');
 
-      (fs.readdir as jest.Mock).mockResolvedValue(['versatil-v2.5.0-2025-10-03T12-00-00.tar.gz']);
+      (fs.readdir as Mock).mockResolvedValue(['versatil-v2.5.0-2025-10-03T12-00-00.tar.gz']);
 
-      mockExecAsync.mockImplementation((cmd) => {
+      mockExecAsync.mockImplementation((cmd: string) => {
         if (cmd.includes('tar -xzf')) {
           return Promise.resolve({ stdout: '', stderr: '' });
         }
@@ -440,13 +433,13 @@ describe('UpdateManager', () => {
     });
 
     it('should find and use most recent backup if none specified', async () => {
-      (fs.readdir as jest.Mock).mockResolvedValue([
+      (fs.readdir as Mock).mockResolvedValue([
         'versatil-v2.4.0-2025-10-01T12-00-00.tar.gz',
         'versatil-v2.5.0-2025-10-03T12-00-00.tar.gz',
         'versatil-v2.3.0-2025-09-30T12-00-00.tar.gz'
       ]);
 
-      mockExecAsync.mockImplementation((cmd) => {
+      mockExecAsync.mockImplementation((cmd: string) => {
         if (cmd.includes('tar -xzf')) {
           return Promise.resolve({ stdout: '', stderr: '' });
         }
@@ -456,16 +449,15 @@ describe('UpdateManager', () => {
       const result = await updateManager.rollback();
 
       expect(result).toBe(true);
-      // Should use most recent backup (2025-10-03)
       expect(mockExecAsync).toHaveBeenCalledWith(
         expect.stringContaining('versatil-v2.5.0-2025-10-03T12-00-00.tar.gz')
       );
     });
 
     it('should handle rollback failure gracefully', async () => {
-      (fs.readdir as jest.Mock).mockResolvedValue(['backup.tar.gz']);
+      (fs.readdir as Mock).mockResolvedValue(['backup.tar.gz']);
 
-      mockExecAsync.mockImplementation((cmd) => {
+      mockExecAsync.mockImplementation((cmd: string) => {
         if (cmd.includes('tar -xzf')) {
           return Promise.reject(new Error('Extraction failed'));
         }
@@ -481,7 +473,7 @@ describe('UpdateManager', () => {
     });
 
     it('should handle no backups found', async () => {
-      (fs.readdir as jest.Mock).mockResolvedValue([]);
+      (fs.readdir as Mock).mockResolvedValue([]);
 
       const result = await updateManager.rollback();
 
@@ -502,30 +494,29 @@ describe('UpdateManager', () => {
       sharedMockInstance.checkForUpdate.mockResolvedValue(mockCheckResult);
 
       let updateInProgress = false;
-      mockExecAsync.mockImplementation((cmd) => {
+      mockExecAsync.mockImplementation((cmd: string) => {
         if (cmd.includes('npm update')) {
           if (updateInProgress) {
             return Promise.reject(new Error('Update already in progress'));
-            return Promise.resolve({ stdout: '', stderr: '' });
           }
           updateInProgress = true;
-          setTimeout(() => {
-            updateInProgress = false;
-            return Promise.resolve({ stdout: 'Updated', stderr: '' });
-          }, 100);
+          return new Promise(resolve => {
+            setTimeout(() => {
+              updateInProgress = false;
+              resolve({ stdout: 'Updated', stderr: '' });
+            }, 100);
+          });
         } else if (cmd.includes('versatil --version')) {
           return Promise.resolve({ stdout: '3.0.0', stderr: '' });
         }
         return Promise.resolve({ stdout: '', stderr: '' });
       });
 
-      // Start two updates concurrently
       const update1Promise = updateManager.update('2.5.0');
       const update2Promise = updateManager.update('2.5.0');
 
       const [result1, result2] = await Promise.all([update1Promise, update2Promise]);
 
-      // At least one should complete (both might complete if timing is right)
       expect(result1 || result2).toBeDefined();
     });
   });
@@ -542,13 +533,13 @@ describe('UpdateManager', () => {
       let backupCreated = false;
       let updateStarted = false;
 
-      mockExecAsync.mockImplementation((cmd) => {
+      mockExecAsync.mockImplementation((cmd: string) => {
         if (cmd.includes('tar -czf')) {
-          expect(updateStarted).toBe(false); // Backup should happen before update
+          expect(updateStarted).toBe(false);
           backupCreated = true;
           return Promise.resolve({ stdout: '', stderr: '' });
         } else if (cmd.includes('npm update')) {
-          expect(backupCreated).toBe(true); // Update should happen after backup
+          expect(backupCreated).toBe(true);
           updateStarted = true;
           return Promise.resolve({ stdout: 'Updated', stderr: '' });
         } else if (cmd.includes('versatil --version')) {
@@ -571,9 +562,8 @@ describe('UpdateManager', () => {
       };
       sharedMockInstance.checkForUpdate.mockResolvedValue(mockCheckResult);
 
-      mockExecAsync.mockImplementation((cmd) => {
+      mockExecAsync.mockImplementation((cmd: string) => {
         if (cmd.includes('tar -czf')) {
-          // Verify backup path includes version and timestamp
           expect(cmd).toMatch(/versatil-v2\.5\.0-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.tar\.gz/);
           return Promise.resolve({ stdout: '', stderr: '' });
         } else if (cmd.includes('npm update')) {
@@ -595,7 +585,7 @@ describe('UpdateManager', () => {
       };
       sharedMockInstance.checkForUpdate.mockResolvedValue(mockCheckResult);
 
-      mockExecAsync.mockImplementation((cmd) => {
+      mockExecAsync.mockImplementation((cmd: string) => {
         if (cmd.includes('tar -czf')) {
           return Promise.resolve({ stdout: '', stderr: '' });
         } else if (cmd.includes('npm update')) {
@@ -608,7 +598,7 @@ describe('UpdateManager', () => {
 
       await updateManager.update('2.5.0');
 
-      expect((fs.mkdir as jest.Mock)).toHaveBeenCalledWith(
+      expect(fs.mkdir as Mock).toHaveBeenCalledWith(
         expect.stringContaining('backups'),
         expect.objectContaining({ recursive: true })
       );
@@ -633,16 +623,16 @@ describe('UpdateManager', () => {
           }
         ];
 
-        (fs.readFile as jest.Mock).mockResolvedValue(JSON.stringify(mockHistory));
+        (fs.readFile as Mock).mockResolvedValue(JSON.stringify(mockHistory));
 
         const history = await updateManager.getUpdateHistory();
 
         expect(history).toEqual(mockHistory);
-        expect((fs.readFile as jest.Mock)).toHaveBeenCalledWith(updateHistoryFile, 'utf-8');
+        expect(fs.readFile as Mock).toHaveBeenCalledWith(updateHistoryFile, 'utf-8');
       });
 
       it('should return empty array if history file does not exist', async () => {
-        (fs.readFile as jest.Mock).mockRejectedValue(new Error('ENOENT'));
+        (fs.readFile as Mock).mockRejectedValue(new Error('ENOENT'));
 
         const history = await updateManager.getUpdateHistory();
 
@@ -705,11 +695,11 @@ describe('UpdateManager', () => {
           'versatil-v2.3.0-2025-09-30T12-00-00.tar.gz'
         ];
 
-        (fs.readdir as jest.Mock).mockResolvedValue(mockBackups);
+        (fs.readdir as Mock).mockResolvedValue(mockBackups);
 
         const backups = await updateManager.listBackups();
 
-        expect(backups).toEqual(mockBackups); // Should be sorted newest first
+        expect(backups).toEqual(mockBackups);
       });
 
       it('should filter out non-backup files', async () => {
@@ -720,16 +710,16 @@ describe('UpdateManager', () => {
           'versatil-v2.4.0-2025-10-01T12-00-00.tar.gz'
         ];
 
-        (fs.readdir as jest.Mock).mockResolvedValue(mockFiles);
+        (fs.readdir as Mock).mockResolvedValue(mockFiles);
 
         const backups = await updateManager.listBackups();
 
         expect(backups).toHaveLength(2);
-        expect(backups.every(b => b.endsWith('.tar.gz'))).toBe(true);
+        expect(backups.every((b: string) => b.endsWith('.tar.gz'))).toBe(true);
       });
 
       it('should return empty array if backups directory does not exist', async () => {
-        (fs.readdir as jest.Mock).mockRejectedValue(new Error('ENOENT'));
+        (fs.readdir as Mock).mockRejectedValue(new Error('ENOENT'));
 
         const backups = await updateManager.listBackups();
 
@@ -766,7 +756,7 @@ describe('UpdateManager', () => {
         sharedMockInstance.checkForUpdate.mockResolvedValue(mockCheckResult);
 
         const errorMessage = 'Network error occurred';
-        mockExecAsync.mockImplementation((cmd) => {
+        mockExecAsync.mockImplementation((cmd: string) => {
           if (cmd.includes('npm update')) {
             return Promise.reject(new Error(errorMessage));
           }
@@ -775,18 +765,17 @@ describe('UpdateManager', () => {
 
         await updateManager.update('2.5.0');
 
-        expect((fs.writeFile as jest.Mock)).toHaveBeenCalledWith(
+        expect(fs.writeFile as Mock).toHaveBeenCalledWith(
           updateHistoryFile,
           expect.stringContaining('"success": false')
         );
-        expect((fs.writeFile as jest.Mock)).toHaveBeenCalledWith(
+        expect(fs.writeFile as Mock).toHaveBeenCalledWith(
           updateHistoryFile,
           expect.stringContaining(errorMessage)
         );
       });
 
       it('should limit history to 50 entries', async () => {
-        // Create history with 55 entries
         const largeHistory: UpdateHistory[] = Array.from({ length: 55 }, (_, i) => ({
           timestamp: new Date(2025, 9, i + 1).toISOString(),
           fromVersion: `2.${i}.0`,
@@ -794,7 +783,7 @@ describe('UpdateManager', () => {
           success: true
         }));
 
-        (fs.readFile as jest.Mock).mockResolvedValue(JSON.stringify(largeHistory));
+        (fs.readFile as Mock).mockResolvedValue(JSON.stringify(largeHistory));
 
         const mockCheckResult = {
           hasUpdate: true,
@@ -803,7 +792,7 @@ describe('UpdateManager', () => {
         };
         sharedMockInstance.checkForUpdate.mockResolvedValue(mockCheckResult);
 
-        mockExecAsync.mockImplementation((cmd) => {
+        mockExecAsync.mockImplementation((cmd: string) => {
           if (cmd.includes('npm update')) {
             return Promise.resolve({ stdout: 'Updated', stderr: '' });
           } else if (cmd.includes('versatil --version')) {
@@ -814,9 +803,8 @@ describe('UpdateManager', () => {
 
         await updateManager.update('3.0.0');
 
-        // Verify that history was trimmed
-        const writeCall = ((fs.writeFile as jest.Mock) as jest.Mock).mock.calls.find(
-          call => call[0] === updateHistoryFile
+        const writeCall = (fs.writeFile as Mock).mock.calls.find(
+          (call: any[]) => call[0] === updateHistoryFile
         );
         const writtenHistory = JSON.parse(writeCall[1]);
         expect(writtenHistory.length).toBe(50);
@@ -830,7 +818,7 @@ describe('UpdateManager', () => {
         };
         sharedMockInstance.checkForUpdate.mockResolvedValue(mockCheckResult);
 
-        mockExecAsync.mockImplementation((cmd) => {
+        mockExecAsync.mockImplementation((cmd: string) => {
           if (cmd.includes('npm update')) {
             return Promise.resolve({ stdout: 'Updated', stderr: '' });
           } else if (cmd.includes('versatil --version')) {
@@ -839,12 +827,10 @@ describe('UpdateManager', () => {
           return Promise.resolve({ stdout: '', stderr: '' });
         });
 
-        // Make writeFile fail
-        (fs.writeFile as jest.Mock).mockRejectedValue(new Error('Disk full'));
+        (fs.writeFile as Mock).mockRejectedValue(new Error('Disk full'));
 
         const result = await updateManager.update('2.5.0');
 
-        // Update should still succeed
         expect(result).toBe(true);
         expect(console.warn).toHaveBeenCalledWith(
           expect.stringContaining('Failed to record update history'),
@@ -878,7 +864,7 @@ describe('UpdateManager', () => {
         };
         sharedMockInstance.checkForUpdate.mockResolvedValue(mockCheckResult);
 
-        mockExecAsync.mockImplementation((cmd) => {
+        mockExecAsync.mockImplementation((cmd: string) => {
           if (cmd.includes('npm update')) {
             return Promise.resolve({ stdout: 'Updated', stderr: '' });
           } else if (cmd.includes('versatil --version')) {

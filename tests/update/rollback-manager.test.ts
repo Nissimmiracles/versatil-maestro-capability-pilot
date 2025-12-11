@@ -3,29 +3,35 @@
  * Tests for v3.0.0 rollback system with instant recovery
  * Target: 90%+ coverage
  *
- * FIXED: Using __mocks__ directory for proper mock hoisting
+ * FIXED: Converted to Vitest
  */
 
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { RollbackManager, RollbackPoint, HealthCheckResult } from '../../src/update/rollback-manager';
 import * as path from 'path';
 import * as os from 'os';
 
-// Enable manual mocks from __mocks__ directory
-jest.mock('child_process');
-jest.mock('util');
-
-// Mock fs/promises inline (Node built-in modules need inline mocking)
-jest.mock('fs/promises', () => ({
-  mkdir: jest.fn(),
-  writeFile: jest.fn(),
-  readFile: jest.fn(),
-  access: jest.fn(),
-  unlink: jest.fn(),
-  stat: jest.fn()
+// Mock fs/promises
+vi.mock('fs/promises', () => ({
+  mkdir: vi.fn(),
+  writeFile: vi.fn(),
+  readFile: vi.fn(),
+  access: vi.fn(),
+  unlink: vi.fn(),
+  stat: vi.fn()
 }));
 
-// Import mockExecAsync from our manual mock (this works because __mocks__ is hoisted)
-import { mockExecAsync } from '../__mocks__/child_process';
+// Mock child_process and util
+const mockExecAsync = vi.fn();
+vi.mock('child_process', () => ({
+  exec: vi.fn()
+}));
+vi.mock('util', () => ({
+  promisify: () => mockExecAsync
+}));
+
+// Import mocked fs after mocking
+import * as fs from 'fs/promises';
 
 describe('RollbackManager', () => {
   let rollbackManager: RollbackManager;
@@ -34,16 +40,15 @@ describe('RollbackManager', () => {
   let mockHistoryFile: string;
 
   // Get references to mocked fs functions
-  const fs = require('fs/promises');
-  const mockMkdir = fs.mkdir;
-  const mockWriteFile = fs.writeFile;
-  const mockReadFile = fs.readFile;
-  const mockAccess = fs.access;
-  const mockUnlink = fs.unlink;
-  const mockStat = fs.stat;
+  const mockMkdir = fs.mkdir as Mock;
+  const mockWriteFile = fs.writeFile as Mock;
+  const mockReadFile = fs.readFile as Mock;
+  const mockAccess = fs.access as Mock;
+  const mockUnlink = fs.unlink as Mock;
+  const mockStat = fs.stat as Mock;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     rollbackManager = new RollbackManager(5);
     mockVersatilHome = path.join(os.homedir(), '.versatil');
@@ -332,7 +337,7 @@ describe('RollbackManager', () => {
       mockReadFile.mockResolvedValue(JSON.stringify(rollbackPoints));
       mockAccess.mockRejectedValue(new Error('ENOENT')); // Fail health check
 
-      const updateFn = jest.fn().mockResolvedValue('success');
+      const updateFn = vi.fn().mockResolvedValue('success');
 
       await expect(
         rollbackManager.autoRollbackOnFailure(updateFn)
@@ -348,7 +353,7 @@ describe('RollbackManager', () => {
         .mockResolvedValueOnce({ stdout: 'VERSATIL v3.0.0', stderr: '' })
         .mockResolvedValueOnce({ stdout: 'versatil-sdlc-framework@3.0.0', stderr: '' });
 
-      const updateFn = jest.fn().mockResolvedValue('success');
+      const updateFn = vi.fn().mockResolvedValue('success');
 
       const result = await rollbackManager.autoRollbackOnFailure(updateFn);
 
@@ -369,7 +374,7 @@ describe('RollbackManager', () => {
 
       mockReadFile.mockResolvedValue(JSON.stringify(rollbackPoints));
 
-      const updateFn = jest.fn().mockRejectedValue(new Error('Update failed'));
+      const updateFn = vi.fn().mockRejectedValue(new Error('Update failed'));
 
       await expect(
         rollbackManager.autoRollbackOnFailure(updateFn)

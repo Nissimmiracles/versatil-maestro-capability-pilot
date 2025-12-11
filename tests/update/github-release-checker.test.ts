@@ -4,18 +4,18 @@
  * Target: 90%+ coverage
  */
 
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { GitHubReleaseChecker, ReleaseInfo, UpdateCheckResult, GitHubReleaseError } from '../../src/update/github-release-checker';
 
 // Mock global fetch
-global.fetch = jest.fn();
-
-const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
+const mockFetch = vi.fn();
+global.fetch = mockFetch as unknown as typeof fetch;
 
 describe('GitHubReleaseChecker', () => {
   let checker: GitHubReleaseChecker;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     checker = new GitHubReleaseChecker('test-owner', 'test-repo');
   });
 

@@ -50,6 +50,10 @@ vi.mock('../../src/utils/logger', () => ({
   }
 }));
 
+// Import mocked modules after mocks are set up
+import { usageAnalytics } from '../../src/intelligence/usage-analytics';
+import { adaptiveLearning } from '../../src/intelligence/adaptive-learning';
+
 // Test agent implementation
 class TestAgent extends BaseAgent {
   constructor() {
@@ -97,9 +101,6 @@ describe('AgentIntelligenceManager', () => {
     });
 
     it('should start analytics and learning on initialization', () => {
-      const { usageAnalytics } = require('../../src/intelligence/usage-analytics');
-      const { adaptiveLearning } = require('../../src/intelligence/adaptive-learning');
-
       expect(usageAnalytics.startTracking).toHaveBeenCalled();
       expect(adaptiveLearning.startLearning).toHaveBeenCalled();
     });
@@ -295,7 +296,6 @@ describe('AgentIntelligenceManager', () => {
         'This was not actually an issue'
       );
 
-      const { usageAnalytics } = require('../../src/intelligence/usage-analytics');
       expect(usageAnalytics.trackFalsePositive).toHaveBeenCalledWith(
         'test-agent',
         'test-issue-type',
@@ -366,7 +366,6 @@ describe('AgentIntelligenceManager', () => {
       expect(wrapper?.learningEnabled).toBe(false);
       expect(intelligenceManager['isLearningEnabled']).toBe(false);
 
-      const { usageAnalytics } = require('../../src/intelligence/usage-analytics');
       expect(usageAnalytics.stopTracking).toHaveBeenCalled();
     });
   });

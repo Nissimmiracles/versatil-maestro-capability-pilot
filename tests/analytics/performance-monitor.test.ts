@@ -8,12 +8,12 @@ import { EventEmitter } from 'events';
 
 // Mock VERSATILLogger
 vi.mock('../../src/utils/logger', () => ({
-  VERSATILLogger: vi.fn().mockImplementation(() => ({
-    info: vi.fn(),
-    debug: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn()
-  }))
+  VERSATILLogger: class {
+    info = vi.fn();
+    debug = vi.fn();
+    warn = vi.fn();
+    error = vi.fn();
+  }
 }));
 
 describe('PerformanceMonitor', () => {

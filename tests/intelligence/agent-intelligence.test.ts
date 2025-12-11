@@ -42,11 +42,12 @@ vi.mock('../../src/intelligence/adaptive-learning', () => ({
 }));
 
 vi.mock('../../src/utils/logger', () => ({
-  VERSATILLogger: vi.fn().mockImplementation(() => ({
-    info: vi.fn(),
-    debug: vi.fn(),
-    error: vi.fn()
-  }))
+  VERSATILLogger: class {
+    info = vi.fn();
+    debug = vi.fn();
+    warn = vi.fn();
+    error = vi.fn();
+  }
 }));
 
 // Test agent implementation

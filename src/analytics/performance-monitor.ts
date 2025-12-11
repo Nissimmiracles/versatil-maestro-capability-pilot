@@ -646,6 +646,15 @@ export class PerformanceMonitor extends EventEmitter {
   }
 
   /**
+   * Stop monitoring (for server integration)
+   */
+  public stop(): void {
+    if (this.isMonitoring) {
+      this.stopMonitoring();
+    }
+  }
+
+  /**
    * Get Prometheus-compatible metrics
    */
   public getPrometheusMetrics(): string {

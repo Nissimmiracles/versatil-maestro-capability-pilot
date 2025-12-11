@@ -4,22 +4,25 @@
  * Target: 90%+ coverage
  */
 
+import { describe, it, expect, beforeEach, vi, type Mock, type MockedClass } from 'vitest';
 import { VersionDiffGenerator, VersionDiff } from '../../src/update/version-diff';
 import { GitHubReleaseChecker, ReleaseInfo } from '../../src/update/github-release-checker';
 
 // Mock GitHubReleaseChecker
-jest.mock('../../src/update/github-release-checker');
+vi.mock('../../src/update/github-release-checker');
 
-const MockedGitHubReleaseChecker = GitHubReleaseChecker as jest.MockedClass<typeof GitHubReleaseChecker>;
+const MockedGitHubReleaseChecker = GitHubReleaseChecker as MockedClass<typeof GitHubReleaseChecker>;
 
 describe('VersionDiffGenerator', () => {
   let diffGenerator: VersionDiffGenerator;
-  let mockReleaseChecker: jest.Mocked<GitHubReleaseChecker>;
+  let mockReleaseChecker: any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    mockReleaseChecker = new MockedGitHubReleaseChecker() as jest.Mocked<GitHubReleaseChecker>;
+    mockReleaseChecker = new MockedGitHubReleaseChecker('test', 'test');
+    mockReleaseChecker.getReleaseByVersion = vi.fn();
+    mockReleaseChecker.getReleasesBetween = vi.fn();
     diffGenerator = new VersionDiffGenerator(mockReleaseChecker);
   });
 

@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 /**
  * Tests for Performance Monitor System
  */
@@ -116,32 +116,38 @@ describe('PerformanceMonitor', () => {
       expect(performanceMonitor['agentMetrics'].size).toBe(0);
     });
 
-    it('should emit performance_alert for slow executions', (done) => {
-      performanceMonitor.on('performance_alert', (alert) => {
-        expect(alert).toMatchObject({
-          type: 'slow_execution',
-          agentId: 'enhanced-maria',
-          executionTime: 10000,
-          threshold: 5000
+    it('should emit performance_alert for slow executions', async () => {
+      const alertPromise = new Promise<void>((resolve) => {
+        performanceMonitor.on('performance_alert', (alert) => {
+          expect(alert).toMatchObject({
+            type: 'slow_execution',
+            agentId: 'enhanced-maria',
+            executionTime: 10000,
+            threshold: 5000
+          });
+          resolve();
         });
-        done();
       });
 
       performanceMonitor.recordAgentExecution('enhanced-maria', 10000, 1, 0.9);
+      await alertPromise;
     });
 
-    it('should emit performance_alert for low quality scores', (done) => {
-      performanceMonitor.on('performance_alert', (alert) => {
-        expect(alert).toMatchObject({
-          type: 'low_quality',
-          agentId: 'enhanced-maria',
-          qualityScore: 0.3,
-          threshold: 0.7
+    it('should emit performance_alert for low quality scores', async () => {
+      const alertPromise = new Promise<void>((resolve) => {
+        performanceMonitor.on('performance_alert', (alert) => {
+          expect(alert).toMatchObject({
+            type: 'low_quality',
+            agentId: 'enhanced-maria',
+            qualityScore: 0.3,
+            threshold: 0.7
+          });
+          resolve();
         });
-        done();
       });
 
       performanceMonitor.recordAgentExecution('enhanced-maria', 1000, 1, 0.3);
+      await alertPromise;
     });
   });
 
@@ -150,29 +156,27 @@ describe('PerformanceMonitor', () => {
       performanceMonitor.start();
     });
 
-    it('should collect system metrics periodically', (done) => {
+    it('should collect system metrics periodically', async () => {
       // Trigger system metrics collection manually
       performanceMonitor['collectSystemMetrics']();
 
-      setTimeout(() => {
-        const systemMetrics = performanceMonitor['systemMetrics'];
-        expect(systemMetrics.uptime).toBeGreaterThan(0);
-        expect(systemMetrics.memoryUsage.total).toBeGreaterThan(0);
-        expect(systemMetrics.memoryUsage.used).toBeGreaterThanOrEqual(0);
-        expect(systemMetrics.memoryUsage.percentage).toBeGreaterThanOrEqual(0);
-        done();
-      }, 100);
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const systemMetrics = performanceMonitor['systemMetrics'];
+      expect(systemMetrics.uptime).toBeGreaterThan(0);
+      expect(systemMetrics.memoryUsage.total).toBeGreaterThan(0);
+      expect(systemMetrics.memoryUsage.used).toBeGreaterThanOrEqual(0);
+      expect(systemMetrics.memoryUsage.percentage).toBeGreaterThanOrEqual(0);
     });
 
-    it('should update system metrics over time', (done) => {
+    it('should update system metrics over time', async () => {
       const initialUptime = performanceMonitor['systemMetrics'].uptime;
 
-      setTimeout(() => {
-        performanceMonitor['collectSystemMetrics']();
-        const updatedUptime = performanceMonitor['systemMetrics'].uptime;
-        expect(updatedUptime).toBeGreaterThanOrEqual(initialUptime);
-        done();
-      }, 100);
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      performanceMonitor['collectSystemMetrics']();
+      const updatedUptime = performanceMonitor['systemMetrics'].uptime;
+      expect(updatedUptime).toBeGreaterThanOrEqual(initialUptime);
     });
   });
 
@@ -291,21 +295,24 @@ describe('PerformanceMonitor', () => {
       performanceMonitor.start();
     });
 
-    it('should detect performance degradation', (done) => {
+    it('should detect performance degradation', async () => {
       let alertCount = 0;
 
-      performanceMonitor.on('performance_alert', (alert) => {
-        alertCount++;
-        expect(alert.type).toBeDefined();
-        expect(alert.agentId).toBeDefined();
+      const alertsPromise = new Promise<void>((resolve) => {
+        performanceMonitor.on('performance_alert', (alert) => {
+          alertCount++;
+          expect(alert.type).toBeDefined();
+          expect(alert.agentId).toBeDefined();
 
-        if (alertCount === 2) {
-          done();
-        }
+          if (alertCount === 2) {
+            resolve();
+          }
+        });
       });
 
       // Trigger multiple alerts
       performanceMonitor.recordAgentExecution('enhanced-maria', 8000, 1, 0.5); // Slow + low quality
+      await alertsPromise;
     });
 
     it('should track agent performance trends', () => {
@@ -379,33 +386,39 @@ describe('PerformanceMonitor', () => {
       performanceMonitor.start();
     });
 
-    it('should emit agent_execution event', (done) => {
-      performanceMonitor.on('agent_execution', (data) => {
-        expect(data).toMatchObject({
-          agentId: 'enhanced-maria',
-          executionTime: 1200,
-          issuesDetected: 3,
-          qualityScore: 0.95,
-          timestamp: expect.any(Number)
+    it('should emit agent_execution event', async () => {
+      const eventPromise = new Promise<void>((resolve) => {
+        performanceMonitor.on('agent_execution', (data) => {
+          expect(data).toMatchObject({
+            agentId: 'enhanced-maria',
+            executionTime: 1200,
+            issuesDetected: 3,
+            qualityScore: 0.95,
+            timestamp: expect.any(Number)
+          });
+          resolve();
         });
-        done();
       });
 
       performanceMonitor.recordAgentExecution('enhanced-maria', 1200, 3, 0.95);
+      await eventPromise;
     });
 
-    it('should emit system_metrics event', (done) => {
-      performanceMonitor.on('system_metrics', (metrics) => {
-        expect(metrics).toMatchObject({
-          uptime: expect.any(Number),
-          memoryUsage: expect.any(Object),
-          cpuUsage: expect.any(Number),
-          timestamp: expect.any(Number)
+    it('should emit system_metrics event', async () => {
+      const eventPromise = new Promise<void>((resolve) => {
+        performanceMonitor.on('system_metrics', (metrics) => {
+          expect(metrics).toMatchObject({
+            uptime: expect.any(Number),
+            memoryUsage: expect.any(Object),
+            cpuUsage: expect.any(Number),
+            timestamp: expect.any(Number)
+          });
+          resolve();
         });
-        done();
       });
 
       performanceMonitor['collectSystemMetrics']();
+      await eventPromise;
     });
   });
 });

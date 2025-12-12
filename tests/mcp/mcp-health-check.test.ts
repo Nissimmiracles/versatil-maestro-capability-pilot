@@ -1,7 +1,7 @@
 /**
  * MCP Health Check Test Suite
  *
- * Comprehensive health checks for all 11 MCPs configured in the framework:
+ * Comprehensive health checks for all 12 MCPs configured in the framework:
  * 1. Playwright (browser automation)
  * 2. GitHub (repository operations)
  * 3. GitMCP (documentation access)
@@ -323,7 +323,7 @@ class MCPHealthChecker {
 // Test Suite
 // ============================================================================
 
-describe('MCP Health Check - All 11 MCPs', () => {
+describe('MCP Health Check - All 12 MCPs', () => {
   let configLoader: MCPConfigLoader;
   let healthChecker: MCPHealthChecker;
   let mcpConfigs: Record<string, MCPConfig>;
@@ -339,9 +339,9 @@ describe('MCP Health Check - All 11 MCPs', () => {
   });
 
   describe('MCP Configuration', () => {
-    it('should have 11 MCPs configured', () => {
+    it('should have 12 MCPs configured', () => {
       const mcpCount = configLoader.getMCPCount();
-      expect(mcpCount).toBe(11);
+      expect(mcpCount).toBe(12);
     });
 
     it('should have all expected MCPs in config', () => {
@@ -530,7 +530,7 @@ describe('MCP Health Check - All 11 MCPs', () => {
     it('should check health of all MCPs in batch', async () => {
       const results = await healthChecker.checkAllMCPs(mcpConfigs);
 
-      expect(results.length).toBe(11);
+      expect(results.length).toBe(12);
 
       // Verify all MCPs were checked
       const checkedNames = results.map(r => r.name);

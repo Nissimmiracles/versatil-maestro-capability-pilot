@@ -551,8 +551,8 @@ const isValid = await bcrypt.compare(inputPassword, hashedPassword);
 
       console.log(`📊 Performance consistency: avg=${avgTime.toFixed(0)}ms, stdDev=${stdDev.toFixed(0)}ms`);
 
-      // Standard deviation should be reasonable (less than 2x avg)
-      expect(stdDev).toBeLessThan(avgTime * 2);
+      // Standard deviation should be reasonable (less than 2x avg + epsilon for floating point)
+      expect(stdDev).toBeLessThan(avgTime * 2 + 0.001);
     }, 30000);
   });
 

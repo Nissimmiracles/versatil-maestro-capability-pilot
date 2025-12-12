@@ -739,6 +739,20 @@ export class OliverMCPAgent extends BaseAgent {
     return Object.fromEntries(this.usageStats);
   }
 
+  /**
+   * Get MCP registry as plain object (for testing/introspection)
+   */
+  getMCPRegistry(): Record<string, MCPDefinition> {
+    return Object.fromEntries(this.mcpRegistry);
+  }
+
+  /**
+   * Suggest MCPs for a specific agent
+   */
+  async suggestMCPsForAgent(agentId: string): Promise<MCPDefinition[]> {
+    return this.getMCPsForAgent(agentId);
+  }
+
   // ============================================================================
   // Private Helper Methods
   // ============================================================================

@@ -209,6 +209,14 @@ export declare class OliverMCPAgent extends BaseAgent {
      * Get usage statistics
      */
     getUsageStats(): Record<string, number>;
+    /**
+     * Get MCP registry as plain object (for testing/introspection)
+     */
+    getMCPRegistry(): Record<string, MCPDefinition>;
+    /**
+     * Suggest MCPs for a specific agent
+     */
+    suggestMCPsForAgent(agentId: string): Promise<MCPDefinition[]>;
     private determineRequiredMCPType;
     private selectBestCandidate;
     private scoreMCPForTask;

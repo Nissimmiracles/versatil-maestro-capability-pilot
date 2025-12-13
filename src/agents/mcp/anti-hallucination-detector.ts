@@ -22,6 +22,7 @@ export interface HallucinationRisk {
     action: 'use-gitmcp' | 'use-web-search' | 'proceed-with-caution';
     gitMCPQuery?: string;
     confidence: number;
+    framework?: string; // The detected framework name
   };
 }
 
@@ -370,20 +371,23 @@ export class AntiHallucinationDetector extends EventEmitter {
       return {
         action: 'use-gitmcp',
         gitMCPQuery: this.formatGitMCPQuery(framework, specificPath),
-        confidence: 95
+        confidence: 95,
+        framework: framework.name
       };
     } else if (risk.level === 'medium') {
       // Medium risk: Suggest GitMCP for verification
       return {
         action: 'use-gitmcp',
         gitMCPQuery: this.formatGitMCPQuery(framework),
-        confidence: 70
+        confidence: 70,
+        framework: framework.name
       };
     } else {
       // Low risk: Proceed but mention limitation
       return {
         action: 'proceed-with-caution',
-        confidence: 50
+        confidence: 50,
+        framework: framework.name
       };
     }
   }

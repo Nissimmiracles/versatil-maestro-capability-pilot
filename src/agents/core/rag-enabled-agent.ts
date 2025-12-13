@@ -739,6 +739,7 @@ Provide your analysis using the RAG context above as reference.`;
       if (ragContext.similarCode.length > 0) {
         prompt += '### Similar Code Patterns From This Project:\n';
         ragContext.similarCode.forEach((pattern, index) => {
+          if (!pattern.content) return; // Skip patterns without content
           const tags = pattern.metadata?.tags?.join(', ') || 'N/A';
           const score = Math.round((pattern.metadata?.relevanceScore || 0) * 100);
           prompt += `Example ${index + 1} (${score}% relevance, tags: ${tags}):\n`;
@@ -753,6 +754,7 @@ Provide your analysis using the RAG context above as reference.`;
         solutionEntries.forEach(([issueType, solutions]) => {
           prompt += `For ${issueType}:\n`;
           solutions.forEach(solution => {
+            if (!solution.content) return; // Skip solutions without content
             prompt += `- ${solution.content.slice(0, 150)}...\n`;
           });
           prompt += '\n';
@@ -763,6 +765,7 @@ Provide your analysis using the RAG context above as reference.`;
       if (ragContext.projectStandards.length > 0) {
         prompt += '### Project Standards:\n';
         ragContext.projectStandards.forEach(standard => {
+          if (!standard.content) return; // Skip standards without content
           prompt += `- ${standard.content.slice(0, 100)}...\n`;
         });
         prompt += '\n';

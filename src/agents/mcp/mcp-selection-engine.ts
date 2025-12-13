@@ -417,8 +417,16 @@ export class MCPSelectionEngine extends EventEmitter {
     // Step 3: Sort by confidence and return
     const sortedRecommendations = recommendations.sort((a, b) => b.confidence - a.confidence);
 
+    // Fallback if no recommendations
+    const fallbackRecommendation: MCPRecommendation = {
+      mcpName: 'filesystem',
+      confidence: 50,
+      reasoning: 'Default fallback - no specific MCP matched the task',
+      capabilities: ['file-read', 'file-write', 'directory-list']
+    };
+
     const result: MCPSelectionResult = {
-      primary: sortedRecommendations[0],
+      primary: sortedRecommendations[0] || fallbackRecommendation,
       alternatives: sortedRecommendations.slice(1, 4), // Top 3 alternatives
       taskAnalysis
     };

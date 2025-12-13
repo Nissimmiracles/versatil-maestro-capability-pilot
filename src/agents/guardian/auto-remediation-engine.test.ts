@@ -494,7 +494,7 @@ describe('AutoRemediationEngine', () => {
       const result = await engine.remediate(issue, testDir);
 
       expect(result.duration_ms).toBeGreaterThan(0);
-      expect(result.duration_ms).toBeGreaterThan(2000); // Includes 2s wait
+      expect(result.duration_ms).toBeGreaterThanOrEqual(2000); // Includes 2s wait
     });
   });
 });

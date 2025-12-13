@@ -50,6 +50,12 @@ const DOC_PATH_PATTERNS: Record<string, Record<string, string[]>> = {
     django: ['topics/auth/customizing'],
     nextjs: ['pages/building-your-application/authentication']
   },
+  'oauth2': {
+    common: ['security/oauth2', 'security/oauth', 'authentication/oauth2'],
+    fastapi: ['docs/tutorial/security/oauth2-jwt'],
+    django: ['topics/auth/customizing'],
+    nextjs: ['pages/building-your-application/authentication']
+  },
 
   // Database
   'database': {

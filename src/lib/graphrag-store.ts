@@ -616,6 +616,20 @@ export class GraphRAGStore extends EventEmitter {
   }
 
   /**
+   * Clear only a fully initialized in-memory graph; leave persistence and client intact.
+   * Cached getters require reinitialization; query/addPattern/statistics retain their existing auto-initialization.
+   * This is not a query-result cache or eviction policy.
+   * For sequential idle use, not synchronization with concurrent mutation or close.
+   */
+  clearCache(): void {
+    this.requireInitializedCache();
+    this.nodes.clear();
+    this.edges.clear();
+    this.adjacencyList.clear();
+    this.initialized = false;
+  }
+
+  /**
    * Cleanup resources
    */
   async close(): Promise<void> {

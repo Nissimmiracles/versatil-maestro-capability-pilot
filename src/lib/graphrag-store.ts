@@ -184,6 +184,20 @@ export class GraphRAGStore extends EventEmitter {
       .filter(edge => edge.source === id || edge.target === id);
   }
 
+  // New local convention, not a recovered historical algorithm: select stored
+  // finite centrality >= a required finite threshold, preserving insertion order.
+  // Missing scores are uncomputed; malformed scores fail without normalization.
+  private getHighCentralityNodes(threshold: number): GraphNode[] {
+    this.requireInitializedCache();
+    if (!Number.isFinite(threshold)) throw new Error('GraphRAG centrality threshold must be finite');
+    return [...this.nodes.values()].map(node => this.cloneCachedValue(node)).filter(node => {
+      const centrality = node.centrality;
+      if (centrality === undefined) return false;
+      if (!Number.isFinite(centrality)) throw new Error('GraphRAG cached centrality must be finite');
+      return centrality >= threshold;
+    });
+  }
+
   /** Returns the loaded node's declared connection IDs, including unresolved IDs. */
   getNeighbors(id: string): string[] {
     this.requireInitializedCache();
@@ -277,8 +291,8 @@ export class GraphRAGStore extends EventEmitter {
     }
     let copy: any;
     if (prototype === Date.prototype) copy = new Date(Date.prototype.getTime.call(value));
-    else if (prototype === Buffer.prototype) copy = Buffer.from(value as Buffer);
-    else if (prototype === Uint8Array.prototype) copy = new Uint8Array(value as Uint8Array);
+    else if (prototype === Buffer.prototype) copy = Buffer.from(value as unknown as Buffer);
+    else if (prototype === Uint8Array.prototype) copy = new Uint8Array(value as unknown as Uint8Array);
     else if (prototype === Array.prototype) copy = [];
     else copy = Object.create(prototype);
     seen.set(value, copy);

@@ -197,6 +197,61 @@ export class GraphRAGStore extends EventEmitter {
     return connections;
   }
 
+  // Local convention: source depth is zero; connections are directed and ordered.
+  // Only existing cached nodes are visited, matching query's declared-connection basis.
+  private bfsTraversal(startId: string, maxDepth = 2): string[] {
+    this.requireInitializedCache();
+    if (typeof startId !== 'string') throw new Error('GraphRAG traversal IDs must be strings');
+    if (!Number.isInteger(maxDepth) || maxDepth < 0) {
+      throw new Error('GraphRAG maxDepth must be a nonnegative integer');
+    }
+    if (this.getNode(startId) === undefined) return [];
+    const discovered = new Set([startId]);
+    const queue = [{ id: startId, depth: 0 }];
+    const visited: string[] = [];
+    for (let cursor = 0; cursor < queue.length; cursor++) {
+      const current = queue[cursor];
+      visited.push(current.id);
+      if (current.depth >= maxDepth) continue;
+      for (const neighbor of this.getNeighbors(current.id)) {
+        if (discovered.has(neighbor) || this.getNode(neighbor) === undefined) continue;
+        discovered.add(neighbor);
+        queue.push({ id: neighbor, depth: current.depth + 1 });
+      }
+    }
+    return visited;
+  }
+
+  // Shortest hop path over the same directed connections; no reverse links invented.
+  private findShortestPath(startId: string, targetId: string): string[] {
+    this.requireInitializedCache();
+    if (typeof startId !== 'string' || typeof targetId !== 'string') {
+      throw new Error('GraphRAG traversal IDs must be strings');
+    }
+    if (this.getNode(startId) === undefined || this.getNode(targetId) === undefined) return [];
+    if (startId === targetId) return [startId];
+    const previous = new Map<string, string | undefined>([[startId, undefined]]);
+    const queue = [startId];
+    for (let cursor = 0; cursor < queue.length; cursor++) {
+      const current = queue[cursor];
+      for (const neighbor of this.getNeighbors(current)) {
+        if (previous.has(neighbor) || this.getNode(neighbor) === undefined) continue;
+        previous.set(neighbor, current);
+        if (neighbor === targetId) {
+          const path: string[] = [];
+          let step: string | undefined = targetId;
+          while (step !== undefined) {
+            path.push(step);
+            step = previous.get(step);
+          }
+          return path.reverse();
+        }
+        queue.push(neighbor);
+      }
+    }
+    return [];
+  }
+
   private requireInitializedCache(): void {
     if (!this.initialized) throw new Error('GraphRAG cache is not initialized');
   }

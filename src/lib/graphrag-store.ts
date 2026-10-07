@@ -17,6 +17,7 @@
 
 import { EventEmitter } from 'events';
 import { Firestore } from '@google-cloud/firestore';
+import { Timestamp } from '@google-cloud/firestore/build/src/timestamp.js';
 
 // Graph Node Types
 export type NodeType = 'pattern' | 'agent' | 'technology' | 'concept' | 'category';
@@ -156,6 +157,81 @@ export class GraphRAGStore extends EventEmitter {
       loaded.push(edge);
     });
     return loaded;
+  }
+
+  /** Trusted in-process whole-cache views; these perform no privacy filtering. */
+  getNode(id: string): GraphNode | undefined {
+    this.requireInitializedCache();
+    const node = this.nodes.get(id);
+    return node === undefined ? undefined : this.cloneCachedValue(node);
+  }
+
+  getEdge(id: string): GraphEdge | undefined {
+    this.requireInitializedCache();
+    const edge = this.edges.get(id);
+    return edge === undefined ? undefined : this.cloneCachedValue(edge);
+  }
+
+  getNodesByType(type: NodeType): GraphNode[] {
+    this.requireInitializedCache();
+    return [...this.nodes.values()].map(node => this.cloneCachedValue(node))
+      .filter(node => node.type === type);
+  }
+
+  getEdgesForNode(id: string): GraphEdge[] {
+    this.requireInitializedCache();
+    return [...this.edges.values()].map(edge => this.cloneCachedValue(edge))
+      .filter(edge => edge.source === id || edge.target === id);
+  }
+
+  /** Returns the loaded node's declared connection IDs, including unresolved IDs. */
+  getNeighbors(id: string): string[] {
+    this.requireInitializedCache();
+    const node = this.nodes.get(id);
+    if (node === undefined) return [];
+    const connections = this.cloneCachedValue(node).connections;
+    if (connections === undefined || connections === null) return [];
+    if (!Array.isArray(connections) || connections.some(connection => typeof connection !== 'string')) {
+      throw new Error('Unsupported GraphRAG cached connections');
+    }
+    return connections;
+  }
+
+  private requireInitializedCache(): void {
+    if (!this.initialized) throw new Error('GraphRAG cache is not initialized');
+  }
+
+  // Only supported data values are cloned. Accessors, functions and opaque classes
+  // are rejected, rather than exposing an alias or inventing invalid internal slots.
+  private cloneCachedValue<T>(value: T, seen = new WeakMap<object, any>()): T {
+    if (typeof value === 'function') throw new Error('Unsupported GraphRAG cached value: function');
+    if (value === null || typeof value !== 'object') return value;
+    if (seen.has(value)) return seen.get(value);
+    const prototype = Object.getPrototypeOf(value);
+    const supported = prototype === Object.prototype || prototype === null ||
+      prototype === Array.prototype || prototype === Date.prototype ||
+      prototype === Timestamp.prototype || prototype === Buffer.prototype ||
+      prototype === Uint8Array.prototype;
+    if (!supported) throw new Error('Unsupported GraphRAG cached value prototype');
+    const descriptors = Reflect.ownKeys(value).map(key => [key, Object.getOwnPropertyDescriptor(value, key)!] as const);
+    if (descriptors.some(([, descriptor]) => !('value' in descriptor))) {
+      throw new Error('Unsupported GraphRAG cached accessor');
+    }
+    if (descriptors.some(([, descriptor]) => typeof descriptor.value === 'function')) {
+      throw new Error('Unsupported GraphRAG cached value: function');
+    }
+    let copy: any;
+    if (prototype === Date.prototype) copy = new Date(Date.prototype.getTime.call(value));
+    else if (prototype === Buffer.prototype) copy = Buffer.from(value as Buffer);
+    else if (prototype === Uint8Array.prototype) copy = new Uint8Array(value as Uint8Array);
+    else if (prototype === Array.prototype) copy = [];
+    else copy = Object.create(prototype);
+    seen.set(value, copy);
+    for (const [key, descriptor] of descriptors) {
+      descriptor.value = this.cloneCachedValue(descriptor.value, seen);
+      Object.defineProperty(copy, key, descriptor);
+    }
+    return copy;
   }
 
   /**

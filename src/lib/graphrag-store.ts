@@ -238,6 +238,64 @@ export class GraphRAGStore extends EventEmitter {
     });
   }
 
+  /** New create-only directed edge convention; both endpoints must exist in persisted storage.
+   * Preserve source metadata, add target exactly once, and publish only after the atomic commit.
+   * Uses the node-writer queue; older addPattern/clear/close races remain outside that guarantee.
+   */
+  async addEdge(input: GraphEdge): Promise<void> {
+    const edge = this.cloneCachedValue(input);
+    if (!edge || typeof edge !== 'object' || Array.isArray(edge) ||
+        ![Object.prototype, null].includes(Object.getPrototypeOf(edge))) throw new Error('Invalid GraphRAG edge');
+    for (const id of [edge.id, edge.source, edge.target]) this.validateNodeDocumentId(id);
+    if (typeof edge.relationship !== 'string' || !edge.relationship || !Number.isFinite(edge.weight) ||
+        edge.weight < 0 || edge.weight > 1) throw new Error('Invalid GraphRAG edge');
+    // Same pinned SDK serializer and local64KiB document admission as the node-writer family.
+    this.validateNodeWriteData(edge);
+    return this.serializeNodeWrite(async () => {
+      await this.initialize();
+      try {
+        const edgeRef = this.firestore.collection(this.edgesCollection).doc(edge.id);
+        const sourceRef = this.firestore.collection(this.nodesCollection).doc(edge.source);
+        const targetRef = this.firestore.collection(this.nodesCollection).doc(edge.target);
+        const committed = await this.firestore.runTransaction(async transaction => {
+          const existing = await transaction.get(edgeRef);
+          if (existing.exists) throw new Error('GraphRAG edge already exists');
+          const sourceSnapshot = await transaction.get(sourceRef);
+          const targetSnapshot = edge.source === edge.target ? sourceSnapshot : await transaction.get(targetRef);
+          if (!sourceSnapshot.exists || !targetSnapshot.exists) throw new Error('GraphRAG edge endpoint does not exist');
+          const source = this.prepareNodeWrite(sourceSnapshot.data() as GraphNode);
+          const target = edge.source === edge.target ? source : this.prepareNodeWrite(targetSnapshot.data() as GraphNode);
+          if (source.id !== edge.source || target.id !== edge.target) throw new Error('GraphRAG edge endpoint ID mismatch');
+          // Only duplicate occurrences of this target are removed; unrelated declared links retain their order.
+          let foundTarget = false;
+          const connections = source.connections.filter(id => {
+            if (id !== edge.target) return true;
+            if (foundTarget) return false;
+            foundTarget = true;
+            return true;
+          });
+          if (!foundTarget) connections.push(edge.target);
+          const changedSource = this.prepareNodeWrite({ ...source, connections });
+          // Both records are admitted individually64KiB, total below the existing1MiB local plan budget.
+          if (this.nodeWriteDataSize(edge) + this.nodeWriteDataSize(changedSource) > 1024 * 1024) {
+            throw new Error('GraphRAG local edge transaction size budget exceeded');
+          }
+          // All authoritative reads and validation precede these writes. SDK callback retries publish nothing.
+          transaction.create(edgeRef, edge);
+          transaction.set(sourceRef, changedSource);
+          return { source: changedSource, target, edge };
+        });
+        this.publishNodeWrite(committed.source);
+        if (committed.target.id !== committed.source.id) this.publishNodeWrite(committed.target);
+        this.edges.set(committed.edge.id, this.cloneCachedValue(committed.edge));
+      } catch (error) {
+        // A transport rejection may follow an actual commit; invalidate rather than assert backend rollback.
+        this.invalidateNodeWriteCache();
+        throw error;
+      }
+    });
+  }
+
   private serializeNodeWrite(operation: () => Promise<void>): Promise<void> {
     const result = this.nodeWriteTail.then(operation);
     this.nodeWriteTail = result.catch(() => undefined);

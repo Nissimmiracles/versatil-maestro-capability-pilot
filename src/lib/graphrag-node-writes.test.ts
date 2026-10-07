@@ -182,8 +182,7 @@ describe('Generic GraphRAG node writes, isolated proposal', () => {
     expect(() => store.getNode('fresh')).toThrow('GraphRAG cache is not initialized');
   });
 
-  it.each(['create', 'update', 'batch'] as const)
-  ('handles known-before and ambiguous-after errors for %s without claiming rollback', async operation => {
+  it.each(['create', 'update', 'batch'] as const)('handles known-before and ambiguous-after errors for %s without claiming rollback', async operation => {
     for (const failure of ['before', 'after'] as const) {
       backend.nodes.clear(); backend.failure = undefined;
       const store = new GraphRAGStore(); await store.addNode(node('existing')); backend.failure = failure;

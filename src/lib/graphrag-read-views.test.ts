@@ -120,8 +120,7 @@ describe('GraphRAG initialized cache read views', () => {
     expectNoExtraIO();
   });
 
-  it.each(['getNode', 'getNodesByType'] as const)
-  ('detaches nested values, Date and installed Firestore Timestamp from %s', async method => {
+  it.each(['getNode', 'getNodesByType'] as const)('detaches nested values, Date and installed Firestore Timestamp from %s', async method => {
     const store = await initializedStore();
     const node: GraphNode = method === 'getNode' ? store.getNode('pattern-a')! : store.getNodesByType('pattern')[0];
     expect(node.properties.lastUsed).toBeInstanceOf(Date);
@@ -158,8 +157,7 @@ describe('GraphRAG initialized cache read views', () => {
     expectNoExtraIO();
   });
 
-  it.each(['getEdge', 'getEdgesForNode'] as const)
-  ('detaches edge records returned by %s', async method => {
+  it.each(['getEdge', 'getEdgesForNode'] as const)('detaches edge records returned by %s', async method => {
     const store = await initializedStore();
     const edge: GraphEdge = method === 'getEdge' ? store.getEdge('edge-out')! : store.getEdgesForNode('pattern-a')[0];
     edge.weight = 0;
@@ -246,8 +244,7 @@ describe('GraphRAG initialized cache read views', () => {
   it.each([
     { connections: 'tech-react' }, { connections: [1, 'tech-react'] },
     { connections: false }, { connections: 0 },
-  ])
-  ('rejects malformed declared connections without fabricating neighbor IDs', async ({ connections }) => {
+  ])('rejects malformed declared connections without fabricating neighbor IDs', async ({ connections }) => {
     const store = await initializedStore();
     fixture.nodes[0].connections = connections;
     expect(() => store.getNeighbors('pattern-a')).toThrow('Unsupported GraphRAG cached connections');

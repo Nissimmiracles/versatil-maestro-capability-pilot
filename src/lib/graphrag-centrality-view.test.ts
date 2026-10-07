@@ -23,7 +23,7 @@ vi.mock('@google-cloud/firestore', async importOriginal => {
     }
     async terminate() { fixture.terminations++; }
   }
-  return { Firestore: MockFirestore, Timestamp: actual.Timestamp };
+  return { ...actual, Firestore: MockFirestore };
 });
 beforeEach(() => {
   fixture.requests.length = 0;

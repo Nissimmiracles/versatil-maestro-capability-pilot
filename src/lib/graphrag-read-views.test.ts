@@ -28,7 +28,7 @@ vi.mock('@google-cloud/firestore', async importOriginal => {
     }
     async terminate() {}
   }
-  return { Firestore: MockFirestore, Timestamp: actual.Timestamp };
+  return { ...actual, Firestore: MockFirestore };
 });
 
 beforeEach(() => {

@@ -20,7 +20,8 @@ const fixture = vi.hoisted(() => ({
 }));
 
 // Hoisted module mock prevents a real Firestore client or network request.
-vi.mock('@google-cloud/firestore', () => {
+vi.mock('@google-cloud/firestore', async importOriginal => {
+  const actual = await importOriginal<typeof import('@google-cloud/firestore')>();
   class MockFirestore {
     collection(name: string) {
       const records = name === 'graphrag_nodes' ? fixture.nodes :
@@ -45,7 +46,7 @@ vi.mock('@google-cloud/firestore', () => {
     }
     async terminate() {}
   }
-  return { Firestore: MockFirestore };
+  return { ...actual, Firestore: MockFirestore };
 });
 
 beforeEach(() => {

@@ -18,6 +18,8 @@
 import { EventEmitter } from 'events';
 import { Firestore } from '@google-cloud/firestore';
 import { Timestamp } from '@google-cloud/firestore/build/src/timestamp.js';
+import { validateDocumentData } from '@google-cloud/firestore/build/src/write-batch.js';
+import { Serializer } from '@google-cloud/firestore/build/src/serializer.js';
 
 // Graph Node Types
 export type NodeType = 'pattern' | 'agent' | 'technology' | 'concept' | 'category';
@@ -93,6 +95,9 @@ export class GraphRAGStore extends EventEmitter {
   private edgesCollection = 'graphrag_edges';
   private initialized = false;
 
+  // Local serializer for this new node-writer family only, not the older mutation paths.
+  private nodeWriteTail: Promise<void> = Promise.resolve();
+
   // In-memory graph cache for fast traversal
   private nodes: Map<string, GraphNode> = new Map();
   private edges: Map<string, GraphEdge> = new Map();
@@ -157,6 +162,183 @@ export class GraphRAGStore extends EventEmitter {
       loaded.push(edge);
     });
     return loaded;
+  }
+
+  async addNode(input: GraphNode): Promise<void> {
+    const node = this.prepareNodeWrite(input);
+    return this.serializeNodeWrite(async () => {
+      await this.initialize();
+      try {
+        await this.firestore.collection(this.nodesCollection).doc(node.id).create(node);
+        this.publishNodeWrite(node);
+      } catch (error) {
+        this.invalidateNodeWriteCache();
+        throw error;
+      }
+    });
+  }
+
+  // Supplied top-level fields replace those fields. Properties are replaced, not deep merged.
+  // ID and type are immutable; explicit metadata is stored as supplied, not interpreted as authority.
+  async updateNode(input: Pick<GraphNode, 'id'> & Partial<Omit<GraphNode, 'id'>>): Promise<void> {
+    const patch = this.cloneCachedValue(input);
+    if (patch === null || typeof patch !== 'object' || Array.isArray(patch)) throw new Error('Invalid GraphRAG node update');
+    this.validateNodeDocumentId(patch.id);
+    const allowed = ['id', 'type', 'label', 'properties', 'connections', 'centrality', 'privacy'];
+    if (Object.keys(patch).some(key => !allowed.includes(key))) throw new Error('Unsupported GraphRAG node update field');
+    this.prepareNodeWrite({ type: 'concept', label: '', properties: {}, connections: [], ...patch });
+    this.validateNodeWriteData(patch);
+    return this.serializeNodeWrite(async () => {
+      await this.initialize();
+      try {
+        const node = await this.firestore.runTransaction(async transaction => {
+          const ref = this.firestore.collection(this.nodesCollection).doc(patch.id);
+          const snapshot = await transaction.get(ref);
+          if (!snapshot.exists) throw new Error('GraphRAG node does not exist');
+          const current = this.prepareNodeWrite(snapshot.data() as GraphNode);
+          if (current.id !== patch.id) throw new Error('GraphRAG persisted node ID mismatch');
+          if (patch.type !== undefined && patch.type !== current.type) throw new Error('GraphRAG node type is immutable');
+          const candidate = this.prepareNodeWrite({ ...current, ...patch });
+          transaction.set(ref, candidate);
+          return candidate;
+        });
+        this.publishNodeWrite(node);
+      } catch (error) {
+        // Even read/validation failure can reveal that the loaded projection was stale.
+        this.invalidateNodeWriteCache();
+        throw error;
+      }
+    });
+  }
+
+  async batchAddNodes(input: GraphNode[]): Promise<void> {
+    const detached = this.cloneCachedValue(input);
+    if (!Array.isArray(detached) || detached.length === 0 || detached.length > 100) {
+      throw new Error('GraphRAG node batch must contain 1 to 100 nodes');
+    }
+    for (let index = 0; index < detached.length; index++) {
+      if (!(index in detached)) throw new Error('Sparse GraphRAG node batch');
+    }
+    const nodes = detached.map(node => this.prepareNodeWrite(node));
+    if (new Set(nodes.map(node => node.id)).size !== nodes.length) throw new Error('Duplicate GraphRAG batch node ID');
+    if (nodes.reduce((sum, node) => sum + this.nodeWriteDataSize(node), 0) > 1024 * 1024) {
+      throw new Error('GraphRAG local node batch size budget exceeded');
+    }
+    return this.serializeNodeWrite(async () => {
+      await this.initialize();
+      try {
+        const batch = this.firestore.batch();
+        for (const node of nodes) batch.create(this.firestore.collection(this.nodesCollection).doc(node.id), node);
+        await batch.commit();
+        for (const node of nodes) this.publishNodeWrite(node);
+      } catch (error) {
+        this.invalidateNodeWriteCache();
+        throw error;
+      }
+    });
+  }
+
+  private serializeNodeWrite(operation: () => Promise<void>): Promise<void> {
+    const result = this.nodeWriteTail.then(operation);
+    this.nodeWriteTail = result.catch(() => undefined);
+    return result;
+  }
+
+  private publishNodeWrite(node: GraphNode): void {
+    const cached = this.cloneCachedValue(node);
+    this.nodes.set(cached.id, cached);
+    this.adjacencyList.set(cached.id, [...cached.connections]);
+  }
+
+  private invalidateNodeWriteCache(): void {
+    this.initialized = false;
+    this.nodes.clear();
+    this.edges.clear();
+    this.adjacencyList.clear();
+  }
+
+  private validateNodeDocumentId(id: unknown): asserts id is string {
+    if (typeof id !== 'string' || !id || id.includes('/') || id === '.' || id === '..' ||
+      /^__.*__$/.test(id) || Buffer.byteLength(id, 'utf8') > 1500 || Buffer.from(id).toString('utf8') !== id) {
+      throw new Error('Invalid GraphRAG document ID');
+    }
+  }
+
+  private prepareNodeWrite(input: GraphNode): GraphNode {
+    const node = this.cloneCachedValue(input);
+    if (node === null || typeof node !== 'object' || Array.isArray(node)) throw new Error('Invalid GraphRAG node');
+    this.validateNodeDocumentId(node.id);
+    if (!['pattern', 'agent', 'technology', 'concept', 'category'].includes(node.type) ||
+      typeof node.label !== 'string' || node.properties === null || typeof node.properties !== 'object' ||
+      Array.isArray(node.properties) || ![Object.prototype, null].includes(Object.getPrototypeOf(node.properties)) ||
+      !Array.isArray(node.connections)) throw new Error('Invalid GraphRAG node');
+    for (const id of node.connections) this.validateNodeDocumentId(id);
+    if (node.centrality !== undefined && !Number.isFinite(node.centrality)) throw new Error('Invalid GraphRAG node centrality');
+    if (node.privacy !== undefined && (node.privacy === null || typeof node.privacy !== 'object' ||
+      Array.isArray(node.privacy) || typeof node.privacy.isPublic !== 'boolean' ||
+      ['userId', 'teamId', 'projectId'].some(key => key in node.privacy! && typeof (node.privacy as any)[key] !== 'string'))) {
+      throw new Error('Invalid GraphRAG explicit privacy metadata');
+    }
+    this.validateNodeWriteData(node);
+    return node;
+  }
+
+  private validateNodeWriteData(data: object): void {
+    const ancestors = new Set<object>();
+    const inspect = (value: any, path: string[] = []) => {
+      if (value === undefined) throw new Error('GraphRAG writes cannot contain undefined');
+      if (typeof value === 'symbol' || typeof value === 'bigint') throw new Error('Unsupported GraphRAG write primitive');
+      if (typeof value === 'string' && Buffer.from(value).toString('utf8') !== value) throw new Error('Invalid GraphRAG UTF-8 string');
+      if (value === null || typeof value !== 'object') return;
+      const prototype = Object.getPrototypeOf(value);
+      if (prototype === Date.prototype) {
+        if (!Number.isFinite(value.getTime()) || Reflect.ownKeys(value).length) throw new Error('Invalid GraphRAG Date');
+        return;
+      }
+      if (prototype === Timestamp.prototype) {
+        if (Reflect.ownKeys(value).some(key => key !== '_seconds' && key !== '_nanoseconds') ||
+          !Number.isInteger(value.seconds) || value.seconds < -62135596800 || value.seconds > 253402300799 ||
+          !Number.isInteger(value.nanoseconds) || value.nanoseconds < 0 || value.nanoseconds >= 1e9) {
+          throw new Error('Invalid GraphRAG Timestamp');
+        }
+        return;
+      }
+      if (prototype === Buffer.prototype || prototype === Uint8Array.prototype) {
+        if (Reflect.ownKeys(value).some(key => typeof key !== 'string' || !/^(0|[1-9][0-9]*)$/.test(key))) {
+          throw new Error('Unsupported GraphRAG bytes field');
+        }
+        return;
+      }
+      if (ancestors.has(value)) throw new Error('Cyclic GraphRAG write value');
+      ancestors.add(value);
+      if (Array.isArray(value)) {
+        if (value.some(Array.isArray)) throw new Error('Nested GraphRAG arrays are not Firestore values');
+        if (Reflect.ownKeys(value).some(key => key !== 'length' && (typeof key !== 'string' || !/^(0|[1-9][0-9]*)$/.test(key)))) {
+          throw new Error('Unsupported GraphRAG array field');
+        }
+        for (let index = 0; index < value.length; index++) inspect(value[index], [...path, String(index)]);
+      } else {
+        for (const key of Reflect.ownKeys(value)) {
+          if (typeof key !== 'string' || !Object.getOwnPropertyDescriptor(value, key)!.enumerable ||
+            /^__.*__$/.test(key) || Buffer.byteLength(key, 'utf8') > 1500 || Buffer.from(key).toString('utf8') !== key ||
+            Buffer.byteLength([...path, key].join('.'), 'utf8') + path.length * 2 > 1500) {
+            throw new Error('Invalid GraphRAG Firestore field key');
+          }
+          inspect(value[key], [...path, key]);
+        }
+      }
+      ancestors.delete(value);
+    };
+    inspect(data);
+    validateDocumentData('GraphRAG node', data, false, false);
+    if (this.nodeWriteDataSize(data) > 64 * 1024) throw new Error('GraphRAG local node size budget exceeded');
+  }
+
+  private nodeWriteDataSize(data: object): number {
+    // Pure installed SDK encoding; the reference factory is never allowed to perform I/O.
+    const serializer = new Serializer({ _settings: { ignoreUndefinedProperties: false, useBigInt: false },
+      doc: () => { throw new Error('Unsupported GraphRAG document reference'); } } as unknown as ConstructorParameters<typeof Serializer>[0]);
+    return Buffer.byteLength(JSON.stringify(serializer.encodeFields(data)), 'utf8');
   }
 
   /** Trusted in-process whole-cache views; these perform no privacy filtering. */

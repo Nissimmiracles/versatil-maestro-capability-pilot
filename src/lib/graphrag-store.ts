@@ -448,6 +448,236 @@ export class GraphRAGStore extends EventEmitter {
     return [];
   }
 
+  // New local lexical convention, independent of query ranking; exact Unicode tokens only.
+  private calculateRelevance(queryText: string, patternText: string): number {
+    if (typeof queryText !== 'string' || typeof patternText !== 'string') {
+      throw new Error('GraphRAG relevance inputs must be strings');
+    }
+    const tokens = (text: string) => new Set(text.toLowerCase().match(/[\p{L}\p{N}]+/gu) || []);
+    const query = tokens(queryText);
+    const pattern = tokens(patternText);
+    return query.size === 0 ? 0 : [...query].filter(token => pattern.has(token)).length / query.size;
+  }
+
+  // Pure supplied-score boost, not integrated into query or inferred from connectivity.
+  private boostByCentrality(base: number, input: GraphNode): number {
+    if (!Number.isFinite(base) || base < 0 || base > 1) throw new Error('GraphRAG base score must be in [0,1]');
+    const node = this.cloneCachedValue(input);
+    if (!node || typeof node !== 'object' || Array.isArray(node)) throw new Error('Invalid GraphRAG score node');
+    const score = node.centrality === undefined ? 0 : node.centrality;
+    if (!Number.isFinite(score) || score < 0 || score > 1) throw new Error('GraphRAG boost centrality must be in [0,1]');
+    return base + (1 - base) * score;
+  }
+
+  // Validate and detach the entire trusted cache before reading selectors or publishing metrics.
+  // This is a local structural analysis, not tenant-filtered retrieval or backend freshness proof.
+  private metricSnapshot(): GraphNode[] {
+    this.requireInitializedCache();
+    if (this.nodes.size > 10000) throw new Error('GraphRAG metric node budget exceeded');
+    const entries = [...this.nodes.entries()].map(([id, node]) => [id, this.cloneCachedValue(node)] as const);
+    let linkCount = 0;
+    for (const [id, node] of entries) {
+      if (!node || typeof node !== 'object' || Array.isArray(node) || node.id !== id || typeof id !== 'string' || !id ||
+          !['pattern', 'agent', 'technology', 'concept', 'category'].includes(node.type) || typeof node.label !== 'string' ||
+          !node.properties || typeof node.properties !== 'object' || Array.isArray(node.properties) ||
+          ![Object.prototype, null].includes(Object.getPrototypeOf(node.properties)) || !Array.isArray(node.connections)) {
+        throw new Error('Invalid GraphRAG metric node');
+      }
+      for (let i = 0; i < node.connections.length; i++) {
+        if (!Object.prototype.hasOwnProperty.call(node.connections, i) || typeof node.connections[i] !== 'string') {
+          throw new Error('Invalid GraphRAG metric connections');
+        }
+      }
+      linkCount += node.connections.length;
+      if (linkCount > 100000) throw new Error('GraphRAG metric connection budget exceeded');
+    }
+    return entries.map(([, node]) => node);
+  }
+
+  /** New deterministic PageRank convention. Only complete converged scores are published in memory.
+   * Receipt carries the detached source topology/options; reload restores persisted scores.
+   * No query-ranking integration, backend writes, or concurrent mutation guarantee is introduced.
+   */
+  async calculateCentrality(input: { damping?: number; tolerance?: number; maxIterations?: number } = {}) {
+    const options = this.cloneCachedValue(input);
+    if (!options || typeof options !== 'object' || Array.isArray(options) ||
+        Reflect.ownKeys(options).some(key => !['damping', 'tolerance', 'maxIterations'].includes(String(key)))) {
+      throw new Error('Invalid GraphRAG PageRank options');
+    }
+    const damping = options.damping === undefined ? 0.85 : options.damping;
+    const tolerance = options.tolerance === undefined ? 1e-10 : options.tolerance;
+    const maxIterations = options.maxIterations === undefined ? 200 : options.maxIterations;
+    if (!Number.isFinite(damping) || damping < 0 || damping >= 1 || !Number.isFinite(tolerance) ||
+        tolerance <= 0 || tolerance >= 1 || !Number.isInteger(maxIterations) || maxIterations < 1 || maxIterations > 10000) {
+      throw new Error('Invalid GraphRAG PageRank options');
+    }
+    const nodes = this.metricSnapshot();
+    const index = new Map(nodes.map((node, i) => [node.id, i]));
+    const links = nodes.map(node => [...new Set(node.connections)].filter(id => index.has(id)).map(id => index.get(id)!));
+    if (maxIterations * (nodes.length + links.reduce((sum, row) => sum + row.length, 0)) > 50000000) {
+      throw new Error('GraphRAG PageRank work budget exceeded');
+    }
+    let ranks = nodes.map(() => 1 / nodes.length);
+    let iterations = 0;
+    let converged = nodes.length === 0;
+    while (!converged && iterations < maxIterations) {
+      const dangling = ranks.reduce((sum, rank, i) => sum + (links[i].length === 0 ? rank : 0), 0);
+      const next = nodes.map(() => (1 - damping) / nodes.length + damping * dangling / nodes.length);
+      for (let i = 0; i < links.length; i++) {
+        for (const target of links[i]) next[target] += damping * ranks[i] / links[i].length;
+      }
+      const change = next.reduce((sum, rank, i) => sum + Math.abs(rank - ranks[i]), 0);
+      ranks = next;
+      iterations++;
+      converged = change <= tolerance;
+    }
+    if (!converged) throw new Error('GraphRAG PageRank did not converge within iteration budget');
+    if (ranks.some(score => !Number.isFinite(score) || score < 0)) throw new Error('Invalid GraphRAG PageRank result');
+    // Prepare every replacement before publishing, so validation/nonconvergence leaves the cache untouched.
+    const published = nodes.map((node, i) => ({ ...node, centrality: ranks[i] }));
+    for (const node of published) this.nodes.set(node.id, node);
+    return { algorithm: 'pagerank' as const, converged: true as const, iterations,
+      options: { damping, tolerance, maxIterations },
+      sourceConnections: nodes.map(node => ({ id: node.id, connections: [...node.connections] })),
+      scores: ranks.map((centrality, i) => ({ id: nodes[i].id, centrality })) };
+  }
+
+  /** New bounded deterministic Louvain convention: unweighted undirected projection of unique
+   * existing declared links, ignoring original self/dangling links. Local moving + aggregation
+   * optimize standard modularity (resolution1); these are structural, not semantic communities.
+   */
+  async detectCommunities(input: { maxPasses?: number; maxLevels?: number } = {}): Promise<string[][]> {
+    const options = this.cloneCachedValue(input);
+    if (!options || typeof options !== 'object' || Array.isArray(options) ||
+        Reflect.ownKeys(options).some(key => !['maxPasses', 'maxLevels'].includes(String(key)))) {
+      throw new Error('Invalid GraphRAG Louvain options');
+    }
+    const maxPasses = options.maxPasses === undefined ? 100 : options.maxPasses;
+    const maxLevels = options.maxLevels === undefined ? 128 : options.maxLevels;
+    if (!Number.isInteger(maxPasses) || maxPasses < 1 || maxPasses > 1000 ||
+        !Number.isInteger(maxLevels) || maxLevels < 1 || maxLevels > 128) throw new Error('Invalid GraphRAG Louvain options');
+    const nodes = this.metricSnapshot();
+    return this.calculateLouvain(nodes, maxPasses, maxLevels).groups;
+  }
+
+  // Pure internal receipt includes level quality on the original projection, not backend state.
+  private calculateLouvain(nodes: GraphNode[], maxPasses: number, maxLevels: number) {
+    if (nodes.length > 128) throw new Error('GraphRAG Louvain node budget exceeded');
+    const ids = new Map(nodes.map((node, i) => [node.id, i]));
+    let matrix = nodes.map(() => nodes.map(() => 0));
+    for (let i = 0; i < nodes.length; i++) {
+      for (const id of nodes[i].connections) {
+        const j = ids.get(id);
+        if (j !== undefined && j !== i) matrix[i][j] = matrix[j][i] = 1;
+      }
+    }
+    const original = matrix.map(row => [...row]);
+    const modularity = (groups: number[][]): number => {
+      const degrees = original.map(row => row.reduce((sum, weight) => sum + weight, 0));
+      const total = degrees.reduce((sum, degree) => sum + degree, 0);
+      if (total === 0) return 0;
+      return groups.reduce((quality, group) => {
+        const internal = group.reduce((sum, i) => sum + group.reduce((subtotal, j) => subtotal + original[i][j], 0), 0);
+        const degree = group.reduce((sum, i) => sum + degrees[i], 0);
+        return quality + internal / total - (degree / total) ** 2;
+      }, 0);
+    };
+    const levels: Array<{ groups: string[][]; modularity: number }> = [];
+    const receipt = (groups: number[][]) => ({
+      algorithm: 'louvain' as const, converged: true as const,
+      groups: groups.map(group => group.slice().sort((a, b) => a - b).map(i => nodes[i].id)),
+      modularity: modularity(groups), levels,
+    });
+    let members = nodes.map((_, i) => [i]);
+    let moves = 0;
+    const gainTolerance = 1e-12;
+    for (let level = 0; level < maxLevels; level++) {
+      const n = matrix.length;
+      const degrees = matrix.map(row => row.reduce((sum, weight) => sum + weight, 0));
+      const total = degrees.reduce((sum, degree) => sum + degree, 0); // 2m, including aggregated loops twice.
+      if (total === 0) return receipt(members);
+      const labels = matrix.map((_, i) => i);
+      const totals = new Map(degrees.map((degree, i) => [i, degree]));
+      let stable = false;
+      for (let pass = 0; pass < maxPasses; pass++) {
+        let changed = false;
+        for (let i = 0; i < n; i++) {
+          const own = labels[i];
+          const weights = new Map<number, number>();
+          for (let j = 0; j < n; j++) {
+            if (i !== j && matrix[i][j] !== 0) weights.set(labels[j], (weights.get(labels[j]) || 0) + matrix[i][j]);
+          }
+          // Existing groups in stable numeric order; a singleton option permits removal from a group.
+          const candidates = [...new Set([...weights.keys(), n * (pass + 1) + i])].sort((a, b) => a - b);
+          let best = own;
+          let bestGain = gainTolerance;
+          const k = degrees[i];
+          const ownTotal = totals.get(own) || 0;
+          for (const target of candidates) {
+            if (target === own) continue;
+            if (++moves > 2000000) throw new Error('GraphRAG Louvain work budget exceeded');
+            const targetTotal = totals.get(target) || 0;
+            const gain = 2 * ((weights.get(target) || 0) - (weights.get(own) || 0)) / total -
+              ((ownTotal - k) ** 2 + (targetTotal + k) ** 2 - ownTotal ** 2 - targetTotal ** 2) / total ** 2;
+            if (gain > bestGain) { best = target; bestGain = gain; }
+          }
+          if (best !== own) {
+            labels[i] = best;
+            totals.set(own, ownTotal - k);
+            totals.set(best, (totals.get(best) || 0) + k);
+            changed = true;
+          }
+        }
+        if (!changed) { stable = true; break; }
+      }
+      if (!stable) throw new Error('GraphRAG Louvain did not converge within pass budget');
+      const groups: number[][] = [];
+      const groupIndex = new Map<number, number>();
+      for (let i = 0; i < n; i++) {
+        if (!groupIndex.has(labels[i])) { groupIndex.set(labels[i], groups.length); groups.push([]); }
+        groups[groupIndex.get(labels[i])!].push(i);
+      }
+      const partition = groups.map(group => group.flatMap(i => members[i]).sort((a, b) => a - b));
+      levels.push({ groups: partition.map(group => group.map(i => nodes[i].id)), modularity: modularity(partition) });
+      if (groups.length === n) return receipt(members);
+      // Aggregation preserves weighted degree/internal self-loop mass; next level can merge local optima.
+      const aggregated = groups.map(() => groups.map(() => 0));
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+        aggregated[groupIndex.get(labels[i])!][groupIndex.get(labels[j])!] += matrix[i][j];
+      }
+      members = groups.map(group => group.flatMap(i => members[i]).sort((a, b) => a - b));
+      matrix = aggregated;
+    }
+    throw new Error('GraphRAG Louvain did not converge within level budget');
+  }
+
+  /** New structural relatedness convention: existing directed hops <=2, distance/discovery ties,
+   * excluding the seed. Returns detached GraphNodes of type pattern, not tenant-filtered results.
+   */
+  async findRelatedPatterns(startId: string, limit = 10): Promise<GraphNode[]> {
+    if (typeof startId !== 'string' || !Number.isInteger(limit) || limit < 0 || limit > 10000) {
+      throw new Error('Invalid GraphRAG related-pattern arguments');
+    }
+    const snapshot = this.metricSnapshot();
+    const nodes = new Map(snapshot.map(node => [node.id, node]));
+    if (!nodes.has(startId) || nodes.get(startId)!.type !== 'pattern' || limit === 0) return [];
+    const queue = [{ id: startId, depth: 0 }];
+    const visited = new Set([startId]);
+    const results: GraphNode[] = [];
+    for (let cursor = 0; cursor < queue.length; cursor++) {
+      const current = queue[cursor];
+      if (current.depth === 2) continue;
+      for (const id of nodes.get(current.id)!.connections) {
+        if (!nodes.has(id) || visited.has(id)) continue;
+        visited.add(id);
+        const node = nodes.get(id)!;
+        queue.push({ id, depth: current.depth + 1 });
+        if (node.type === 'pattern') results.push(node);
+      }
+    }
+    return results.slice(0, limit);
+  }
+
   private requireInitializedCache(): void {
     if (!this.initialized) throw new Error('GraphRAG cache is not initialized');
   }

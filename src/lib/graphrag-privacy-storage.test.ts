@@ -65,8 +65,7 @@ describe('GraphRAG explicit privacy storage', () => {
     ['private user', { userId: 'fixture-user', isPublic: false }],
     ['private team', { teamId: 'fixture-team', isPublic: false }],
     ['private project', { projectId: 'fixture-project', isPublic: false }],
-  ] as Array<[string, NonNullable<GraphNode['privacy']>]>)
-  ('preserves %s at the node level through persistence and reload', async (_, privacy) => {
+  ] as Array<[string, NonNullable<GraphNode['privacy']>]>)('preserves %s at the node level through persistence and reload', async (_, privacy) => {
     const input = { ...properties(), privacy };
     const original = structuredClone(input);
     Object.freeze(privacy);

@@ -45,8 +45,7 @@ function expectNoExtraIO() {
 }
 
 describe('GraphRAG private initialized-cache traversal', () => {
-  it.each(['bfsTraversal', 'findShortestPath'] as const)
-  ('rejects %s before initialize without fetching or writing', method => {
+  it.each(['bfsTraversal', 'findShortestPath'] as const)('rejects %s before initialize without fetching or writing', method => {
     const store = new GraphRAGStore();
     expect(() => method === 'bfsTraversal' ? store['bfsTraversal']('a') : store['findShortestPath']('a', 'e'))
       .toThrow('GraphRAG cache is not initialized');
@@ -119,8 +118,7 @@ describe('GraphRAG private initialized-cache traversal', () => {
     expectNoExtraIO();
   });
 
-  it.each([-1, 0.5, NaN, Infinity, '2', null])
-  ('rejects invalid maxDepth %s rather than coercing it', async depth => {
+  it.each([-1, 0.5, NaN, Infinity, '2', null])('rejects invalid maxDepth %s rather than coercing it', async depth => {
     const store = await loaded();
     expect(() => store['bfsTraversal']('a', depth as number)).toThrow('GraphRAG maxDepth must be a nonnegative integer');
     expectNoExtraIO();
@@ -133,8 +131,7 @@ describe('GraphRAG private initialized-cache traversal', () => {
     expectNoExtraIO();
   });
 
-  it.each(['bfsTraversal', 'findShortestPath'] as const)
-  ('validates encountered nodes through clone guard before %s reads connections', async method => {
+  it.each(['bfsTraversal', 'findShortestPath'] as const)('validates encountered nodes through clone guard before %s reads connections', async method => {
     const store = await loaded();
     let calls = 0;
     Object.defineProperty(fixture.nodes[1], 'connections', { get: () => { calls++; return ['d']; } });

@@ -114,8 +114,7 @@ describe('GraphRAG private collection loading', () => {
     expect(store['edges'].size).toBe(1);
   });
 
-  it.each(['graphrag_nodes', 'graphrag_edges'])
-  ('propagates a %s fetch failure without marking initialized or emitting readiness', async collection => {
+  it.each(['graphrag_nodes', 'graphrag_edges'])('propagates a %s fetch failure without marking initialized or emitting readiness', async collection => {
     fixture.failCollection = collection;
     const store = new GraphRAGStore();
     const initialized = vi.fn();

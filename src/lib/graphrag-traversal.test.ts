@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GraphRAGStore } from './graphrag-store.js';
 
 const fixture = vi.hoisted(() => ({ nodes: [] as any[], requests: [] as string[], writes: 0 }));
-vi.mock('@google-cloud/firestore', () => {
+vi.mock('@google-cloud/firestore', async importOriginal => {
+  const actual = await importOriginal<typeof import('@google-cloud/firestore')>();
   class MockFirestore {
     collection(name: string) {
       if (name !== 'graphrag_nodes' && name !== 'graphrag_edges') throw new Error(`Unexpected collection: ${name}`);
@@ -21,7 +22,7 @@ vi.mock('@google-cloud/firestore', () => {
     }
     async terminate() {}
   }
-  return { Firestore: MockFirestore };
+  return { ...actual, Firestore: MockFirestore };
 });
 beforeEach(() => {
   fixture.requests.length = 0;

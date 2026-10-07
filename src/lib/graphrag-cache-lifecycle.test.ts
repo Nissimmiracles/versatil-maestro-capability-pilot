@@ -9,7 +9,8 @@ const fixture = vi.hoisted(() => ({
   onBlocked: undefined as (() => void) | undefined,
   release: undefined as (() => void) | undefined,
 }));
-vi.mock('@google-cloud/firestore', () => {
+vi.mock('@google-cloud/firestore', async importOriginal => {
+  const actual = await importOriginal<typeof import('@google-cloud/firestore')>();
   class MockFirestore {
     constructor() { fixture.clients++; }
     collection(name: string) {
@@ -38,7 +39,7 @@ vi.mock('@google-cloud/firestore', () => {
     }
     async terminate() { fixture.terminations++; }
   }
-  return { Firestore: MockFirestore };
+  return { ...actual, Firestore: MockFirestore };
 });
 
 beforeEach(() => {

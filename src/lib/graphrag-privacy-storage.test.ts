@@ -9,7 +9,8 @@ const persisted = vi.hoisted(() => ({
 }));
 
 // Registered before importing GraphRAGStore; no SDK connection is constructed.
-vi.mock('@google-cloud/firestore', () => {
+vi.mock('@google-cloud/firestore', async importOriginal => {
+  const actual = await importOriginal<typeof import('@google-cloud/firestore')>();
   class MockFirestore {
     collection(name: string) {
       const records = name === 'graphrag_nodes' ? persisted.nodes :
@@ -41,7 +42,7 @@ vi.mock('@google-cloud/firestore', () => {
     }
     async terminate() {}
   }
-  return { Firestore: MockFirestore };
+  return { ...actual, Firestore: MockFirestore };
 });
 
 const properties = () => ({

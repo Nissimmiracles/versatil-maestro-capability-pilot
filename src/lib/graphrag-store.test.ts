@@ -48,13 +48,36 @@ const firestoreFixture = vi.hoisted(() => {
         target: entityId, relationship: 'relates_to', weight: 1 });
     }
   }
-  return { nodes: [...patterns, ...entities.values()], edges };
+  const nodes = [...patterns, ...entities.values()];
+  const documents = {
+    graphrag_nodes: new Map<string, Record<string, any>>(),
+    graphrag_edges: new Map<string, Record<string, any>>(),
+  };
+  const reset = () => {
+    documents.graphrag_nodes.clear(); documents.graphrag_edges.clear();
+    for (const record of nodes) documents.graphrag_nodes.set(record.id, structuredClone(record));
+    for (const record of edges) documents.graphrag_edges.set(record.id, structuredClone(record));
+  };
+  return { nodes, edges, documents, reset, replayTransaction: false };
+
 });
 
-// Node and edge collections expose distinct, valid QuerySnapshots.
-vi.mock('@google-cloud/firestore', () => {
-  const snapshot = (records: Record<string, any>[]) => {
-    const docs = records.map(record => ({ id: record.id, data: () => structuredClone(record) }));
+// Retained documents and atomic preconditions model actual storage, not API success stubs.
+vi.mock('@google-cloud/firestore', async importOriginal => {
+  const actual = await importOriginal<typeof import('@google-cloud/firestore')>();
+  type Reference = { collectionName: 'graphrag_nodes' | 'graphrag_edges'; id: string };
+  type Operation = { kind: 'create' | 'set' | 'update' | 'delete'; ref: Reference; data?: Record<string, any> };
+  const records = (name: string) => {
+    if (name !== 'graphrag_nodes' && name !== 'graphrag_edges') throw new Error(`Unexpected collection: ${name}`);
+    return firestoreFixture.documents[name];
+  };
+  const documentSnapshot = (ref: Reference) => {
+    const value = records(ref.collectionName).get(ref.id);
+    const copy = value === undefined ? undefined : structuredClone(value);
+    return { id: ref.id, exists: copy !== undefined, data: () => copy === undefined ? undefined : structuredClone(copy) };
+  };
+  const snapshot = (values: Record<string, any>[]) => {
+    const docs = values.map(record => ({ id: record.id, data: () => structuredClone(record) }));
     return {
       docs, empty: docs.length === 0, size: docs.length,
       forEach(callback: (doc: typeof docs[number]) => void, thisArg?: unknown) {
@@ -62,32 +85,83 @@ vi.mock('@google-cloud/firestore', () => {
       },
     };
   };
+  const commit = (operations: Operation[]) => {
+    const staged = {
+      graphrag_nodes: new Map([...records('graphrag_nodes')].map(([id, data]) => [id, structuredClone(data)])),
+      graphrag_edges: new Map([...records('graphrag_edges')].map(([id, data]) => [id, structuredClone(data)])),
+    };
+    for (const operation of operations) {
+      const target = staged[operation.ref.collectionName];
+      if (operation.kind === 'create' && target.has(operation.ref.id)) throw new Error('ALREADY_EXISTS');
+      if (operation.kind === 'update' && !target.has(operation.ref.id)) throw new Error('NOT_FOUND');
+      if (operation.kind === 'delete') target.delete(operation.ref.id);
+      else if (operation.kind === 'update') target.set(operation.ref.id, {
+        ...target.get(operation.ref.id), ...structuredClone(operation.data!),
+      });
+      else target.set(operation.ref.id, structuredClone(operation.data!));
+    }
+    // Publish both collections only after every operation has passed its precondition.
+    for (const name of ['graphrag_nodes', 'graphrag_edges'] as const) {
+      const target = records(name); target.clear();
+      for (const [id, data] of staged[name]) target.set(id, data);
+    }
+  };
+  const stagedWriter = () => {
+    const operations: Operation[] = [];
+    const writer = {
+      create: vi.fn((ref: Reference, data: Record<string, any>) => {
+        operations.push({ kind: 'create', ref, data: structuredClone(data) }); return writer;
+      }),
+      set: vi.fn((ref: Reference, data: Record<string, any>) => {
+        operations.push({ kind: 'set', ref, data: structuredClone(data) }); return writer;
+      }),
+      update: vi.fn((ref: Reference, data: Record<string, any>) => {
+        operations.push({ kind: 'update', ref, data: structuredClone(data) }); return writer;
+      }),
+      delete: vi.fn((ref: Reference) => { operations.push({ kind: 'delete', ref }); return writer; }),
+      commit: vi.fn(async () => { commit(operations); return []; }),
+    };
+    return { writer, operations };
+  };
   class MockFirestore {
     constructor(config?: any) {}
     collection(name: string) {
-      const records = name === 'graphrag_nodes' ? firestoreFixture.nodes :
-        name === 'graphrag_edges' ? firestoreFixture.edges : undefined;
-      if (!records) throw new Error(`Unexpected collection: ${name}`);
+      records(name);
       return {
-        doc: vi.fn((id: string) => ({
-          get: vi.fn().mockResolvedValue({ exists: records.some(record => record.id === id),
-            data: () => records.find(record => record.id === id) }),
-          set: vi.fn().mockResolvedValue(undefined),
-          update: vi.fn().mockResolvedValue(undefined),
-          delete: vi.fn().mockResolvedValue(undefined),
-        })),
-        where: vi.fn().mockReturnThis(),
-        get: vi.fn().mockResolvedValue(snapshot(records)),
-        add: vi.fn().mockResolvedValue({ id: 'mock-id' }),
+        doc: vi.fn((id: string) => {
+          const ref: Reference = { collectionName: name as Reference['collectionName'], id };
+          return { ...ref,
+            get: vi.fn(async () => documentSnapshot(ref)),
+            create: vi.fn(async (data: Record<string, any>) => { commit([{ kind: 'create', ref, data }]); }),
+            set: vi.fn(async (data: Record<string, any>) => { commit([{ kind: 'set', ref, data }]); }),
+            update: vi.fn(async (data: Record<string, any>) => { commit([{ kind: 'update', ref, data }]); }),
+            delete: vi.fn(async () => { commit([{ kind: 'delete', ref }]); }),
+          };
+        }),
+        where: vi.fn(() => { throw new Error('Fixture query filtering is not implemented'); }),
+        get: vi.fn(async () => snapshot([...records(name).values()])),
+        add: vi.fn(() => { throw new Error('Fixture auto-generated document IDs are not implemented'); }),
       };
     }
-    batch() {
-      return { set: vi.fn().mockReturnThis(), update: vi.fn().mockReturnThis(),
-        delete: vi.fn().mockReturnThis(), commit: vi.fn().mockResolvedValue([]) };
+    batch() { return stagedWriter().writer; }
+    async runTransaction(callback: (transaction: any) => Promise<any>) {
+      const run = async () => {
+        const { writer, operations } = stagedWriter();
+        const transaction = { ...writer, get: vi.fn(async (ref: Reference) => {
+          if (operations.length) throw new Error('Transaction reads must precede writes');
+          return documentSnapshot(ref);
+        }) };
+        const result = await callback(transaction);
+        return { result, operations };
+      };
+      if (firestoreFixture.replayTransaction) { await run(); firestoreFixture.replayTransaction = false; }
+      const { result, operations } = await run();
+      commit(operations);
+      return result;
     }
     async terminate() { return undefined; }
   }
-  return { Firestore: MockFirestore };
+  return { ...actual, Firestore: MockFirestore };
 });
 
 describe('GraphRAGStore', () => {
@@ -96,6 +170,8 @@ describe('GraphRAGStore', () => {
   beforeEach(async () => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
+    firestoreFixture.reset();
+    firestoreFixture.replayTransaction = false;
     store = new GraphRAGStore();
     await store.initialize();
   });

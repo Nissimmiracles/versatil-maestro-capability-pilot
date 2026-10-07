@@ -37,7 +37,13 @@ vi.mock('@google-cloud/firestore', () => {
         })
       }],
       empty: false,
-      size: 1
+      size: 1,
+      forEach(
+        callback: (doc: { id: string; data: () => Record<string, unknown> }) => void,
+        thisArg?: unknown
+      ) {
+        this.docs.forEach(doc => callback.call(thisArg, doc));
+      },
     }),
     add: vi.fn().mockResolvedValue({ id: 'mock-id' }),
   };

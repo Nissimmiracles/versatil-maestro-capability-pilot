@@ -151,11 +151,17 @@ export class GraphRAGStore extends EventEmitter {
    * Add pattern to knowledge graph
    * Extracts entities and creates graph connections
    */
-  async addPattern(pattern: Omit<PatternNode['properties'], 'lastUsed'> & { lastUsed?: Date }): Promise<string> {
+  async addPattern(pattern: Omit<PatternNode['properties'], 'lastUsed'> & {
+    lastUsed?: Date;
+    privacy?: GraphNode['privacy'];
+  }): Promise<string> {
     await this.initialize();
 
     const now = new Date();
     const patternId = `pattern_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Privacy belongs to the graph node, not the pattern properties.
+    const { privacy, ...properties } = pattern;
 
     // Create pattern node
     const patternNode: PatternNode = {
@@ -163,10 +169,11 @@ export class GraphRAGStore extends EventEmitter {
       type: 'pattern',
       label: pattern.pattern.substring(0, 60),
       properties: {
-        ...pattern,
+        ...properties,
         lastUsed: pattern.lastUsed || now
       },
-      connections: []
+      connections: [],
+      ...(privacy !== undefined ? { privacy: { ...privacy } } : {})
     };
 
     // Extract entities from pattern text

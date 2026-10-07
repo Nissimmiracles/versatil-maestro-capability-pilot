@@ -296,6 +296,129 @@ export class GraphRAGStore extends EventEmitter {
     });
   }
 
+  /** Stable caller-ID pattern create. This path alone deliberately links both pattern and entities.
+   * Shared entities retain authoritative metadata; explicit pattern privacy is stored, not authorized.
+   * Uses the new-writer queue, without claiming safety for older addPattern/clear/close races.
+   */
+  async storePattern(input: PatternNode): Promise<void> {
+    const supplied = this.preparePatternWrite(input);
+    // Keep the existing heuristic and first interpretation, but create each extracted ID only once.
+    const unique = new Map<string, ReturnType<GraphRAGStore['extractEntities']>[number]>();
+    for (const entity of this.extractEntities(supplied.properties)) {
+      this.validateNodeDocumentId(entity.id);
+      if (entity.id === supplied.id) throw new Error('GraphRAG pattern entity ID collision');
+      const previous = unique.get(entity.id);
+      if (previous && (previous.type !== entity.type || previous.label !== entity.label ||
+          previous.relationship !== entity.relationship || previous.weight !== entity.weight)) {
+        throw new Error('GraphRAG conflicting extracted entity ID');
+      }
+      if (!previous) unique.set(entity.id, entity);
+    }
+    const extracted = [...unique.values()];
+    const edges: GraphEdge[] = extracted.map(entity => ({
+      id: `edge_${supplied.id}_${entity.id}`, source: supplied.id, target: entity.id,
+      relationship: entity.relationship, weight: entity.weight
+    }));
+    for (const edge of edges) { this.validateNodeDocumentId(edge.id); this.validateNodeWriteData(edge); }
+    // Conservative local bound inherited from the 100-record writer admission, not a cloud quota claim.
+    if (1 + extracted.length + edges.length > 100) throw new Error('GraphRAG local pattern write count budget exceeded');
+    const pattern = this.preparePatternWrite({ ...supplied,
+      connections: this.appendPatternConnections(supplied.connections, extracted.map(entity => entity.id)) });
+    return this.serializeNodeWrite(async () => {
+      await this.initialize();
+      try {
+        const patternRef = this.firestore.collection(this.nodesCollection).doc(pattern.id);
+        const entityRefs = extracted.map(entity => this.firestore.collection(this.nodesCollection).doc(entity.id));
+        const edgeRefs = edges.map(edge => this.firestore.collection(this.edgesCollection).doc(edge.id));
+        const committed = await this.firestore.runTransaction(async transaction => {
+          const existingPattern = await transaction.get(patternRef);
+          if (existingPattern.exists) throw new Error('GraphRAG pattern already exists');
+          const snapshots = [];
+          for (const ref of entityRefs) snapshots.push(await transaction.get(ref));
+          for (const ref of edgeRefs) {
+            if ((await transaction.get(ref)).exists) throw new Error('GraphRAG extracted edge already exists');
+          }
+          const entities = extracted.map((entity, index) => {
+            const snapshot = snapshots[index];
+            const current = snapshot.exists ? this.prepareNodeWrite(snapshot.data() as GraphNode) : {
+              id: entity.id, type: entity.type, label: entity.label, properties: {}, connections: []
+            };
+            if (current.id !== entity.id || current.type !== entity.type) throw new Error('GraphRAG shared entity ID/type mismatch');
+            return this.prepareNodeWrite({ ...current,
+              connections: this.appendPatternConnections(current.connections, [pattern.id]) });
+          });
+          if ([pattern, ...entities, ...edges].reduce((sum, record) => sum + this.nodeWriteDataSize(record), 0) > 1024 * 1024) {
+            throw new Error('GraphRAG local pattern transaction size budget exceeded');
+          }
+          // Every authoritative read and validation precedes writes; retry callbacks publish nothing.
+          transaction.create(patternRef, pattern);
+          entities.forEach((entity, index) => {
+            if (snapshots[index].exists) transaction.set(entityRefs[index], entity);
+            else transaction.create(entityRefs[index], entity);
+          });
+          edges.forEach((edge, index) => transaction.create(edgeRefs[index], edge));
+          return { pattern, entities, edges };
+        });
+        this.publishNodeWrite(committed.pattern);
+        for (const entity of committed.entities) this.publishNodeWrite(entity);
+        for (const edge of committed.edges) this.edges.set(edge.id, this.cloneCachedValue(edge));
+      } catch (error) {
+        // Transport failure can follow a commit; refuse stale cached success, never claim rollback.
+        this.invalidateNodeWriteCache();
+        throw error;
+      }
+    });
+  }
+
+  /** Explicit durable usage accounting only; reads/query do not become writes and lastUsed is unchanged. */
+  async incrementUsageCount(id: string): Promise<void> {
+    this.validateNodeDocumentId(id);
+    return this.serializeNodeWrite(async () => {
+      await this.initialize();
+      try {
+        const ref = this.firestore.collection(this.nodesCollection).doc(id);
+        const committed = await this.firestore.runTransaction(async transaction => {
+          const snapshot = await transaction.get(ref);
+          if (!snapshot.exists) throw new Error('GraphRAG pattern does not exist');
+          const current = this.preparePatternWrite(snapshot.data() as PatternNode);
+          if (current.id !== id) throw new Error('GraphRAG persisted pattern ID mismatch');
+          if (current.properties.usageCount === Number.MAX_SAFE_INTEGER) throw new Error('GraphRAG usage count overflow');
+          const next = this.preparePatternWrite({ ...current,
+            properties: { ...current.properties, usageCount: current.properties.usageCount + 1 } });
+          transaction.set(ref, next);
+          return next;
+        });
+        this.publishNodeWrite(committed);
+      } catch (error) {
+        this.invalidateNodeWriteCache();
+        throw error;
+      }
+    });
+  }
+
+  private preparePatternWrite(input: PatternNode): PatternNode {
+    const node = this.prepareNodeWrite(input);
+    const properties = node.properties;
+    if (node.type !== 'pattern' || ['pattern', 'agent', 'category'].some(key => typeof properties[key] !== 'string') ||
+        !Number.isFinite(properties.effectiveness) || !Number.isFinite(properties.timeSaved) ||
+        !Number.isSafeInteger(properties.usageCount) || properties.usageCount < 0 ||
+        !Array.isArray(properties.tags) || properties.tags.some((tag: unknown) => typeof tag !== 'string') ||
+        ![Date.prototype, Timestamp.prototype].includes(Object.getPrototypeOf(properties.lastUsed ?? {})) ||
+        ['description', 'code'].some(key => key in properties && typeof properties[key] !== 'string') ||
+        ('examples' in properties && (!Array.isArray(properties.examples) || properties.examples.some((item: unknown) => typeof item !== 'string')))) {
+      throw new Error('Invalid GraphRAG complete pattern properties');
+    }
+    // prepareNodeWrite has already checked supported timestamps, SDK encoding, sparse/undefined values and size.
+    return node as PatternNode;
+  }
+
+  private appendPatternConnections(existing: string[], additions: string[]): string[] {
+    const connections = [...existing];
+    const seen = new Set(existing);
+    for (const id of additions) if (!seen.has(id)) { connections.push(id); seen.add(id); }
+    return connections;
+  }
+
   private serializeNodeWrite(operation: () => Promise<void>): Promise<void> {
     const result = this.nodeWriteTail.then(operation);
     this.nodeWriteTail = result.catch(() => undefined);

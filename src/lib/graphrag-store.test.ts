@@ -6,80 +6,95 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GraphRAGStore, type GraphNode, type GraphEdge, type PatternNode, type GraphRAGQuery, type GraphRAGResult } from './graphrag-store.js';
 
-// Mock Firestore
-vi.mock('@google-cloud/firestore', () => {
-  const mockDoc = {
-    get: vi.fn().mockResolvedValue({
-      exists: true,
-      data: () => ({
-        id: 'mock-node-1',
-        type: 'entity',
-        label: 'Test Entity',
-        properties: { name: 'Test' }
-      })
-    }),
-    set: vi.fn().mockResolvedValue({}),
-    update: vi.fn().mockResolvedValue({}),
-    delete: vi.fn().mockResolvedValue({}),
-  };
-
-  const mockCollection = {
-    doc: vi.fn(() => mockDoc),
-    where: vi.fn().mockReturnThis(),
-    get: vi.fn().mockResolvedValue({
-      docs: [{
-        id: 'mock-node-1',
-        data: () => ({
-          id: 'mock-node-1',
-          type: 'entity',
-          label: 'Test Entity',
-          properties: { name: 'Test' }
-        })
-      }],
-      empty: false,
-      size: 1,
-      forEach(
-        callback: (doc: { id: string; data: () => Record<string, unknown> }) => void,
-        thisArg?: unknown
-      ) {
-        this.docs.forEach(doc => callback.call(thisArg, doc));
-      },
-    }),
-    add: vi.fn().mockResolvedValue({ id: 'mock-id' }),
-  };
-
-  class MockFirestore {
-    constructor(config?: any) {
-      // Constructor accepts config but doesn't use it in mock
-    }
-
-    collection(name: string) {
-      return mockCollection;
-    }
-
-    batch() {
-      return {
-        set: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        delete: vi.fn().mockReturnThis(),
-        commit: vi.fn().mockResolvedValue([]),
-      };
-    }
-
-    async terminate() {
-      return undefined;
+// A connected corpus makes query and privacy checks exercise real results.
+// Privacy assertions below describe the existing contract, not a new policy.
+const firestoreFixture = vi.hoisted(() => {
+  const makePattern = (id: string, privacy: Record<string, unknown>,
+    agent = 'marcus-backend', category = 'security', effectiveness = 1) => ({
+    id, type: 'pattern', label: `${id} API JWT Vitest workflow config pattern`,
+    properties: {
+      pattern: 'API JWT Vitest workflow config pattern', agent, category,
+      effectiveness, timeSaved: 100, tags: ['postgresql', 'orm', 'workflow', 'config', 'pattern'],
+      usageCount: 10, lastUsed: new Date('2026-01-01T00:00:00Z'),
+    },
+    connections: ['tech_api', 'tech_jwt', 'tech_vitest', 'concept_postgresql',
+      'concept_orm', 'concept_workflow', 'concept_config', 'concept_pattern',
+      `agent_${agent}`, `category_${category}`],
+    privacy,
+  });
+  const patterns = [
+    makePattern('fixture-user-123', { userId: 'user-123', isPublic: false }),
+    makePattern('fixture-user-999', { userId: 'user-999', isPublic: false }),
+    makePattern('fixture-team-456', { teamId: 'team-456', isPublic: false }),
+    makePattern('fixture-team-other', { teamId: 'team-other', isPublic: false }),
+    makePattern('fixture-project-789', { projectId: 'project-789', isPublic: false }),
+    makePattern('fixture-project-other', { projectId: 'project-other', isPublic: false }),
+    makePattern('fixture-public', { isPublic: true }),
+    makePattern('fixture-other-agent-category', { isPublic: true }, 'james-frontend', 'ui', 0.5),
+  ];
+  const entities = new Map<string, Record<string, any>>();
+  const edges: Record<string, any>[] = [];
+  for (const pattern of patterns) {
+    for (const entityId of pattern.connections) {
+      if (!entities.has(entityId)) {
+        const [prefix, ...label] = entityId.split('_');
+        entities.set(entityId, {
+          id: entityId, type: prefix === 'tech' ? 'technology' : prefix,
+          label: label.join('_'), properties: {}, connections: [],
+        });
+      }
+      entities.get(entityId)!.connections.push(pattern.id);
+      edges.push({ id: `edge_${pattern.id}_${entityId}`, source: pattern.id,
+        target: entityId, relationship: 'relates_to', weight: 1 });
     }
   }
+  return { nodes: [...patterns, ...entities.values()], edges };
+});
 
-  return {
-    Firestore: MockFirestore,
+// Node and edge collections expose distinct, valid QuerySnapshots.
+vi.mock('@google-cloud/firestore', () => {
+  const snapshot = (records: Record<string, any>[]) => {
+    const docs = records.map(record => ({ id: record.id, data: () => structuredClone(record) }));
+    return {
+      docs, empty: docs.length === 0, size: docs.length,
+      forEach(callback: (doc: typeof docs[number]) => void, thisArg?: unknown) {
+        docs.forEach(doc => callback.call(thisArg, doc));
+      },
+    };
   };
+  class MockFirestore {
+    constructor(config?: any) {}
+    collection(name: string) {
+      const records = name === 'graphrag_nodes' ? firestoreFixture.nodes :
+        name === 'graphrag_edges' ? firestoreFixture.edges : undefined;
+      if (!records) throw new Error(`Unexpected collection: ${name}`);
+      return {
+        doc: vi.fn((id: string) => ({
+          get: vi.fn().mockResolvedValue({ exists: records.some(record => record.id === id),
+            data: () => records.find(record => record.id === id) }),
+          set: vi.fn().mockResolvedValue(undefined),
+          update: vi.fn().mockResolvedValue(undefined),
+          delete: vi.fn().mockResolvedValue(undefined),
+        })),
+        where: vi.fn().mockReturnThis(),
+        get: vi.fn().mockResolvedValue(snapshot(records)),
+        add: vi.fn().mockResolvedValue({ id: 'mock-id' }),
+      };
+    }
+    batch() {
+      return { set: vi.fn().mockReturnThis(), update: vi.fn().mockReturnThis(),
+        delete: vi.fn().mockReturnThis(), commit: vi.fn().mockResolvedValue([]) };
+    }
+    async terminate() { return undefined; }
+  }
+  return { Firestore: MockFirestore };
 });
 
 describe('GraphRAGStore', () => {
   let store: GraphRAGStore;
 
   beforeEach(async () => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
     store = new GraphRAGStore();
     await store.initialize();
@@ -206,6 +221,52 @@ describe('GraphRAGStore', () => {
     });
   });
 
+  describe('Current public API', () => {
+    it('loads separate node and edge snapshots with coherent statistics', async () => {
+      const stats = await store.getStatistics();
+      expect(stats.totalNodes).toBe(firestoreFixture.nodes.length);
+      expect(stats.totalEdges).toBe(firestoreFixture.edges.length);
+      expect(stats.nodesByType.pattern).toBe(8);
+      expect(Object.values(stats.nodesByType).reduce((sum, count) => sum + count, 0))
+        .toBe(stats.totalNodes);
+      expect(stats.avgConnections).toBeGreaterThan(0);
+    });
+
+    it('persists an added pattern and returns it through entity traversal', async () => {
+      const properties = {
+        pattern: 'React component with TypeScript', agent: 'james-frontend', category: 'ui',
+        effectiveness: 0.9, timeSaved: 100, tags: ['components'], usageCount: 0,
+      };
+      const collection = vi.spyOn(store['firestore'], 'collection');
+      const id = await store.addPattern(properties);
+      const writtenDocuments = collection.mock.results
+        .filter(result => result.type === 'return')
+        .flatMap(result => vi.mocked(result.value.doc).mock.results)
+        .filter(result => result.type === 'return')
+        .map(result => result.value);
+      expect(writtenDocuments.some(doc => vi.mocked(doc.set).mock.calls.some(([node]) =>
+        node.id === id && node.type === 'pattern' && node.properties.pattern === properties.pattern
+      ))).toBe(true);
+      const results = await store.query({ query: 'React' });
+      expect(results.map(result => result.pattern.id)).toContain(id);
+      const added = results.find(result => result.pattern.id === id)!;
+      expect(added.pattern.properties).toMatchObject(properties);
+      expect(added.graphPath).toEqual(['tech_react', id]);
+      expect(added.explanation).toContain('react');
+      expect((await store.getStatistics()).nodesByType.pattern).toBe(9);
+    });
+
+    it('clears graph state and terminates the connection on close', async () => {
+      const terminate = vi.spyOn(store['firestore'], 'terminate');
+      await store.close();
+      expect(terminate).toHaveBeenCalledOnce();
+      expect(store['initialized']).toBe(false);
+      expect(store['nodes'].size).toBe(0);
+      expect(store['edges'].size).toBe(0);
+      expect(store['adjacencyList'].size).toBe(0);
+    });
+  });
+
   describe('Pattern Storage', () => {
     it('should store pattern as graph nodes', async () => {
       const pattern: PatternNode = {
@@ -232,9 +293,11 @@ describe('GraphRAGStore', () => {
 
     it('should extract entities from pattern', async () => {
       const patternText = 'Use React hooks with TypeScript for type-safe state management';
-      const entities = await store['extractEntities'](patternText);
-      expect(entities).toContain('React');
-      expect(entities).toContain('TypeScript');
+      const entities = store['extractEntities']({ pattern: patternText });
+      expect(entities).toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: 'tech_react', type: 'technology', label: 'react' }),
+        expect.objectContaining({ id: 'tech_typescript', type: 'technology', label: 'typescript' }),
+      ]));
     });
 
     it('should create relationships between pattern and entities', async () => {
@@ -309,12 +372,13 @@ describe('GraphRAGStore', () => {
   describe('Query Processing', () => {
     it('should query patterns by keyword', async () => {
       const query: GraphRAGQuery = {
-        query: 'authentication',
+        query: 'JWT authentication',
         limit: 10,
         minRelevance: 0.5,
       };
       const results = await store.query(query);
       expect(Array.isArray(results)).toBe(true);
+      expect(results.length).toBeGreaterThan(0);
     });
 
     it('should filter by agent', async () => {
@@ -323,6 +387,7 @@ describe('GraphRAGStore', () => {
         agent: 'marcus-backend',
       };
       const results = await store.query(query);
+      expect(results.length).toBeGreaterThan(0);
       results.forEach(result => {
         expect(result.pattern.properties.agent).toBe('marcus-backend');
       });
@@ -334,6 +399,7 @@ describe('GraphRAGStore', () => {
         category: 'security',
       };
       const results = await store.query(query);
+      expect(results.length).toBeGreaterThan(0);
       results.forEach(result => {
         expect(result.pattern.properties.category).toBe('security');
       });
@@ -345,6 +411,7 @@ describe('GraphRAGStore', () => {
         tags: ['postgresql', 'orm'],
       };
       const results = await store.query(query);
+      expect(results.length).toBeGreaterThan(0);
       results.forEach(result => {
         const hasTags = result.pattern.properties.tags.some(tag =>
           ['postgresql', 'orm'].includes(tag)
@@ -356,18 +423,22 @@ describe('GraphRAGStore', () => {
     it('should respect limit parameter', async () => {
       const query: GraphRAGQuery = {
         query: 'pattern',
+        tags: ['pattern'],
         limit: 5,
       };
       const results = await store.query(query);
+      expect(results.length).toBeGreaterThan(0);
       expect(results.length).toBeLessThanOrEqual(5);
     });
 
     it('should respect minimum relevance score', async () => {
       const query: GraphRAGQuery = {
-        query: 'testing',
+        query: 'Vitest testing',
+        agent: 'marcus-backend',
         minRelevance: 0.7,
       };
       const results = await store.query(query);
+      expect(results.length).toBeGreaterThan(0);
       results.forEach(result => {
         expect(result.relevanceScore).toBeGreaterThanOrEqual(0.7);
       });
@@ -406,8 +477,9 @@ describe('GraphRAGStore', () => {
     });
 
     it('should rank results by relevance', async () => {
-      const query: GraphRAGQuery = { query: 'testing' };
+      const query: GraphRAGQuery = { query: 'Vitest testing' };
       const results = await store.query(query);
+      expect(results.length).toBeGreaterThan(1);
       for (let i = 1; i < results.length; i++) {
         expect(results[i - 1].relevanceScore).toBeGreaterThanOrEqual(results[i].relevanceScore);
       }
@@ -496,9 +568,11 @@ describe('GraphRAGStore', () => {
     it('should query user-specific patterns', async () => {
       const query: GraphRAGQuery = {
         query: 'workflow',
+        tags: ['workflow'],
         userId: 'user-123',
       };
       const results = await store.query(query);
+      expect(results.map(result => result.pattern.id)).toContain('fixture-user-123');
       results.forEach(result => {
         expect(
           result.pattern.privacy?.userId === 'user-123' ||
@@ -510,9 +584,11 @@ describe('GraphRAGStore', () => {
     it('should query team-specific patterns', async () => {
       const query: GraphRAGQuery = {
         query: 'workflow',
+        tags: ['workflow'],
         teamId: 'team-456',
       };
       const results = await store.query(query);
+      expect(results.map(result => result.pattern.id)).toContain('fixture-team-456');
       results.forEach(result => {
         expect(
           result.pattern.privacy?.teamId === 'team-456' ||
@@ -524,9 +600,11 @@ describe('GraphRAGStore', () => {
     it('should query project-specific patterns', async () => {
       const query: GraphRAGQuery = {
         query: 'config',
+        tags: ['config'],
         projectId: 'project-789',
       };
       const results = await store.query(query);
+      expect(results.map(result => result.pattern.id)).toContain('fixture-project-789');
       results.forEach(result => {
         expect(
           result.pattern.privacy?.projectId === 'project-789' ||
@@ -538,6 +616,7 @@ describe('GraphRAGStore', () => {
     it('should include public patterns by default', async () => {
       const query: GraphRAGQuery = {
         query: 'pattern',
+        tags: ['pattern'],
         userId: 'user-123',
         includePublic: true,
       };
@@ -549,10 +628,12 @@ describe('GraphRAGStore', () => {
     it('should exclude public patterns when requested', async () => {
       const query: GraphRAGQuery = {
         query: 'pattern',
+        tags: ['pattern'],
         userId: 'user-123',
         includePublic: false,
       };
       const results = await store.query(query);
+      expect(results.length).toBeGreaterThan(0);
       results.forEach(result => {
         expect(result.pattern.privacy?.userId).toBe('user-123');
       });
@@ -561,10 +642,12 @@ describe('GraphRAGStore', () => {
     it('should prevent cross-user pattern access', async () => {
       const query: GraphRAGQuery = {
         query: 'workflow',
+        tags: ['workflow'],
         userId: 'user-999',
         includePublic: false,
       };
       const results = await store.query(query);
+      expect(results.map(result => result.pattern.id)).toContain('fixture-user-999');
       const hasOtherUserPattern = results.some(r =>
         r.pattern.privacy?.userId && r.pattern.privacy.userId !== 'user-999'
       );
@@ -600,9 +683,10 @@ describe('GraphRAGStore', () => {
 
   describe('Performance Optimization', () => {
     it('should cache query results', async () => {
-      const query: GraphRAGQuery = { query: 'caching' };
+      const query: GraphRAGQuery = { query: 'caching', tags: ['pattern'] };
       const results1 = await store.query(query);
       const results2 = await store.query(query);
+      expect(results1.length).toBeGreaterThan(0);
       expect(results1).toEqual(results2);
     });
 

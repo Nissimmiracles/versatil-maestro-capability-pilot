@@ -98,6 +98,13 @@ export class GraphRAGStore extends EventEmitter {
   // Local serializer for this new node-writer family only, not the older mutation paths.
   private nodeWriteTail: Promise<void> = Promise.resolve();
 
+  // Local result memoization only; not backend freshness, authorization, or a graph read lock.
+  private graphRevision = 0n;
+  private outstandingGraphMutations = 0;
+  private memoizationDisabled = false;
+  private queryResultBytes = 0;
+  private queryResults = new Map<string, { revision: bigint; result: GraphRAGResult[]; bytes: number }>();
+
   // In-memory graph cache for fast traversal
   private nodes: Map<string, GraphNode> = new Map();
   private edges: Map<string, GraphEdge> = new Map();
@@ -116,18 +123,23 @@ export class GraphRAGStore extends EventEmitter {
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
-    console.log(`🔧 Initializing GraphRAG Store (${this.projectId})...`);
-
+    this.beginGraphMutation();
     try {
-      // Load existing graph from Firestore into memory
-      await this.loadGraph();
+      console.log(`🔧 Initializing GraphRAG Store (${this.projectId})...`);
 
-      this.initialized = true;
-      console.log('✅ GraphRAG Store initialized successfully');
-      this.emit('initialized');
-    } catch (error: any) {
-      console.error('❌ GraphRAG initialization failed:', error.message);
-      throw error;
+      try {
+        // Load existing graph from Firestore into memory
+        await this.loadGraph();
+
+        this.initialized = true;
+        console.log('✅ GraphRAG Store initialized successfully');
+        this.emit('initialized');
+      } catch (error: any) {
+        console.error('❌ GraphRAG initialization failed:', error.message);
+        throw error;
+      }
+    } finally {
+      this.endGraphMutation();
     }
   }
 
@@ -135,33 +147,56 @@ export class GraphRAGStore extends EventEmitter {
    * Load graph from Firestore into memory for fast traversal
    */
   private async loadGraph(): Promise<void> {
-    await this.loadNodesFromFirestore();
-    await this.loadEdgesFromFirestore();
+    const wasInitialized = this.initialized;
+    this.beginGraphMutation();
+    try {
+      await this.loadNodesFromFirestore(true);
+      await this.loadEdgesFromFirestore(true);
 
-    console.log(`📊 Loaded ${this.nodes.size} nodes and ${this.edges.size} edges`);
+      console.log(`📊 Loaded ${this.nodes.size} nodes and ${this.edges.size} edges`);
+    } catch (error) {
+      // Preserve legacy partial maps/readiness, but never memoize a failed loaded-graph reload.
+      if (wasInitialized) this.disableQueryMemoization();
+      throw error;
+    } finally {
+      this.endGraphMutation();
+    }
   }
 
-  private async loadNodesFromFirestore(): Promise<GraphNode[]> {
-    const loaded: GraphNode[] = [];
-    const nodesSnapshot = await this.firestore.collection(this.nodesCollection).get();
-    nodesSnapshot.forEach(doc => {
-      const node = doc.data() as GraphNode;
-      this.nodes.set(node.id, node);
-      this.adjacencyList.set(node.id, node.connections || []);
-      loaded.push(node);
-    });
-    return loaded;
+  private async loadNodesFromFirestore(internalLoad = false): Promise<GraphNode[]> {
+    // Only loadGraph discards returned aliases; this flag is bookkeeping, not authorization.
+    if (!internalLoad) this.disableQueryMemoization();
+    this.beginGraphMutation();
+    try {
+      const loaded: GraphNode[] = [];
+      const nodesSnapshot = await this.firestore.collection(this.nodesCollection).get();
+      nodesSnapshot.forEach(doc => {
+        const node = doc.data() as GraphNode;
+        this.nodes.set(node.id, node);
+        this.adjacencyList.set(node.id, node.connections || []);
+        loaded.push(node);
+      });
+      return loaded;
+    } finally {
+      this.endGraphMutation();
+    }
   }
 
-  private async loadEdgesFromFirestore(): Promise<GraphEdge[]> {
-    const loaded: GraphEdge[] = [];
-    const edgesSnapshot = await this.firestore.collection(this.edgesCollection).get();
-    edgesSnapshot.forEach(doc => {
-      const edge = doc.data() as GraphEdge;
-      this.edges.set(edge.id, edge);
-      loaded.push(edge);
-    });
-    return loaded;
+  private async loadEdgesFromFirestore(internalLoad = false): Promise<GraphEdge[]> {
+    if (!internalLoad) this.disableQueryMemoization();
+    this.beginGraphMutation();
+    try {
+      const loaded: GraphEdge[] = [];
+      const edgesSnapshot = await this.firestore.collection(this.edgesCollection).get();
+      edgesSnapshot.forEach(doc => {
+        const edge = doc.data() as GraphEdge;
+        this.edges.set(edge.id, edge);
+        loaded.push(edge);
+      });
+      return loaded;
+    } finally {
+      this.endGraphMutation();
+    }
   }
 
   async addNode(input: GraphNode): Promise<void> {
@@ -420,22 +455,35 @@ export class GraphRAGStore extends EventEmitter {
   }
 
   private serializeNodeWrite(operation: () => Promise<void>): Promise<void> {
-    const result = this.nodeWriteTail.then(operation);
+    const result = this.nodeWriteTail.then(async () => {
+      this.beginGraphMutation();
+      try { return await operation(); } finally { this.endGraphMutation(); }
+    });
     this.nodeWriteTail = result.catch(() => undefined);
     return result;
   }
 
   private publishNodeWrite(node: GraphNode): void {
-    const cached = this.cloneCachedValue(node);
-    this.nodes.set(cached.id, cached);
-    this.adjacencyList.set(cached.id, [...cached.connections]);
+    this.beginGraphMutation();
+    try {
+      const cached = this.cloneCachedValue(node);
+      this.nodes.set(cached.id, cached);
+      this.adjacencyList.set(cached.id, [...cached.connections]);
+    } finally {
+      this.endGraphMutation();
+    }
   }
 
   private invalidateNodeWriteCache(): void {
-    this.initialized = false;
-    this.nodes.clear();
-    this.edges.clear();
-    this.adjacencyList.clear();
+    this.beginGraphMutation();
+    try {
+      this.initialized = false;
+      this.nodes.clear();
+      this.edges.clear();
+      this.adjacencyList.clear();
+    } finally {
+      this.endGraphMutation();
+    }
   }
 
   private validateNodeDocumentId(id: unknown): asserts id is string {
@@ -716,7 +764,9 @@ export class GraphRAGStore extends EventEmitter {
     if (ranks.some(score => !Number.isFinite(score) || score < 0)) throw new Error('Invalid GraphRAG PageRank result');
     // Prepare every replacement before publishing, so validation/nonconvergence leaves the cache untouched.
     const published = nodes.map((node, i) => ({ ...node, centrality: ranks[i] }));
-    for (const node of published) this.nodes.set(node.id, node);
+    this.beginGraphMutation();
+    try { for (const node of published) this.nodes.set(node.id, node); }
+    finally { this.endGraphMutation(); }
     return { algorithm: 'pagerank' as const, converged: true as const, iterations,
       options: { damping, tolerance, maxIterations },
       sourceConnections: nodes.map(node => ({ id: node.id, connections: [...node.connections] })),
@@ -904,86 +954,94 @@ export class GraphRAGStore extends EventEmitter {
     lastUsed?: Date;
     privacy?: GraphNode['privacy'];
   }): Promise<string> {
-    await this.initialize();
+    // Legacy properties/privacy retain caller tags/Date/nested references. Preserve ownership,
+    // but never reuse memoized results after caller-held aliases can escape.
+    this.disableQueryMemoization();
+    this.beginGraphMutation();
+    try {
+      await this.initialize();
 
-    const now = new Date();
-    const patternId = `pattern_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const now = new Date();
+      const patternId = `pattern_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Privacy belongs to the graph node, not the pattern properties.
-    const { privacy, ...properties } = pattern;
+      // Privacy belongs to the graph node, not the pattern properties.
+      const { privacy, ...properties } = pattern;
 
-    // Create pattern node
-    const patternNode: PatternNode = {
-      id: patternId,
-      type: 'pattern',
-      label: pattern.pattern.substring(0, 60),
-      properties: {
-        ...properties,
-        lastUsed: pattern.lastUsed || now
-      },
-      connections: [],
-      ...(privacy !== undefined ? { privacy: { ...privacy } } : {})
-    };
-
-    // Extract entities from pattern text
-    const entities = this.extractEntities(pattern);
-
-    // Create entity nodes and edges
-    const newEdges: GraphEdge[] = [];
-
-    for (const entity of entities) {
-      let entityNode = this.nodes.get(entity.id);
-
-      // Create entity node if doesn't exist
-      if (!entityNode) {
-        entityNode = {
-          id: entity.id,
-          type: entity.type,
-          label: entity.label,
-          properties: {},
-          connections: []
-        };
-        this.nodes.set(entity.id, entityNode);
-
-        // Save entity node to Firestore
-        await this.firestore.collection(this.nodesCollection).doc(entity.id).set(entityNode);
-      }
-
-      // Create edge between pattern and entity
-      const edgeId = `edge_${patternId}_${entity.id}`;
-      const edge: GraphEdge = {
-        id: edgeId,
-        source: patternId,
-        target: entity.id,
-        relationship: entity.relationship,
-        weight: entity.weight
+      // Create pattern node
+      const patternNode: PatternNode = {
+        id: patternId,
+        type: 'pattern',
+        label: pattern.pattern.substring(0, 60),
+        properties: {
+          ...properties,
+          lastUsed: pattern.lastUsed || now
+        },
+        connections: [],
+        ...(privacy !== undefined ? { privacy: { ...privacy } } : {})
       };
 
-      newEdges.push(edge);
-      this.edges.set(edgeId, edge);
+      // Extract entities from pattern text
+      const entities = this.extractEntities(pattern);
 
-      // Update connections
-      patternNode.connections.push(entity.id);
-      entityNode.connections.push(patternId);
+      // Create entity nodes and edges
+      const newEdges: GraphEdge[] = [];
 
-      // Save edge to Firestore
-      await this.firestore.collection(this.edgesCollection).doc(edgeId).set(edge);
+      for (const entity of entities) {
+        let entityNode = this.nodes.get(entity.id);
 
-      // Update entity node in Firestore
-      await this.firestore.collection(this.nodesCollection).doc(entity.id).update({
-        connections: entityNode.connections
-      });
+        // Create entity node if doesn't exist
+        if (!entityNode) {
+          entityNode = {
+            id: entity.id,
+            type: entity.type,
+            label: entity.label,
+            properties: {},
+            connections: []
+          };
+          this.nodes.set(entity.id, entityNode);
+
+          // Save entity node to Firestore
+          await this.firestore.collection(this.nodesCollection).doc(entity.id).set(entityNode);
+        }
+
+        // Create edge between pattern and entity
+        const edgeId = `edge_${patternId}_${entity.id}`;
+        const edge: GraphEdge = {
+          id: edgeId,
+          source: patternId,
+          target: entity.id,
+          relationship: entity.relationship,
+          weight: entity.weight
+        };
+
+        newEdges.push(edge);
+        this.edges.set(edgeId, edge);
+
+        // Update connections
+        patternNode.connections.push(entity.id);
+        entityNode.connections.push(patternId);
+
+        // Save edge to Firestore
+        await this.firestore.collection(this.edgesCollection).doc(edgeId).set(edge);
+
+        // Update entity node in Firestore
+        await this.firestore.collection(this.nodesCollection).doc(entity.id).update({
+          connections: entityNode.connections
+        });
+      }
+
+      // Save pattern node
+      this.nodes.set(patternId, patternNode);
+      this.adjacencyList.set(patternId, patternNode.connections);
+      await this.firestore.collection(this.nodesCollection).doc(patternId).set(patternNode);
+
+      console.log(`✅ Added pattern to graph: ${pattern.pattern.substring(0, 60)}`);
+      console.log(`   Entities extracted: ${entities.length}`);
+
+      return patternId;
+    } finally {
+      this.endGraphMutation();
     }
-
-    // Save pattern node
-    this.nodes.set(patternId, patternNode);
-    this.adjacencyList.set(patternId, patternNode.connections);
-    await this.firestore.collection(this.nodesCollection).doc(patternId).set(patternNode);
-
-    console.log(`✅ Added pattern to graph: ${pattern.pattern.substring(0, 60)}`);
-    console.log(`   Entities extracted: ${entities.length}`);
-
-    return patternId;
   }
 
   /**
@@ -1068,9 +1126,131 @@ export class GraphRAGStore extends EventEmitter {
    * Query knowledge graph using graph traversal
    * Returns patterns ranked by graph centrality and path relevance
    */
+  private invalidateQueryResults(): void {
+    this.graphRevision++;
+    this.queryResults.clear();
+    this.queryResultBytes = 0;
+  }
+
+  private beginGraphMutation(): void {
+    this.invalidateQueryResults();
+    this.outstandingGraphMutations++;
+  }
+
+  private endGraphMutation(): void {
+    this.invalidateQueryResults();
+    this.outstandingGraphMutations--;
+  }
+
+  // Legacy result aliases can outlive clear/reload. Disable for the instance lifetime, not a revision.
+  private disableQueryMemoization(): void {
+    this.memoizationDisabled = true;
+    this.invalidateQueryResults();
+  }
+
+  isCacheValid(): boolean {
+    return !this.memoizationDisabled && this.initialized && this.outstandingGraphMutations === 0 &&
+      this.queryResults.size > 0 && [...this.queryResults.values()].every(entry => entry.revision === this.graphRevision);
+  }
+
+  // Safe own-data inspection only. Not a universal malicious Proxy boundary.
+  // A detached snapshot is captured AFTER initialize and used by both key and calculation.
+  private captureCacheQuery(input: GraphRAGQuery): { key: string; query: GraphRAGQuery } | undefined {
+    if (!input || typeof input !== 'object' || Array.isArray(input) ||
+        ![Object.prototype, null].includes(Object.getPrototypeOf(input))) return undefined;
+    const fields = ['query', 'agent', 'category', 'tags', 'limit', 'minRelevance',
+      'userId', 'teamId', 'projectId', 'includePublic'];
+    const descriptors = Object.getOwnPropertyDescriptors(input);
+    const ownKeys = Reflect.ownKeys(descriptors);
+    if (ownKeys.some(key => typeof key !== 'string' || !fields.includes(key))) return undefined;
+    const snapshot: Record<string, any> = {};
+    const encoded: any[] = [];
+    for (const field of fields) {
+      const descriptor = Object.getOwnPropertyDescriptor(input, field);
+      if (!descriptor) {
+        if (field in input) return undefined; // Relevant inherited selectors retain legacy reads via bypass.
+        encoded.push([field, 'absent']);
+        continue;
+      }
+      if (!('value' in descriptor)) return undefined;
+      const value = descriptor.value;
+      if (value === undefined) { snapshot[field] = undefined; encoded.push([field, 'undefined']); continue; }
+      if (field === 'tags') {
+        if (!Array.isArray(value) || Object.getPrototypeOf(value) !== Array.prototype || value.length > 1000) return undefined;
+        const tags = Object.getOwnPropertyDescriptors(value);
+        if (Reflect.ownKeys(tags).some(key => typeof key !== 'string' ||
+            (key !== 'length' && !/^(0|[1-9][0-9]*)$/.test(key)))) return undefined;
+        const copy: string[] = [];
+        for (let index = 0; index < value.length; index++) {
+          const tag = Object.getOwnPropertyDescriptor(value, String(index));
+          if (!tag || !('value' in tag) || typeof tag.value !== 'string' || Buffer.byteLength(tag.value) > 8192) return undefined;
+          copy.push(tag.value);
+        }
+        if (Reflect.ownKeys(tags).length !== value.length + 1) return undefined;
+        snapshot[field] = copy;
+        encoded.push([field, 'tags', copy]);
+      } else if (field === 'limit' || field === 'minRelevance') {
+        if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
+        snapshot[field] = value;
+        encoded.push([field, 'number', Object.is(value, -0) ? '-0' : value]);
+      } else if (field === 'includePublic') {
+        if (typeof value !== 'boolean') return undefined;
+        snapshot[field] = value;
+        encoded.push([field, 'boolean', value]);
+      } else {
+        if (typeof value !== 'string' || Buffer.byteLength(value) > 8192) return undefined;
+        snapshot[field] = value;
+        encoded.push([field, 'string', value]);
+      }
+    }
+    const key = JSON.stringify(encoded);
+    if (Buffer.byteLength(key) > 8192) return undefined;
+    return { key, query: snapshot as GraphRAGQuery };
+  }
+
+  /** Bounded FIFO memoization; only eligible requests gain detached first-call/hit ownership.
+   * Unsupported input preserves the legacy calculation/alias result and disables future admission
+   * when a nonempty result exposes graph nodes. Unsupported result copying does the same.
+   * Never catch calculation errors or alter filtering/ranking/defaults.
+   */
   async query(query: GraphRAGQuery): Promise<GraphRAGResult[]> {
     await this.initialize();
+    const captured = this.captureCacheQuery(query);
+    const revision = this.graphRevision;
+    const ready = !this.memoizationDisabled && this.initialized && this.outstandingGraphMutations === 0;
+    if (captured && ready) {
+      const cached = this.queryResults.get(captured.key);
+      if (cached && cached.revision === revision) return this.cloneCachedValue(cached.result);
+    }
+    const result = this.computeQuery(captured ? captured.query : query);
+    if (!captured) {
+      if (result.length > 0) this.disableQueryMemoization();
+      return result;
+    }
+    let detached: GraphRAGResult[];
+    try { detached = this.cloneCachedValue(result); }
+    catch { this.disableQueryMemoization(); return result; }
+    if (!ready || this.memoizationDisabled || !this.initialized || this.outstandingGraphMutations !== 0 || this.graphRevision !== revision) {
+      return detached;
+    }
+    // Serialized byte admission only; no claim of exact JS heap use or Firestore freshness.
+    let bytes: number;
+    try { bytes = Buffer.byteLength(captured.key) + Buffer.byteLength(JSON.stringify(detached)); }
+    catch { return detached; } // Cyclic/BigInt values may be safely detached but are not admitted.
+    if (bytes > 65536) return detached;
+    while (this.queryResults.size >= 32 || this.queryResultBytes + bytes > 262144) {
+      const oldest = this.queryResults.keys().next().value;
+      if (oldest === undefined) break;
+      this.queryResultBytes -= this.queryResults.get(oldest)!.bytes;
+      this.queryResults.delete(oldest);
+    }
+    const entry = this.cloneCachedValue(detached);
+    this.queryResults.set(captured.key, {revision, result: entry, bytes});
+    this.queryResultBytes += bytes;
+    return detached;
+  }
 
+  private computeQuery(query: GraphRAGQuery): GraphRAGResult[] {
     // Extract query entities using same logic as pattern extraction
     const queryEntities = this.extractEntities({
       pattern: query.query,
@@ -1230,22 +1410,32 @@ export class GraphRAGStore extends EventEmitter {
    */
   clearCache(): void {
     this.requireInitializedCache();
-    this.nodes.clear();
-    this.edges.clear();
-    this.adjacencyList.clear();
-    this.initialized = false;
+    this.beginGraphMutation();
+    try {
+      this.nodes.clear();
+      this.edges.clear();
+      this.adjacencyList.clear();
+      this.initialized = false;
+    } finally {
+      this.endGraphMutation();
+    }
   }
 
   /**
    * Cleanup resources
    */
   async close(): Promise<void> {
-    await this.firestore.terminate();
-    this.initialized = false;
-    this.nodes.clear();
-    this.edges.clear();
-    this.adjacencyList.clear();
-    console.log('✅ GraphRAG Store closed');
+    this.beginGraphMutation();
+    try {
+      await this.firestore.terminate();
+      this.initialized = false;
+      this.nodes.clear();
+      this.edges.clear();
+      this.adjacencyList.clear();
+      console.log('✅ GraphRAG Store closed');
+    } finally {
+      this.endGraphMutation();
+    }
   }
 }
 

@@ -251,6 +251,17 @@ describe('GraphRAGStore', () => {
   });
 
   describe('Edge Management', () => {
+    // Real persisted endpoints, fixture-only and identical for baseline/candidate qualifications.
+    beforeEach(async () => {
+      for (const id of ['node-1', 'node-2', 'node-a', 'node-b', 'node-c', 'node-d']) {
+        firestoreFixture.documents.graphrag_nodes.set(id, {
+          id, type: 'concept', label: id, properties: {}, connections: [],
+        });
+      }
+      store.clearCache();
+      await store.initialize();
+    });
+
     it('should add edge between nodes', async () => {
       const edge: GraphEdge = {
         id: 'edge-1',

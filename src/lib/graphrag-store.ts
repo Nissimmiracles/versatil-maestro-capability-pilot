@@ -129,22 +129,33 @@ export class GraphRAGStore extends EventEmitter {
    * Load graph from Firestore into memory for fast traversal
    */
   private async loadGraph(): Promise<void> {
-    // Load nodes
+    await this.loadNodesFromFirestore();
+    await this.loadEdgesFromFirestore();
+
+    console.log(`📊 Loaded ${this.nodes.size} nodes and ${this.edges.size} edges`);
+  }
+
+  private async loadNodesFromFirestore(): Promise<GraphNode[]> {
+    const loaded: GraphNode[] = [];
     const nodesSnapshot = await this.firestore.collection(this.nodesCollection).get();
     nodesSnapshot.forEach(doc => {
       const node = doc.data() as GraphNode;
       this.nodes.set(node.id, node);
       this.adjacencyList.set(node.id, node.connections || []);
+      loaded.push(node);
     });
+    return loaded;
+  }
 
-    // Load edges
+  private async loadEdgesFromFirestore(): Promise<GraphEdge[]> {
+    const loaded: GraphEdge[] = [];
     const edgesSnapshot = await this.firestore.collection(this.edgesCollection).get();
     edgesSnapshot.forEach(doc => {
       const edge = doc.data() as GraphEdge;
       this.edges.set(edge.id, edge);
+      loaded.push(edge);
     });
-
-    console.log(`📊 Loaded ${this.nodes.size} nodes and ${this.edges.size} edges`);
+    return loaded;
   }
 
   /**

@@ -22,7 +22,7 @@
  * - Error handling
  */
 
-import { describe, it, expect, beforeAll, afterAll, jest } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, jest } from '@jest/globals';
 import { spawn, ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 
@@ -598,9 +598,28 @@ describe('MCP Health Check - Configured MCPs', () => {
   });
 
   describe('Error Handling', () => {
+    beforeEach(() => jest.useFakeTimers({ now: new Date('2025-02-01T00:00:00Z'), doNotFake: ['queueMicrotask'] }));
+    afterEach(() => {
+      expect(jest.getTimerCount()).toBe(0);
+      jest.useRealTimers();
+    });
+
+    it('clears deadlines and closes the fake process after protocol initialization', async () => {
+      const pending = healthChecker.checkMCP('protocol-fixture', { name: 'protocol', command: 'synthetic-node', args: [] });
+      await jest.advanceTimersByTimeAsync(0);
+      expect((await pending).status).toBe('healthy');
+      const processFixture = (spawn as jest.Mock).mock.results.at(-1)!.value;
+      expect(processFixture.kill).toHaveBeenCalledTimes(1);
+      expect(processFixture.killed).toBe(true);
+      expect(jest.getTimerCount()).toBe(0);
+    });
+
     it('requires protocol initialization rather than a running process', async () => {
-      const result = await healthChecker.checkMCP('silent-fixture', { name: 'silent', command: 'sleep', args: [] });
+      const pending = healthChecker.checkMCP('silent-fixture', { name: 'silent', command: 'sleep', args: [] });
+      await jest.advanceTimersByTimeAsync(5000);
+      const result = await pending;
       expect(result.status).toBe('unhealthy');
+      expect(result.responseTime).toBe(5000);
     }, 10000);
 
     it('should handle missing MCP configuration gracefully', async () => {
@@ -623,11 +642,21 @@ describe('MCP Health Check - Configured MCPs', () => {
         args: ['10'] // Sleep for 10 seconds
       };
 
-      const result = await healthChecker.checkMCP('slow-mcp', slowConfig);
-
+      let settled = false;
+      const pending = healthChecker.checkMCP('slow-mcp', slowConfig).then(result => { settled = true; return result; });
+      await jest.advanceTimersByTimeAsync(0); // Complete the synthetic spawn, installing the readiness deadline.
+      await jest.advanceTimersByTimeAsync(4999);
+      expect(settled).toBe(false);
+      expect(jest.getTimerCount()).toBe(1);
+      await jest.advanceTimersByTimeAsync(1);
+      const result = await pending;
+      expect(settled).toBe(true);
       expect(result.status).toBe('unhealthy');
-      expect(result.responseTime).toBeGreaterThanOrEqual(5000);
-      expect(result.responseTime).toBeLessThan(10000);
+      expect(result.responseTime).toBe(5000);
+      const processFixture = (spawn as jest.Mock).mock.results.at(-1)!.value;
+      expect(processFixture.kill).toHaveBeenCalledTimes(1);
+      expect(processFixture.killed).toBe(true);
+      expect(jest.getTimerCount()).toBe(0);
     }, 12000);
   });
 });

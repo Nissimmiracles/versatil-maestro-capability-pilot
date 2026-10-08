@@ -3,6 +3,7 @@ import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { pathToFileURL } from 'node:url';
 const hook = path.join(process.cwd(), '.claude/hooks/before-prompt.ts');
 const preload = path.join(process.cwd(), 'tests/integration/helpers/cli-offline-fixture.mjs');
 let root: string;
@@ -15,7 +16,7 @@ beforeEach(() => {
 });
 afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 function run(prompt: string): string {
-  return execFileSync(process.execPath, ['--import', preload, '--import', 'tsx', hook], {
+  return execFileSync(process.execPath, ['--import', pathToFileURL(preload).href, '--import', 'tsx', hook], {
     input: JSON.stringify({ prompt, workingDirectory: root }), cwd: process.cwd(), encoding: 'utf8',
     env: { ...process.env, VERSATIL_TEST_HOME: root }, timeout: 10000,
     stdio: ['pipe', 'pipe', 'pipe'],

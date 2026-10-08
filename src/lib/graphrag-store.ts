@@ -1250,6 +1250,37 @@ export class GraphRAGStore extends EventEmitter {
     return detached;
   }
 
+  // Explicit local OR selection, not authenticated identity/tenant authorization.
+  // Scope-only historical markers remain readable; missing classification is never made public.
+  private isPatternSelected(node: GraphNode, query: GraphRAGQuery): boolean {
+    const marker = Object.getOwnPropertyDescriptor(node, 'privacy');
+    if (!marker || !('value' in marker)) return false;
+    const privacy: unknown = marker.value;
+    if (!privacy || typeof privacy !== 'object' || Array.isArray(privacy) ||
+        ![Object.prototype, null].includes(Object.getPrototypeOf(privacy))) return false;
+    let isPublic = false;
+    const publicMarker = Object.getOwnPropertyDescriptor(privacy, 'isPublic');
+    if (publicMarker) {
+      if (!('value' in publicMarker)) return false;
+      if (publicMarker.value !== undefined) {
+        if (typeof publicMarker.value !== 'boolean') return false;
+        isPublic = publicMarker.value;
+      }
+    }
+    const scopes: Array<{ field: 'userId' | 'teamId' | 'projectId'; value: string }> = [];
+    for (const field of ['userId', 'teamId', 'projectId'] as const) {
+      const descriptor = Object.getOwnPropertyDescriptor(privacy, field);
+      if (!descriptor) continue;
+      if (!('value' in descriptor)) return false;
+      if (descriptor.value === undefined) continue;
+      if (typeof descriptor.value !== 'string' || descriptor.value.trim().length === 0) return false;
+      scopes.push({ field, value: descriptor.value });
+    }
+    // Validate all known marker fields before OR selection; audit metadata is not classification.
+    return (isPublic && query.includePublic !== false) ||
+      scopes.some(scope => typeof query[scope.field] === 'string' && query[scope.field] === scope.value);
+  }
+
   private computeQuery(query: GraphRAGQuery): GraphRAGResult[] {
     // Extract query entities using same logic as pattern extraction
     const queryEntities = this.extractEntities({
@@ -1288,6 +1319,10 @@ export class GraphRAGStore extends EventEmitter {
 
         const node = this.nodes.get(nodeId);
         if (!node) continue;
+
+        // Exclude unclassified or unselected patterns before admission/scoring/limit AND traversal:
+        // their IDs/labels must not leak through a classified result's path or explanation.
+        if (node.type === 'pattern' && !this.isPatternSelected(node, query)) continue;
 
         // If we found a pattern node, add to results
         if (node.type === 'pattern') {

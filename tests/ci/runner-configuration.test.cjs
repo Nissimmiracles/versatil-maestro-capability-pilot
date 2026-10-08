@@ -161,3 +161,19 @@ test('integration workflow dispatch agrees with the runner partition for every m
     assert(partition.byRunner[runner].includes(file), `${file} must run under ${runner}`);
   }
 });
+
+test('Jest CJS transformation preserves source import.meta URLs and local filename bindings', () => {
+  const transform = require('../setup/jest-import-meta.cjs');
+  const filename = path.join(os.tmpdir(), 'path with spaces', 'source.ts');
+  const source = "const {fileURLToPath} = require('node:url'); const __filename = fileURLToPath(import.meta.url); const __dirname = require('node:path').dirname(__filename); module.exports = {url: import.meta.url, filename: __filename, directory: __dirname};";
+  const output = ts.transpileModule(source, {
+    fileName: filename,
+    compilerOptions: {module: ts.ModuleKind.CommonJS},
+    transformers: {before: [transform.factory({configSet: {compilerModule: ts}})]},
+  }).outputText;
+  const module = {exports: {}};
+  vm.runInNewContext(output, {module, exports: module.exports, require, __filename: 'wrapper.cjs', __dirname: 'wrapper'});
+  assert.equal(module.exports.url, pathToFileURL(filename).href);
+  assert.equal(module.exports.filename, filename);
+  assert.equal(module.exports.directory, path.dirname(filename));
+});

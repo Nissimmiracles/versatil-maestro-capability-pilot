@@ -167,7 +167,8 @@ export class DocsSearchEngine {
         );
 
         // Find all markdown files in docs directory
-        const pattern = path.join(this.docsPath, '**/*.md');
+        // Glob treats backslashes as escapes even on Windows; filesystem paths stay native.
+        const pattern = path.join(this.docsPath, '**/*.md').replace(/\\/g, '/');
 
         this.progressTracker.reportProgress(
           operationId,

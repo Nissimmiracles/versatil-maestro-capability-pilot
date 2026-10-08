@@ -132,6 +132,9 @@ describe('Rule 3: Daily Audit Scheduling', () => {
     it('should create log file on start', async () => {
       await daemon.start();
 
+      // Wait for the queued startup writes rather than assuming stream.open already ran.
+      const stream = (daemon as any).logStream as fs.WriteStream;
+      await new Promise<void>((resolve, reject) => stream.write('', error => error ? reject(error) : resolve()));
       const logExists = await fs.pathExists(testLogPath);
       expect(logExists).toBe(true);
     });
@@ -303,11 +306,15 @@ describe('Rule 3: Daily Audit Scheduling', () => {
     it('should track uptime correctly', async () => {
       await daemon.start();
 
-      // Wait 2 seconds
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      const status = await daemon.getStatus();
-      expect(status.uptime).toBeGreaterThanOrEqual(2);
+      const startedAt = (daemon as any).startTime.getTime();
+      const clock = jest.spyOn(Date, 'now').mockReturnValue(startedAt + 1999);
+      try {
+        expect((await daemon.getStatus()).uptime).toBe(1);
+        clock.mockReturnValue(startedAt + 2000);
+        expect((await daemon.getStatus()).uptime).toBe(2);
+      } finally {
+        clock.mockRestore();
+      }
     });
   });
 

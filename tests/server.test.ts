@@ -21,6 +21,8 @@ function request(app: any) {
     } finally { await new Promise<void>(resolve => listener.close(() => resolve())); }
   } }; } };
 }
+let mockTempRoot: string;
+jest.mock('node:os', () => ({ ...jest.requireActual('node:os'), tmpdir: () => mockTempRoot }));
 let root: string;
 let app: any;
 let priorEnv: Record<string, string | undefined>;
@@ -28,6 +30,7 @@ let listeners: Map<string, Function[]>;
 function load() { jest.resetModules(); return require('../src/server').app; }
 beforeEach(() => {
   root = fs.mkdtempSync(path.join(os.tmpdir(), 'server-routes-'));
+  mockTempRoot = root;
   fs.mkdirSync(path.join(root, '.versatil', 'analytics'), { recursive: true });
   fs.writeFileSync(path.join(root, '.versatil', 'analytics', 'metrics.json'), JSON.stringify({ timestamp: 'fixture', agents: ['fixture-agent'] }));
   listeners = new Map(['SIGTERM', 'SIGINT'].map(signal => [signal, process.listeners(signal)]));
@@ -56,6 +59,29 @@ describe('Current server routes', () => {
   it('is ready when filesystem, memory, and recent agent metrics pass', async () => {
     const response = await request(app).get('/ready').expect(200);
     expect(response.body.checks).toMatchObject({ filesystem: { status: 'ok' }, memory: { status: 'ok' }, operaAgents: { status: 'ok' } });
+  });
+  it('probes the native temporary directory and removes the health probe', async () => {
+    const write = jest.spyOn(require('fs'), 'writeFileSync');
+    const unlink = jest.spyOn(require('fs'), 'unlinkSync');
+    const result = (await request(app).get('/ready').expect(200)).body;
+    expect(result.checks.filesystem.status).toBe('ok');
+    const probe = write.mock.calls.find(call => path.basename(String(call[0])).startsWith('health-check-'));
+    expect(probe).toBeDefined();
+    expect(path.dirname(String(probe![0]))).toBe(root);
+    expect(unlink).toHaveBeenCalledWith(probe![0]);
+    expect(fs.existsSync(String(probe![0]))).toBe(false);
+  });
+  it('reports an unwritable temporary directory as unready on every platform', async () => {
+    const write = fs.writeFileSync;
+    const denial = Object.assign(new Error('Fixture temporary directory permission denied'), { code: 'EACCES' });
+    jest.spyOn(require('fs'), 'writeFileSync').mockImplementation(((file: fs.PathOrFileDescriptor, ...args: any[]) => {
+      if (path.dirname(String(file)) === root && path.basename(String(file)).startsWith('health-check-')) throw denial;
+      return (write as any)(file, ...args);
+    }) as any);
+    const result = (await request(app).get('/ready').expect(503)).body;
+    expect(result.checks.filesystem).toEqual({ status: 'error', message: denial.message });
+    expect(result.checks.operaAgents.status).toBe('ok');
+    expect(result.checks.memory.status).toBe('ok');
   });
   it('is unready when agent metrics are missing', async () => {
     fs.unlinkSync(path.join(root, '.versatil', 'analytics', 'metrics.json'));

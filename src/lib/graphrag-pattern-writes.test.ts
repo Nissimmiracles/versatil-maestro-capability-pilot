@@ -104,7 +104,7 @@ describe('GraphRAG stable pattern writes',()=>{
     expect(store.getEdge('edge_stable-pattern_tech_react')).toMatchObject({source:input.id,target:'tech_react',relationship:'uses',weight:0.8});
     expect(backend.operations.filter(op=>op.startsWith('create:')).length).toBe(9);
     const fresh=await loaded();expect(fresh.getNode(input.id)).toEqual(store.getNode(input.id));
-    expect((await fresh.query({query:'React'})).map(result=>result.pattern.id)).toContain(input.id);noMutation();
+    expect((await fresh.query({query:'React',userId:'fixture-user'})).map(result=>result.pattern.id)).toContain(input.id);noMutation();
   });
   it('deduplicates repeated extracted IDs without duplicate creates or changing original interpretations',async()=>{
     const store=await loaded();await store.storePattern(pattern());
@@ -242,7 +242,7 @@ describe('GraphRAG explicit durable usage',()=>{
   });
   it('queues two local increments and leaves getters/query as reads',async()=>{
     const input=pattern();backend.nodes.set(input.id,input);backend.nodes.set('tech_react',{...node('tech_react'),connections:[input.id]});const store=await loaded();await Promise.all([store.incrementUsageCount(input.id),store.incrementUsageCount(input.id)]);
-    expect(backend.nodes.get(input.id).properties.usageCount).toBe(2);const writes=backend.operations.slice();expect(store.getNode(input.id)!.properties.usageCount).toBe(2);expect((await store.query({query:'React'})).map(result=>result.pattern.id)).toContain(input.id);
+    expect(backend.nodes.get(input.id).properties.usageCount).toBe(2);const writes=backend.operations.slice();expect(store.getNode(input.id)!.properties.usageCount).toBe(2);expect((await store.query({query:'React',userId:'fixture-user'})).map(result=>result.pattern.id)).toContain(input.id);
     expect(backend.operations).toEqual(writes);expect(backend.nodes.get(input.id).properties.usageCount).toBe(2);
   });
   it.each(['missing','non-pattern','wrong-id','malformed-count','overflow'] as const)('rejects persisted %s without publishing a count',async kind=>{

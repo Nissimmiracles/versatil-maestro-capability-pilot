@@ -59,7 +59,7 @@ beforeEach(()=>{
   backend.closeFailure=false;backend.observe=undefined;backend.closeCalls=0;vi.restoreAllMocks();
   for(const n of [pattern(),pattern('p2',0.5,0),{...simple('tech_react',['p1','p2']),type:'technology' as const},{...simple('agent_agent-x',['p1','p2']),type:'agent' as const},{...simple('category_ui',['p1','p2']),type:'category' as const},simple('concept_cache',['p1','p2'])])backend.nodes.set(n.id,n);
 });
-const request=(extra:Partial<GraphRAGQuery>={})=>({query:'React',...extra});
+const request=(extra:Partial<GraphRAGQuery>={})=>({query:'React',userId:'fixture-user',...extra});
 async function loaded(){const store=new GraphRAGStore();await store.initialize();return store;}
 async function cached(){const store=await loaded();const spy=vi.spyOn(store as any,'extractEntities');const result=await store.query(request());expect(result.map(r=>r.pattern.id)).toEqual(['p1','p2']);expect(store.isCacheValid()).toBe(true);return{store,spy,result};}
 const gate=()=>{let release!:()=>void;const promise=new Promise<void>(resolve=>{release=resolve;});return{promise,release};};
@@ -93,13 +93,13 @@ describe('GraphRAG genuine query memoization and explicit ownership',()=>{
   it.each([
     {query:'React second'}, {agent:'agent-x'}, {category:'ui'}, {tags:['cache']}, {limit:1}, {minRelevance:0.4},
     {userId:'scope-user'}, {teamId:'scope-team'}, {projectId:'scope-project'}, {includePublic:false},
-  ])('retains every selector/scope field in collision-free keys without implementing a visibility policy',async variation=>{
+  ])('retains every selector/scope field in collision-free keys with explicit fixture scope selection',async variation=>{
     const {store,spy}=await cached();await store.query(request(variation));expect(spy).toHaveBeenCalledTimes(2);
     await store.query(request(variation));expect(spy).toHaveBeenCalledTimes(2);expect(store.isCacheValid()).toBe(true);
   });
   it.each(['agent','category','tags','limit','minRelevance','userId','teamId','projectId','includePublic'] as const)('distinguishes missing from own undefined for %s',async field=>{
-      const {store,spy}=await cached();const q=request();Object.defineProperty(q,field,{value:undefined,enumerable:true});
-      await store.query(q);expect(spy).toHaveBeenCalledTimes(2);await store.query(q);expect(spy).toHaveBeenCalledTimes(2);
+      const {store,spy}=await cached();const q=request();delete q[field];await store.query(q);const before=spy.mock.calls.length;Object.defineProperty(q,field,{value:undefined,enumerable:true});
+      await store.query(q);expect(spy).toHaveBeenCalledTimes(before+1);await store.query(q);expect(spy).toHaveBeenCalledTimes(before+1);
     });
   it('distinguishes ordered tags and delimiter-like field contents',async()=>{
     const store=await loaded();const spy=vi.spyOn(store as any,'extractEntities');
@@ -125,15 +125,15 @@ describe('GraphRAG genuine query memoization and explicit ownership',()=>{
   });
   it('enforces32 FIFO entries and proves eviction/recomputation rather than just a size field',async()=>{
     const store=await loaded();const spy=vi.spyOn(store as any,'extractEntities');
-    for(let i=0;i<33;i++)await store.query({query:`React ${i}`});expect(spy).toHaveBeenCalledTimes(33);expect(store['queryResults'].size).toBe(32);
-    await store.query({query:'React 1'});expect(spy).toHaveBeenCalledTimes(33);await store.query({query:'React 0'});expect(spy).toHaveBeenCalledTimes(34);
+    for(let i=0;i<33;i++)await store.query(request({query:`React ${i}`}));expect(spy).toHaveBeenCalledTimes(33);expect(store['queryResults'].size).toBe(32);
+    await store.query(request({query:'React 1'}));expect(spy).toHaveBeenCalledTimes(33);await store.query(request({query:'React 0'}));expect(spy).toHaveBeenCalledTimes(34);
     expect(store['queryResults'].size).toBe(32);expect(store['queryResultBytes']).toBeLessThanOrEqual(262144);
   });
   it('enforces serialized byte budget independently of entry count with genuine nonempty outputs',async()=>{
     backend.nodes.get('p1').properties.padding='x'.repeat(30000);const store=await loaded();const spy=vi.spyOn(store as any,'extractEntities');
-    for(let i=0;i<20;i++)expect((await store.query({query:`React ${i}`})).length).toBe(2);
+    for(let i=0;i<20;i++)expect((await store.query(request({query:`React ${i}`}))).length).toBe(2);
     expect(store['queryResults'].size).toBeGreaterThan(0);expect(store['queryResults'].size).toBeLessThan(20);expect(store['queryResultBytes']).toBeLessThanOrEqual(262144);
-    await store.query({query:'React 19'});expect(spy).toHaveBeenCalledTimes(20);await store.query({query:'React 0'});expect(spy).toHaveBeenCalledTimes(21);
+    await store.query(request({query:'React 19'}));expect(spy).toHaveBeenCalledTimes(20);await store.query(request({query:'React 0'}));expect(spy).toHaveBeenCalledTimes(21);
   });
   it('oversized entries are detached but never admitted; eligible followups still cache normally',async()=>{
     backend.nodes.get('p1').properties.padding='x'.repeat(70000);const store=await loaded();const spy=vi.spyOn(store as any,'extractEntities');
@@ -155,7 +155,7 @@ describe('GraphRAG genuine query memoization and explicit ownership',()=>{
     store.clearCache();await store.initialize();await store.query(request());expect(store.isCacheValid()).toBe(false);
   });
   it('eligibility inspection invokes no getters while legacy query reads its selector exactly twice',async()=>{
-    const {store,spy}=await cached();let invoked=0;const q:any={};Object.defineProperty(q,'query',{enumerable:true,get(){invoked++;return 'React';}});
+    const {store,spy}=await cached();let invoked=0;const q:any={userId:'fixture-user'};Object.defineProperty(q,'query',{enumerable:true,get(){invoked++;return 'React';}});
     expect((await store.query(q)).length).toBe(2);expect(invoked).toBe(2);expect(spy).toHaveBeenCalledTimes(2);expect(store.isCacheValid()).toBe(false);
   });
   it('unknown getters remain unexecuted through inspection and legacy calculation',async()=>{
@@ -338,10 +338,10 @@ describe('GraphRAG memoization mutation revisions and in-flight boundaries',()=>
   });
   it('real caller-shaped own undefined fields remain eligible, and subclass-shaped scope fields preserve markers without a policy claim',async()=>{
     const store=await loaded();const spy=vi.spyOn(store as any,'extractEntities');
-    const shaped:GraphRAGQuery={query:'React',limit:20,minRelevance:0.3,agent:undefined,tags:undefined};
+    const shaped:GraphRAGQuery={query:'React',userId:'fixture-user',limit:20,minRelevance:0.3,agent:undefined,tags:undefined};
     const first=await store.query(shaped);expect(first.map(r=>r.pattern.id)).toEqual(['p1','p2']);await store.query(shaped);expect(spy).toHaveBeenCalledTimes(1);
     const publicShape={...shaped,includePublic:true,userId:undefined,teamId:undefined,projectId:undefined};
     const next=await store.query(publicShape);await store.query(publicShape);expect(spy).toHaveBeenCalledTimes(2);
-    expect(next[0].pattern.privacy).toEqual({userId:'fixture-user',isPublic:false});expect(store.isCacheValid()).toBe(true);
+    expect(next).toEqual([]);expect(first[0].pattern.privacy).toEqual({userId:'fixture-user',isPublic:false});expect(store.isCacheValid()).toBe(true);
   });
 });

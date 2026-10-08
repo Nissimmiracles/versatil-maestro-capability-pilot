@@ -230,3 +230,9 @@ module.exports = {
     }
   }
 };
+// Production sources use import.meta.url; preserve it in the legacy CJS runner.
+for (const project of module.exports.projects) {
+  for (const [, options] of Object.values(project.transform)) {
+    options.astTransformers = { before: [require('path').resolve(__dirname, '../tests/setup/jest-import-meta.cjs')] };
+  }
+}

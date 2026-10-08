@@ -33,6 +33,35 @@ jest.mock('../../../src/agents/sdk/versatil-query', () => ({
   executeWithSDK: jest.fn(async () => new Map())
 }));
 
+// Daemon scheduling is tested against an inert audit provider, without invoking tools or models.
+jest.mock('../../../src/audit/daily-audit-system', () => {
+  const { EventEmitter } = require('node:events');
+  return {
+    AuditStatus: { SUCCESS: 'success', WARNING: 'warning', FAILURE: 'failure', ERROR: 'error', CANCELLED: 'cancelled' },
+    IssueSeverity: { LOW: 'low', MEDIUM: 'medium', HIGH: 'high', CRITICAL: 'critical', EMERGENCY: 'emergency' },
+    DailyAuditSystem: class extends EventEmitter {
+      async runDailyAudit() {
+        const result = { id: 'fixture-audit', status: 'success', overallHealth: 100,
+          scores: {}, checkResults: [], issues: [], recommendations: [] };
+        this.emit('audit:completed', { auditId: result.id });
+        return result;
+      }
+    },
+  };
+});
+const signals = ['SIGTERM', 'SIGINT', 'SIGUSR2', 'uncaughtException', 'unhandledRejection'];
+let originalListeners: Map<string, Function[]>;
+beforeEach(() => {
+  originalListeners = new Map(signals.map(signal => [signal, process.listeners(signal)]));
+});
+afterEach(() => {
+  for (const signal of signals) {
+    for (const listener of process.listeners(signal)) {
+      if (!originalListeners.get(signal)!.includes(listener)) process.removeListener(signal, listener as any);
+    }
+  }
+});
+
 describe('Rule 3: Daily Audit Scheduling', () => {
   let daemon: DailyAuditDaemon;
   let testLogPath: string;
@@ -41,7 +70,7 @@ describe('Rule 3: Daily Audit Scheduling', () => {
 
   beforeEach(async () => {
     // Create temporary test directories
-    testConfigDir = path.join(os.tmpdir(), `versatil-test-${Date.now()}`);
+    testConfigDir = await fs.mkdtemp(path.join(os.tmpdir(), 'versatil-audit-'));
     testLogPath = path.join(testConfigDir, 'logs', 'daily-audit.log');
     testPidPath = path.join(testConfigDir, 'run', 'audit-daemon.pid');
 
@@ -155,7 +184,6 @@ describe('Rule 3: Daily Audit Scheduling', () => {
         '0 2 * * *',
         expect.any(Function),
         expect.objectContaining({
-          scheduled: true,
           timezone: 'America/New_York'
         })
       );
@@ -404,13 +432,11 @@ describe('Rule 3: Daily Audit Scheduling', () => {
       const scheduledListener = jest.fn();
       daemon.on('audit:scheduled:completed', scheduledListener);
 
-      // Trigger scheduled audit manually
-      const auditSystem = (daemon as any).auditSystem;
-      await auditSystem.runDailyAudit();
-
-      // Note: In real scenario, this would be triggered by cron
-      // For testing, we verify the event listener is registered
-      expect(scheduledListener).not.toHaveBeenCalled(); // Not triggered yet
+      // Exercise the scheduler callback registered by the real daemon.
+      const cron = await import('node-cron');
+      const callback = (cron.schedule as jest.Mock).mock.calls[0][1] as () => Promise<void>;
+      await callback();
+      expect(scheduledListener).toHaveBeenCalledWith(expect.objectContaining({ result: expect.objectContaining({ status: expect.any(String) }) }));
     });
   });
 

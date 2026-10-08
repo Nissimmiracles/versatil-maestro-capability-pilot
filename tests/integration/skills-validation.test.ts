@@ -2,6 +2,9 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync, existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { glob } from 'glob';
+import { normalizeMarkdown, parseSkillMarkdown, validateCodeExamples } from '../fixtures/markdown-validation/parser.js';
+
+const readMarkdown = (file: string) => normalizeMarkdown(readFileSync(file, 'utf8'));
 
 /**
  * Integration Test Suite for Skills Validation
@@ -56,6 +59,40 @@ const AGENT_SKILLS_MAP: Record<string, string[]> = {
 };
 
 describe('Skills Validation Suite', () => {
+  describe('Markdown newline representation', () => {
+    const fixture = [
+      '---', 'name: fixture-skill', 'description: Synthetic example only', '---',
+      '# Fixture', '## When to Use', 'Example use.',
+      '```typescript', 'export const value = 1;', '```',
+      '```sql', 'SELECT 1;', '```'
+    ].join('\n');
+    it('produces identical metadata catalogs and code examples for LF and CRLF bytes', () => {
+      const lf = parseSkillMarkdown(fixture);
+      const crlfBytes = fixture.replace(/\n/g, '\r\n');
+      expect(crlfBytes).toContain('\r\n');
+      expect(parseSkillMarkdown(crlfBytes)).toEqual(lf);
+      expect([lf.name]).toEqual(['fixture-skill']);
+      expect(lf.examples).toEqual([{ language: 'typescript', code: 'export const value = 1;' }, { language: 'sql', code: 'SELECT 1;' }]);
+      for (const source of [fixture, crlfBytes]) {
+        expect(() => validateCodeExamples(source, 'typescript')).not.toThrow();
+        expect(() => validateCodeExamples(source, 'sql')).not.toThrow();
+      }
+    });
+    it.each(['LF', 'CRLF'])('rejects invalid metadata and unsafe tags with %s newlines', ending => {
+      const encode = (source: string) => ending === 'CRLF' ? source.replace(/\n/g, '\r\n') : source;
+      for (const invalid of [
+        fixture.replace('name: fixture-skill', 'name: ../outside'),
+        fixture.replace('name: fixture-skill', 'name: 42'),
+        fixture.replace('name: fixture-skill', 'name: "fixture-skill\\n"'),
+        fixture.replace('description: Synthetic example only', 'description: ""'),
+        fixture.replace('name: fixture-skill', 'name: !!js/function "function() {}"'),
+        fixture.replace('---\nname:', 'name:')
+      ]) expect(() => parseSkillMarkdown(encode(invalid))).toThrow();
+      expect(() => validateCodeExamples(encode(fixture.replace('export const value = 1;', 'const value = PLACEHOLDER;')), 'typescript')).toThrow('Invalid TypeScript example');
+      expect(() => validateCodeExamples(encode(fixture.replace('SELECT 1;', 'SELECT 1')), 'sql')).toThrow('Invalid SQL example');
+    });
+  });
+
   describe('Skill File Existence', () => {
     it('should have SKILL.md for all 17 expected skills', () => {
       const missingSkills: string[] = [];
@@ -86,12 +123,13 @@ describe('Skills Validation Suite', () => {
 
         beforeAll(() => {
           const skillPath = join(SKILLS_DIR, skill, 'SKILL.md');
-          content = readFileSync(skillPath, 'utf-8');
+          content = readMarkdown(skillPath);
         });
 
         it('should have frontmatter metadata', () => {
-          expect(content).toMatch(/^---\nname:/);
-          expect(content).toContain('description:');
+          const metadata = parseSkillMarkdown(content);
+          expect(metadata.name).toBe(skill);
+          expect(metadata.description.length).toBeGreaterThan(0);
         });
 
         it('should have When to Use section', () => {
@@ -128,7 +166,7 @@ describe('Skills Validation Suite', () => {
 
         beforeAll(() => {
           const agentPath = join(AGENTS_DIR, `${agentName}.md`);
-          agentContent = readFileSync(agentPath, 'utf-8');
+          agentContent = readMarkdown(agentPath);
         });
 
         it('should have Enhanced Skills section', () => {
@@ -158,58 +196,17 @@ describe('Skills Validation Suite', () => {
 
         beforeAll(() => {
           const skillPath = join(SKILLS_DIR, skill, 'SKILL.md');
-          content = readFileSync(skillPath, 'utf-8');
+          content = readMarkdown(skillPath);
         });
 
         it('should have non-placeholder TypeScript examples', () => {
-          const tsBlocks = content.match(/```typescript[\s\S]*?```/g) || [];
-
-          tsBlocks.forEach((block) => {
-            const code = block.replace(/```typescript\n/, '').replace(/```$/, '');
-
-            // Basic syntax checks (not full compilation)
-            expect(code).not.toContain('PLACEHOLDER');
-            expect(code).not.toContain('TODO:');
-
-            // Must have either import, const, or function
-            expect(code).toMatch(/import|const|function|interface|type|class|export|\w+\s*\(/);
-          });
+          expect(() => validateCodeExamples(content, 'typescript')).not.toThrow();
         });
-
         it('should have non-placeholder Python examples when present', () => {
-          const pyBlocks = content.match(/```python[\s\S]*?```/g) || [];
-
-          if (pyBlocks.length > 0) {
-            pyBlocks.forEach((block) => {
-              const code = block.replace(/```python\n/, '').replace(/```$/, '');
-
-              // Basic syntax checks
-              expect(code).not.toContain('PLACEHOLDER');
-              expect(code).not.toContain('pass  # TODO');
-
-              // Must have either import, def, or class
-              expect(code).toMatch(/import|def|class|from/);
-            });
-          }
+          expect(() => validateCodeExamples(content, 'python')).not.toThrow();
         });
-
         it('should have SQL statements or explicit SQL annotations when present', () => {
-          const sqlBlocks = content.match(/```sql[\s\S]*?```/g) || [];
-
-          if (sqlBlocks.length > 0) {
-            sqlBlocks.forEach((block) => {
-              const code = block.replace(/```sql\n/, '').replace(/```$/, '').trim();
-
-              const statements = code.replace(/--[^\n]*/g, '').trim();
-              if (statements) {
-                expect(statements).toMatch(/CREATE|SELECT|INSERT|UPDATE|DELETE|ALTER|DROP/i);
-                expect(statements).toContain(';');
-              } else {
-                expect(code).toMatch(/^--/m);
-                expect(code.length).toBeGreaterThan(0);
-              }
-            });
-          }
+          expect(() => validateCodeExamples(content, 'sql')).not.toThrow();
         });
       });
     });
@@ -249,13 +246,13 @@ describe('Skills Validation Suite', () => {
   describe('Current skill metadata inventory', () => {
     it('has matching metadata identifiers for every required skill', () => {
       for (const skill of EXPECTED_SKILLS) {
-        const content = readFileSync(join(SKILLS_DIR, skill, 'SKILL.md'), 'utf8');
+        const content = readMarkdown(join(SKILLS_DIR, skill, 'SKILL.md'));
         expect(content).toContain(`name: ${skill}\n`);
       }
     });
     it('has nonempty descriptions for every required skill', () => {
       for (const skill of EXPECTED_SKILLS) {
-        const content = readFileSync(join(SKILLS_DIR, skill, 'SKILL.md'), 'utf8');
+        const content = readMarkdown(join(SKILLS_DIR, skill, 'SKILL.md'));
         expect(content).toMatch(/^description: \S.+$/m);
       }
     });
@@ -264,7 +261,7 @@ describe('Skills Validation Suite', () => {
   describe('Documentation Completeness', () => {
     it('should have PARALLEL_IMPLEMENTATION_SUMMARY.md with all waves complete', () => {
       const summaryPath = join(__dirname, '../../docs/PARALLEL_IMPLEMENTATION_SUMMARY.md');
-      const summaryContent = readFileSync(summaryPath, 'utf-8');
+      const summaryContent = readMarkdown(summaryPath);
 
       // Should show 12 of 12 complete (Phase 4)
       expect(summaryContent).toContain('12 of 12');

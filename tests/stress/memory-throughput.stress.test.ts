@@ -21,14 +21,34 @@ beforeEach(async () => { jest.spyOn(console, 'log').mockImplementation(() => {})
 afterEach(() => { jest.restoreAllMocks(); });
 
 describe('Local memory operation batches', () => {
-  test('round-trips 1000 distinct patterns', async () => {
-    const agent = 'maria-qa';
-    for (let i = 0; i < 1000; i++) await memory.storePattern(agent, `batch-${i}`, `# Batch ${i}
-fixture-${i}`);
-    const patterns = await memory.loadPatterns(agent);
-    expect(patterns.filter(value => value.startsWith('# Batch '))).toHaveLength(1000);
-    expect(patterns).toContain(`# Batch 999
-fixture-999`);
+  test('round-trips 1000 distinct patterns across supported agent directories', async () => {
+    const agents = getAllAgentIds();
+    const batchSize = Math.min(8, agents.length);
+    expect(batchSize).toBeGreaterThan(0);
+    const inputs = Array.from({ length: 1000 }, (_, index) => ({
+      agent: agents[index % agents.length],
+      name: `batch-${index}.md`,
+      content: `# Batch ${index}\nfixture-${index}`,
+    }));
+    // Each batch has one write per agent: distinct files overlap, shared metadata never does.
+    for (let start = 0; start < inputs.length; start += batchSize) {
+      const outcomes = await Promise.allSettled(inputs.slice(start, start + batchSize).map(input =>
+        memory.storePattern(input.agent, input.name, input.content)
+      ));
+      // Drain all writes before propagating a failure so cleanup cannot race active I/O.
+      for (const outcome of outcomes) if (outcome.status === 'rejected') throw outcome.reason;
+    }
+    const files = (await Promise.all(agents.map(async agent =>
+      (await fs.readdir(getAgentMemoryPath(agent)))
+        .filter(name => /^batch-\d+\.md$/.test(name))
+        .map(name => `${agent}/${name}`)
+    ))).flat();
+    expect(files).toHaveLength(1000);
+    expect(files.sort()).toEqual(inputs.map(input => `${input.agent}/${input.name}`).sort());
+    const readback = (await Promise.all(agents.map(agent => memory.loadPatterns(agent)))).flat()
+      .filter(content => content.startsWith('# Batch '));
+    expect(readback).toHaveLength(1000);
+    expect(readback.sort()).toEqual(inputs.map(input => input.content).sort());
   }, 60000);
   test('writes across all supported agent directories concurrently', async () => {
     const agents = getAllAgentIds();

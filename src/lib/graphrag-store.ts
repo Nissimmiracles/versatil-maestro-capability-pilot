@@ -16,6 +16,8 @@
  */
 
 import { EventEmitter } from 'events';
+import { createHash } from 'node:crypto';
+import type { Transaction } from '@google-cloud/firestore';
 import { Firestore } from '@google-cloud/firestore';
 import { Timestamp } from '@google-cloud/firestore/build/src/timestamp.js';
 import { validateDocumentData } from '@google-cloud/firestore/build/src/write-batch.js';
@@ -88,6 +90,21 @@ export interface GraphRAGResult {
 /**
  * GraphRAG Store using Firestore for persistence
  */
+export interface SoftDeletionMarker {
+  schemaVersion: 1; kind: 'node' | 'edge'; id: string; active: boolean;
+  deletedAt: Timestamp; restoreUntil: Timestamp;
+}
+export interface SoftDeletionPlan {
+  schemaVersion: 1; kind: 'node' | 'edge'; ids: string[]; cutoffMs?: number; createdAt: number;
+  fingerprint: string;
+  targets: Array<{ id: string; original: GraphNode | GraphEdge | null; marker: SoftDeletionMarker | null; outcome: string }>;
+  warnings: string[];
+}
+export interface SoftDeletionResult {
+  outcomes: Array<{ id: string; outcome: string }>; warnings: string[];
+  acceptedAt: number; restoreUntil?: number;
+}
+
 export class GraphRAGStore extends EventEmitter {
   private firestore: Firestore;
   private projectId: string;
@@ -110,8 +127,316 @@ export class GraphRAGStore extends EventEmitter {
   private edges: Map<string, GraphEdge> = new Map();
   private adjacencyList: Map<string, string[]> = new Map();
 
-  constructor() {
+  private readonly softMode: boolean;
+  private readonly softClock: () => Date;
+  private readonly deletionCollection = 'graphrag_deletions';
+  private rawNodes = new Map<string, GraphNode>();
+  private rawEdges = new Map<string, GraphEdge>();
+  private deletions = new Map<string, SoftDeletionMarker>();
+  private softProjectionReady = false;
+
+  private deletionKey(kind: 'node' | 'edge', id: string): string {
+    this.validateNodeDocumentId(id);
+    const key = `${kind}_${id}`;
+    this.validateNodeDocumentId(key);
+    return key;
+  }
+
+  private softNow(): number {
+    const date = this.softClock();
+    if (!(date instanceof Date) || !Number.isSafeInteger(Date.prototype.getTime.call(date))) throw new Error('Invalid GraphRAG deletion clock');
+    return Date.prototype.getTime.call(date);
+  }
+
+  private requireSoftMode(): void {
+    if (!this.softMode) throw new Error('GraphRAG soft deletion mode is not admitted');
+  }
+
+  private parseDeletion(input: unknown, key: string): SoftDeletionMarker {
+    const marker = this.cloneCachedValue(input) as SoftDeletionMarker;
+    if (!marker || typeof marker !== 'object' || Array.isArray(marker) ||
+        marker.schemaVersion !== 1 || !['node', 'edge'].includes(marker.kind) ||
+        this.deletionKey(marker.kind, marker.id) !== key || typeof marker.active !== 'boolean' ||
+        Object.keys(marker).some(field => !['schemaVersion', 'kind', 'id', 'active', 'deletedAt', 'restoreUntil'].includes(field)) ||
+        !(marker.deletedAt instanceof Timestamp) || !(marker.restoreUntil instanceof Timestamp)) {
+      throw new Error('Invalid GraphRAG deletion marker');
+    }
+    const deletedAt = marker.deletedAt.toMillis();
+    const restoreUntil = marker.restoreUntil.toMillis();
+    if (!Number.isSafeInteger(deletedAt) || restoreUntil - deletedAt !== 30 * 86400000) {
+      throw new Error('Invalid GraphRAG restoration window');
+    }
+    this.validateNodeWriteData(marker);
+    return marker;
+  }
+
+  private isMasked(kind: 'node' | 'edge', id: string): boolean {
+    return this.deletions.get(this.deletionKey(kind, id))?.active === true;
+  }
+
+  private publishSoftProjection(): void {
+    const nodes = new Map<string, GraphNode>();
+    const edges = new Map<string, GraphEdge>();
+    const adjacency = new Map<string, string[]>();
+    for (const [id, original] of this.rawNodes) {
+      if (this.isMasked('node', id)) continue;
+      const node = this.cloneCachedValue(original);
+      if (!Array.isArray(node.connections)) throw new Error('Invalid GraphRAG projected connections');
+      node.connections = node.connections.filter(target => !this.isMasked('node', target));
+      nodes.set(id, node);
+      adjacency.set(id, [...node.connections]);
+    }
+    for (const [id, original] of this.rawEdges) {
+      if (this.isMasked('edge', id) || this.isMasked('node', original.source) || this.isMasked('node', original.target)) continue;
+      edges.set(id, this.cloneCachedValue(original));
+    }
+    this.nodes = nodes;
+    this.edges = edges;
+    this.adjacencyList = adjacency;
+    this.softProjectionReady = true;
+  }
+
+  // Read structural data faithfully; do not impose writer privacy schema on persisted retrieval metadata.
+  private prepareLoadedNode(input: GraphNode): GraphNode {
+    const node = this.cloneCachedValue(input);
+    if (!node || typeof node !== 'object' || Array.isArray(node) ||
+        !['pattern', 'agent', 'technology', 'concept', 'category'].includes(node.type) ||
+        typeof node.label !== 'string' || !node.properties || typeof node.properties !== 'object' ||
+        Array.isArray(node.properties) || ![Object.prototype, null].includes(Object.getPrototypeOf(node.properties)) ||
+        !Array.isArray(node.connections)) throw new Error('Invalid GraphRAG persisted node structure');
+    this.validateNodeDocumentId(node.id);
+    for (const id of node.connections) this.validateNodeDocumentId(id);
+    return node;
+  }
+
+  private async loadSoftGraph(): Promise<void> {
+    this.beginGraphMutation();
+    this.softProjectionReady = false;
+    const revision = this.graphRevision;
+    try {
+      const loaded = await this.firestore.runTransaction(async transaction => {
+        const nodeSnapshot = await transaction.get(this.firestore.collection(this.nodesCollection));
+        const edgeSnapshot = await transaction.get(this.firestore.collection(this.edgesCollection));
+        const deletionSnapshot = await transaction.get(this.firestore.collection(this.deletionCollection));
+        const nodes = new Map<string, GraphNode>();
+        const edges = new Map<string, GraphEdge>();
+        const deletions = new Map<string, SoftDeletionMarker>();
+        if (nodeSnapshot.size > 10000 || edgeSnapshot.size > 10000 || deletionSnapshot.size > 10000) throw new Error('GraphRAG deletion load budget exceeded');
+        nodeSnapshot.forEach(doc => {
+          const node = this.prepareLoadedNode(doc.data() as GraphNode);
+          if (node.id !== doc.id) throw new Error('GraphRAG persisted node ID mismatch');
+          nodes.set(doc.id, node);
+        });
+        edgeSnapshot.forEach(doc => {
+          const edge = this.cloneCachedValue(doc.data()) as GraphEdge;
+          if (!edge || edge.id !== doc.id) throw new Error('GraphRAG persisted edge ID mismatch');
+          this.validateNodeDocumentId(edge.id);
+          this.validateNodeDocumentId(edge.source);
+          this.validateNodeDocumentId(edge.target);
+          this.validateNodeWriteData(edge);
+          edges.set(doc.id, edge);
+        });
+        deletionSnapshot.forEach(doc => deletions.set(doc.id, this.parseDeletion(doc.data(), doc.id)));
+        return { nodes, edges, deletions };
+      });
+      if (this.graphRevision !== revision) throw new Error('GraphRAG deletion reload was superseded');
+      this.rawNodes = loaded.nodes;
+      this.rawEdges = loaded.edges;
+      this.deletions = loaded.deletions;
+      this.publishSoftProjection();
+    } catch (error) {
+      this.softProjectionReady = false;
+      this.initialized = false;
+      this.softProjectionReady = false; this.rawNodes.clear(); this.rawEdges.clear(); this.deletions.clear();
+      this.nodes.clear(); this.edges.clear(); this.adjacencyList.clear();
+      this.disableQueryMemoization();
+      throw error;
+    } finally {
+      this.endGraphMutation();
+    }
+  }
+
+  private async assertUnmasked(transaction: Transaction, targets: Array<{ kind: 'node' | 'edge'; id: string }>): Promise<void> {
+    if (!this.softMode) return;
+    const seen = new Set<string>();
+    for (const target of targets) {
+      const key = this.deletionKey(target.kind, target.id);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const snapshot = await transaction.get(this.firestore.collection(this.deletionCollection).doc(key));
+      if (snapshot.exists && this.parseDeletion(snapshot.data(), key).active) throw new Error('GraphRAG write target is soft deleted');
+    }
+  }
+
+  private deletionEncoding(value: unknown): string {
+    const ancestors = new WeakSet<object>();
+    const canonical = (item: any): any => {
+      if (item === undefined) return ['Undefined'];
+      if (item === null) return ['Null'];
+      if (typeof item === 'string') return ['String', item];
+      if (typeof item === 'boolean') return ['Boolean', item];
+      if (typeof item === 'number') return ['Number', Object.is(item, -0) ? '-0' : String(item)];
+      if (typeof item !== 'object') throw new Error('Unsupported GraphRAG deletion fingerprint value');
+      if (item instanceof Date) return ['Date', String(Date.prototype.getTime.call(item))];
+      if (item instanceof Timestamp) return ['Timestamp', item.seconds, item.nanoseconds];
+      if (Buffer.isBuffer(item)) return ['Buffer', item.toString('base64')];
+      if (item instanceof Uint8Array) return ['Uint8Array', Buffer.from(item).toString('base64')];
+      if (ancestors.has(item)) throw new Error('Cyclic GraphRAG deletion fingerprint value');
+      ancestors.add(item);
+      try {
+        if (Reflect.ownKeys(item).some(key => typeof key !== 'string')) throw new Error('Unsupported GraphRAG deletion fingerprint key');
+        if (Array.isArray(item)) return ['Array', Array.from({ length: item.length }, (_, index) => Object.prototype.hasOwnProperty.call(item, index) ? canonical(item[index]) : ['Hole'])];
+        return ['Object', Object.getPrototypeOf(item) === null ? 'null-prototype' : 'plain', Object.keys(item).sort().map(key => [key, canonical(item[key])])];
+      } finally { ancestors.delete(item); }
+    };
+    return JSON.stringify(canonical(this.cloneCachedValue(value)));
+  }
+
+  private deletionFingerprint(value: unknown): string {
+    return createHash('sha256').update(this.deletionEncoding(value)).digest('hex');
+  }
+
+  private normalizeDeletionDate(value: unknown): number | undefined {
+    const result = value instanceof Date ? value.getTime() : value instanceof Timestamp ? value.toMillis() : NaN;
+    return Number.isSafeInteger(result) ? result : undefined;
+  }
+
+  private validateDeletionRequest(kind: 'node' | 'edge', ids: string[], cutoff?: Date): string[] {
+    this.requireSoftMode();
+    if (!['node', 'edge'].includes(kind) || !Array.isArray(ids) || ids.length === 0 || ids.length > 100) throw new Error('GraphRAG explicit deletion IDs required, bounded to 100');
+    const copied = this.cloneCachedValue(ids);
+    for (const id of copied) this.deletionKey(kind, id);
+    if (cutoff !== undefined && (!(cutoff instanceof Date) || !Number.isSafeInteger(cutoff.getTime()))) throw new Error('Invalid GraphRAG deletion cutoff');
+    return [...new Set(copied)];
+  }
+
+  private async inspectDeletionTargets(transaction: Transaction, kind: 'node' | 'edge', ids: string[], cutoff?: number) {
+    const targets: Array<{ id: string; original: GraphNode | GraphEdge | null; marker: SoftDeletionMarker | null; outcome: string }> = [];
+    for (const id of ids) {
+      const key = this.deletionKey(kind, id);
+      const ref = this.firestore.collection(kind === 'node' ? this.nodesCollection : this.edgesCollection).doc(id);
+      const snapshot = await transaction.get(ref);
+      const markerSnapshot = await transaction.get(this.firestore.collection(this.deletionCollection).doc(key));
+      const original = snapshot.exists ? this.cloneCachedValue(snapshot.data()) as GraphNode | GraphEdge : null;
+      const marker = markerSnapshot.exists ? this.parseDeletion(markerSnapshot.data(), key) : null;
+      if (snapshot.exists && !original) throw new Error('Invalid GraphRAG deletion target data');
+      if (original && original.id !== id) throw new Error('GraphRAG deletion target ID mismatch');
+      if (original && kind === 'node') this.prepareLoadedNode(original as GraphNode);
+      let outcome = !original ? 'absent' : marker?.active ? 'already-masked' : 'eligible';
+      if (outcome === 'eligible' && cutoff !== undefined) {
+        const node = original as GraphNode;
+        const date = this.normalizeDeletionDate(node.properties?.lastUsed);
+        outcome = node.type !== 'pattern' ? 'retained-non-pattern' : date === undefined ? 'retained-invalid-date' : date > cutoff ? 'retained-recent' : 'eligible';
+      }
+      targets.push({ id, original, marker, outcome });
+    }
+    return targets;
+  }
+
+  async planSoftDeletion(input: { kind: 'node' | 'edge'; id: string }): Promise<SoftDeletionPlan> {
+    const request = this.cloneCachedValue(input);
+    return this.planDeletion(request.kind, [request.id]);
+  }
+
+  async planOldPatterns(input: { cutoff: Date; ids: string[] }): Promise<SoftDeletionPlan> {
+    const request = this.cloneCachedValue(input);
+    return this.planDeletion('node', request.ids, request.cutoff);
+  }
+
+  private async planDeletion(kind: 'node' | 'edge', inputIds: string[], cutoff?: Date): Promise<SoftDeletionPlan> {
+    const ids = this.validateDeletionRequest(kind, inputIds, cutoff);
+    const createdAt = this.softNow();
+    const cutoffMs = cutoff?.getTime();
+    const targets = await this.firestore.runTransaction(transaction => this.inspectDeletionTargets(transaction, kind, ids, cutoffMs));
+    if (targets.reduce((sum, target) => sum + (target.original ? Buffer.byteLength(this.deletionEncoding(target.original)) : 0) + (target.marker ? this.nodeWriteDataSize(target.marker) : 0), 0) > 1024 * 1024) throw new Error('GraphRAG deletion plan size budget exceeded');
+    return this.cloneCachedValue({ schemaVersion: 1, kind, ids, ...(cutoffMs !== undefined ? { cutoffMs } : {}), createdAt,
+      fingerprint: this.deletionFingerprint(targets), targets,
+      warnings: kind === 'edge' ? ['connectionOwnershipUnknown: declared traversal connections are preserved'] : [] } as SoftDeletionPlan);
+  }
+
+  async applySoftDeletion(input: SoftDeletionPlan): Promise<SoftDeletionResult> {
+    const plan = this.cloneCachedValue(input);
+    const ids = this.validateDeletionRequest(plan.kind, plan.ids, plan.cutoffMs === undefined ? undefined : new Date(plan.cutoffMs));
+    const acceptedAt = this.softNow();
+    if (plan.schemaVersion !== 1 || !Number.isSafeInteger(plan.createdAt) || acceptedAt < plan.createdAt || acceptedAt - plan.createdAt > 60000 || typeof plan.fingerprint !== 'string') throw new Error('GraphRAG deletion preview is stale or invalid');
+    // Local preview admission TTL of 60s; restoration begins at acceptedAt, never at preview creation.
+    const restoreUntil = acceptedAt + 30 * 86400000;
+    const now = Timestamp.fromMillis(acceptedAt); const until = Timestamp.fromMillis(restoreUntil);
+    return this.serializeNodeWrite(async () => {
+      try {
+        const committed = await this.firestore.runTransaction(async transaction => {
+          const targets = await this.inspectDeletionTargets(transaction, plan.kind, ids, plan.cutoffMs);
+          if (this.deletionFingerprint(targets) !== plan.fingerprint) throw new Error('GraphRAG deletion preview target drift');
+          const markers = targets.filter(target => target.outcome === 'eligible').map(target => ({ schemaVersion: 1, kind: plan.kind, id: target.id, active: true, deletedAt: now, restoreUntil: until } as SoftDeletionMarker));
+          for (const marker of markers) this.validateNodeWriteData(marker);
+          if (markers.reduce((sum, marker) => sum + this.nodeWriteDataSize(marker), 0) > 1024 * 1024) throw new Error('GraphRAG deletion transaction size budget exceeded');
+          for (const marker of markers) transaction.set(this.firestore.collection(this.deletionCollection).doc(this.deletionKey(marker.kind, marker.id)), marker);
+          return { targets, markers };
+        });
+        this.invalidateNodeWriteCache();
+        await this.initialize();
+        return { outcomes: committed.targets.map(({ id, outcome }) => ({ id, outcome: outcome === 'eligible' ? 'masked' : outcome })), warnings: plan.kind === 'edge' ? ['connectionOwnershipUnknown: declared traversal connections are preserved'] : [], acceptedAt, ...(committed.markers.length ? { restoreUntil } : {}) };
+      } catch (error) {
+        this.invalidateNodeWriteCache();
+        throw error;
+      }
+    });
+  }
+
+  async deleteNode(id: string): Promise<SoftDeletionResult> {
+    return this.applySoftDeletion(await this.planSoftDeletion({ kind: 'node', id }));
+  }
+
+  async deleteEdge(id: string): Promise<SoftDeletionResult> {
+    return this.applySoftDeletion(await this.planSoftDeletion({ kind: 'edge', id }));
+  }
+
+  async deleteOldPatterns(cutoff: Date, scope?: { ids: string[] }): Promise<SoftDeletionResult> {
+    if (!scope) throw new Error('GraphRAG explicit retention IDs required');
+    const request = this.cloneCachedValue(scope);
+    return this.applySoftDeletion(await this.planOldPatterns({ cutoff, ids: request.ids }));
+  }
+
+  async restoreNode(id: string): Promise<SoftDeletionResult> { return this.restoreSoftTarget('node', id); }
+  async restoreEdge(id: string): Promise<SoftDeletionResult> { return this.restoreSoftTarget('edge', id); }
+
+  private async restoreSoftTarget(kind: 'node' | 'edge', id: string): Promise<SoftDeletionResult> {
+    this.requireSoftMode(); const key = this.deletionKey(kind, id); const acceptedAt = this.softNow();
+    return this.serializeNodeWrite(async () => {
+      try {
+        const outcome = await this.firestore.runTransaction(async transaction => {
+          const original = await transaction.get(this.firestore.collection(kind === 'node' ? this.nodesCollection : this.edgesCollection).doc(id));
+          const ref = this.firestore.collection(this.deletionCollection).doc(key);
+          const snapshot = await transaction.get(ref);
+          if (!original.exists) return 'absent';
+          if (original.data()?.id !== id) throw new Error('GraphRAG restoration target ID mismatch');
+          if (!snapshot.exists) return 'already-visible';
+          const marker = this.parseDeletion(snapshot.data(), key);
+          if (!marker.active) return 'already-visible';
+          if (acceptedAt > marker.restoreUntil.toMillis()) throw new Error('GraphRAG restoration window expired');
+          transaction.set(ref, { ...marker, active: false });
+          return 'restored';
+        });
+        this.invalidateNodeWriteCache(); await this.initialize();
+        return { outcomes: [{ id, outcome }], warnings: kind === 'edge' ? ['connectionOwnershipUnknown: declared traversal connections are preserved'] : [], acceptedAt };
+      } catch (error) { this.invalidateNodeWriteCache(); throw error; }
+    });
+  }
+
+  constructor(options: { softDeletion?: { clock?: () => Date } } = {}) {
     super();
+    if (!options || typeof options !== 'object' || Array.isArray(options) ||
+        ![Object.prototype, null].includes(Object.getPrototypeOf(options))) throw new Error('Invalid GraphRAG store options');
+    const mode = Object.getOwnPropertyDescriptor(options, 'softDeletion');
+    if (mode && !('value' in mode)) throw new Error('Invalid GraphRAG deletion mode accessor');
+    const config = mode?.value;
+    if (config !== undefined && (!config || typeof config !== 'object' || Array.isArray(config) ||
+        ![Object.prototype, null].includes(Object.getPrototypeOf(config)) ||
+        Reflect.ownKeys(config).some(key => key !== 'clock'))) throw new Error('Invalid GraphRAG deletion mode');
+    const clock = config === undefined ? undefined : Object.getOwnPropertyDescriptor(config, 'clock');
+    if (clock && (!('value' in clock) || (clock.value !== undefined && typeof clock.value !== 'function'))) throw new Error('Invalid GraphRAG deletion clock dependency');
+    this.softMode = config !== undefined;
+    this.softClock = clock?.value ?? (() => new Date());
     this.projectId = process.env.GOOGLE_CLOUD_PROJECT || 'centering-vine-454613-b3';
 
     this.firestore = new Firestore({
@@ -135,6 +460,7 @@ export class GraphRAGStore extends EventEmitter {
         console.log('✅ GraphRAG Store initialized successfully');
         this.emit('initialized');
       } catch (error: any) {
+        if (this.softMode) this.invalidateNodeWriteCache();
         console.error('❌ GraphRAG initialization failed:', error.message);
         throw error;
       }
@@ -147,6 +473,7 @@ export class GraphRAGStore extends EventEmitter {
    * Load graph from Firestore into memory for fast traversal
    */
   private async loadGraph(): Promise<void> {
+    if (this.softMode) return this.loadSoftGraph();
     const wasInitialized = this.initialized;
     this.beginGraphMutation();
     try {
@@ -164,6 +491,7 @@ export class GraphRAGStore extends EventEmitter {
   }
 
   private async loadNodesFromFirestore(internalLoad = false): Promise<GraphNode[]> {
+    if (this.softMode) { await this.loadSoftGraph(); this.requireInitializedCache(); return [...this.nodes.values()].map(node => this.cloneCachedValue(node)); }
     // Only loadGraph discards returned aliases; this flag is bookkeeping, not authorization.
     if (!internalLoad) this.disableQueryMemoization();
     this.beginGraphMutation();
@@ -183,6 +511,7 @@ export class GraphRAGStore extends EventEmitter {
   }
 
   private async loadEdgesFromFirestore(internalLoad = false): Promise<GraphEdge[]> {
+    if (this.softMode) { await this.loadSoftGraph(); this.requireInitializedCache(); return [...this.edges.values()].map(edge => this.cloneCachedValue(edge)); }
     if (!internalLoad) this.disableQueryMemoization();
     this.beginGraphMutation();
     try {
@@ -204,7 +533,14 @@ export class GraphRAGStore extends EventEmitter {
     return this.serializeNodeWrite(async () => {
       await this.initialize();
       try {
-        await this.firestore.collection(this.nodesCollection).doc(node.id).create(node);
+        if (this.softMode) {
+          await this.firestore.runTransaction(async transaction => {
+            await this.assertUnmasked(transaction, [{ kind: 'node', id: node.id }]);
+            const ref = this.firestore.collection(this.nodesCollection).doc(node.id);
+            if ((await transaction.get(ref)).exists) throw new Error('GraphRAG node already exists');
+            transaction.create(ref, node);
+          });
+        } else await this.firestore.collection(this.nodesCollection).doc(node.id).create(node);
         this.publishNodeWrite(node);
       } catch (error) {
         this.invalidateNodeWriteCache();
@@ -227,6 +563,7 @@ export class GraphRAGStore extends EventEmitter {
       await this.initialize();
       try {
         const node = await this.firestore.runTransaction(async transaction => {
+          await this.assertUnmasked(transaction, [{ kind: 'node', id: patch.id }]);
           const ref = this.firestore.collection(this.nodesCollection).doc(patch.id);
           const snapshot = await transaction.get(ref);
           if (!snapshot.exists) throw new Error('GraphRAG node does not exist');
@@ -262,9 +599,18 @@ export class GraphRAGStore extends EventEmitter {
     return this.serializeNodeWrite(async () => {
       await this.initialize();
       try {
-        const batch = this.firestore.batch();
-        for (const node of nodes) batch.create(this.firestore.collection(this.nodesCollection).doc(node.id), node);
-        await batch.commit();
+        if (this.softMode) {
+          await this.firestore.runTransaction(async transaction => {
+            await this.assertUnmasked(transaction, nodes.map(node => ({ kind: 'node', id: node.id })));
+            const refs = nodes.map(node => this.firestore.collection(this.nodesCollection).doc(node.id));
+            for (const ref of refs) if ((await transaction.get(ref)).exists) throw new Error('GraphRAG batch node already exists');
+            refs.forEach((ref, index) => transaction.create(ref, nodes[index]));
+          });
+        } else {
+          const batch = this.firestore.batch();
+          for (const node of nodes) batch.create(this.firestore.collection(this.nodesCollection).doc(node.id), node);
+          await batch.commit();
+        }
         for (const node of nodes) this.publishNodeWrite(node);
       } catch (error) {
         this.invalidateNodeWriteCache();
@@ -293,6 +639,7 @@ export class GraphRAGStore extends EventEmitter {
         const sourceRef = this.firestore.collection(this.nodesCollection).doc(edge.source);
         const targetRef = this.firestore.collection(this.nodesCollection).doc(edge.target);
         const committed = await this.firestore.runTransaction(async transaction => {
+          await this.assertUnmasked(transaction, [{ kind: 'edge', id: edge.id }, { kind: 'node', id: edge.source }, { kind: 'node', id: edge.target }]);
           const existing = await transaction.get(edgeRef);
           if (existing.exists) throw new Error('GraphRAG edge already exists');
           const sourceSnapshot = await transaction.get(sourceRef);
@@ -322,7 +669,8 @@ export class GraphRAGStore extends EventEmitter {
         });
         this.publishNodeWrite(committed.source);
         if (committed.target.id !== committed.source.id) this.publishNodeWrite(committed.target);
-        this.edges.set(committed.edge.id, this.cloneCachedValue(committed.edge));
+        if (this.softMode) { this.rawEdges.set(committed.edge.id, this.cloneCachedValue(committed.edge)); this.publishSoftProjection(); }
+        else this.edges.set(committed.edge.id, this.cloneCachedValue(committed.edge));
       } catch (error) {
         // A transport rejection may follow an actual commit; invalidate rather than assert backend rollback.
         this.invalidateNodeWriteCache();
@@ -366,6 +714,7 @@ export class GraphRAGStore extends EventEmitter {
         const entityRefs = extracted.map(entity => this.firestore.collection(this.nodesCollection).doc(entity.id));
         const edgeRefs = edges.map(edge => this.firestore.collection(this.edgesCollection).doc(edge.id));
         const committed = await this.firestore.runTransaction(async transaction => {
+          await this.assertUnmasked(transaction, [{ kind: 'node', id: pattern.id }, ...extracted.map(entity => ({ kind: 'node' as const, id: entity.id })), ...edges.map(edge => ({ kind: 'edge' as const, id: edge.id }))]);
           const existingPattern = await transaction.get(patternRef);
           if (existingPattern.exists) throw new Error('GraphRAG pattern already exists');
           const snapshots = [];
@@ -396,7 +745,11 @@ export class GraphRAGStore extends EventEmitter {
         });
         this.publishNodeWrite(committed.pattern);
         for (const entity of committed.entities) this.publishNodeWrite(entity);
-        for (const edge of committed.edges) this.edges.set(edge.id, this.cloneCachedValue(edge));
+        for (const edge of committed.edges) {
+          if (this.softMode) this.rawEdges.set(edge.id, this.cloneCachedValue(edge));
+          else this.edges.set(edge.id, this.cloneCachedValue(edge));
+        }
+        if (this.softMode) this.publishSoftProjection();
       } catch (error) {
         // Transport failure can follow a commit; refuse stale cached success, never claim rollback.
         this.invalidateNodeWriteCache();
@@ -413,6 +766,7 @@ export class GraphRAGStore extends EventEmitter {
       try {
         const ref = this.firestore.collection(this.nodesCollection).doc(id);
         const committed = await this.firestore.runTransaction(async transaction => {
+          await this.assertUnmasked(transaction, [{ kind: 'node', id }]);
           const snapshot = await transaction.get(ref);
           if (!snapshot.exists) throw new Error('GraphRAG pattern does not exist');
           const current = this.preparePatternWrite(snapshot.data() as PatternNode);
@@ -454,12 +808,12 @@ export class GraphRAGStore extends EventEmitter {
     return connections;
   }
 
-  private serializeNodeWrite(operation: () => Promise<void>): Promise<void> {
+  private serializeNodeWrite<T>(operation: () => Promise<T>): Promise<T> {
     const result = this.nodeWriteTail.then(async () => {
       this.beginGraphMutation();
       try { return await operation(); } finally { this.endGraphMutation(); }
     });
-    this.nodeWriteTail = result.catch(() => undefined);
+    this.nodeWriteTail = result.then(() => undefined, () => undefined);
     return result;
   }
 
@@ -467,8 +821,8 @@ export class GraphRAGStore extends EventEmitter {
     this.beginGraphMutation();
     try {
       const cached = this.cloneCachedValue(node);
-      this.nodes.set(cached.id, cached);
-      this.adjacencyList.set(cached.id, [...cached.connections]);
+      if (this.softMode) { this.rawNodes.set(cached.id, cached); this.publishSoftProjection(); }
+      else { this.nodes.set(cached.id, cached); this.adjacencyList.set(cached.id, [...cached.connections]); }
     } finally {
       this.endGraphMutation();
     }
@@ -478,6 +832,7 @@ export class GraphRAGStore extends EventEmitter {
     this.beginGraphMutation();
     try {
       this.initialized = false;
+      this.softProjectionReady = false; this.rawNodes.clear(); this.rawEdges.clear(); this.deletions.clear();
       this.nodes.clear();
       this.edges.clear();
       this.adjacencyList.clear();
@@ -910,7 +1265,7 @@ export class GraphRAGStore extends EventEmitter {
   }
 
   private requireInitializedCache(): void {
-    if (!this.initialized) throw new Error('GraphRAG cache is not initialized');
+    if (!this.initialized || (this.softMode && !this.softProjectionReady)) throw new Error('GraphRAG cache is not initialized');
   }
 
   // Only supported data values are cloned. Accessors, functions and opaque classes
@@ -954,6 +1309,7 @@ export class GraphRAGStore extends EventEmitter {
     lastUsed?: Date;
     privacy?: GraphNode['privacy'];
   }): Promise<string> {
+    if (this.softMode) throw new Error('GraphRAG legacy addPattern is not admitted in soft deletion mode');
     // Legacy properties/privacy retain caller tags/Date/nested references. Preserve ownership,
     // but never reuse memoized results after caller-held aliases can escape.
     this.disableQueryMemoization();
@@ -1283,6 +1639,7 @@ export class GraphRAGStore extends EventEmitter {
 
   private computeQuery(query: GraphRAGQuery): GraphRAGResult[] {
     // Extract query entities using same logic as pattern extraction
+    this.requireInitializedCache();
     const queryEntities = this.extractEntities({
       pattern: query.query,
       description: '',
@@ -1414,6 +1771,7 @@ export class GraphRAGStore extends EventEmitter {
   }> {
     await this.initialize();
 
+    this.requireInitializedCache();
     const nodesByType: Record<NodeType, number> = {
       pattern: 0,
       agent: 0,
@@ -1447,6 +1805,7 @@ export class GraphRAGStore extends EventEmitter {
     this.requireInitializedCache();
     this.beginGraphMutation();
     try {
+      this.softProjectionReady = false; this.rawNodes.clear(); this.rawEdges.clear(); this.deletions.clear();
       this.nodes.clear();
       this.edges.clear();
       this.adjacencyList.clear();
@@ -1464,6 +1823,7 @@ export class GraphRAGStore extends EventEmitter {
     try {
       await this.firestore.terminate();
       this.initialized = false;
+      this.softProjectionReady = false; this.rawNodes.clear(); this.rawEdges.clear(); this.deletions.clear();
       this.nodes.clear();
       this.edges.clear();
       this.adjacencyList.clear();

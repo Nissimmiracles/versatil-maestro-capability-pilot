@@ -52,9 +52,10 @@ const firestoreFixture = vi.hoisted(() => {
   const documents = {
     graphrag_nodes: new Map<string, Record<string, any>>(),
     graphrag_edges: new Map<string, Record<string, any>>(),
+    graphrag_deletions: new Map<string, Record<string, any>>(),
   };
   const reset = () => {
-    documents.graphrag_nodes.clear(); documents.graphrag_edges.clear();
+    documents.graphrag_nodes.clear(); documents.graphrag_edges.clear(); documents.graphrag_deletions.clear();
     for (const record of nodes) documents.graphrag_nodes.set(record.id, structuredClone(record));
     for (const record of edges) documents.graphrag_edges.set(record.id, structuredClone(record));
   };
@@ -65,19 +66,28 @@ const firestoreFixture = vi.hoisted(() => {
 // Retained documents and atomic preconditions model actual storage, not API success stubs.
 vi.mock('@google-cloud/firestore', async importOriginal => {
   const actual = await importOriginal<typeof import('@google-cloud/firestore')>();
-  type Reference = { collectionName: 'graphrag_nodes' | 'graphrag_edges'; id: string };
+  const cloneData = (input: any): any => {
+    if (input instanceof Date) return new Date(input.getTime());
+    if (input instanceof actual.Timestamp) return new actual.Timestamp(input.seconds, input.nanoseconds);
+    if (Buffer.isBuffer(input)) return Buffer.from(input);
+    if (input instanceof Uint8Array) return new Uint8Array(input);
+    if (Array.isArray(input)) return input.map(cloneData);
+    if (input && typeof input === 'object') return Object.fromEntries(Object.entries(input).map(([key, value]) => [key, cloneData(value)]));
+    return input;
+  };
+  type Reference = { collectionName: 'graphrag_nodes' | 'graphrag_edges' | 'graphrag_deletions'; id: string };
   type Operation = { kind: 'create' | 'set' | 'update' | 'delete'; ref: Reference; data?: Record<string, any> };
   const records = (name: string) => {
-    if (name !== 'graphrag_nodes' && name !== 'graphrag_edges') throw new Error(`Unexpected collection: ${name}`);
+    if (name !== 'graphrag_nodes' && name !== 'graphrag_edges' && name !== 'graphrag_deletions') throw new Error(`Unexpected collection: ${name}`);
     return firestoreFixture.documents[name];
   };
   const documentSnapshot = (ref: Reference) => {
     const value = records(ref.collectionName).get(ref.id);
-    const copy = value === undefined ? undefined : structuredClone(value);
-    return { id: ref.id, exists: copy !== undefined, data: () => copy === undefined ? undefined : structuredClone(copy) };
+    const copy = value === undefined ? undefined : cloneData(value);
+    return { id: ref.id, exists: copy !== undefined, data: () => copy === undefined ? undefined : cloneData(copy) };
   };
-  const snapshot = (values: Record<string, any>[]) => {
-    const docs = values.map(record => ({ id: record.id, data: () => structuredClone(record) }));
+  const snapshot = (entries: Array<[string, Record<string, any>]>) => {
+    const docs = entries.map(([id, record]) => ({ id, data: () => cloneData(record) }));
     return {
       docs, empty: docs.length === 0, size: docs.length,
       forEach(callback: (doc: typeof docs[number]) => void, thisArg?: unknown) {
@@ -87,8 +97,9 @@ vi.mock('@google-cloud/firestore', async importOriginal => {
   };
   const commit = (operations: Operation[]) => {
     const staged = {
-      graphrag_nodes: new Map([...records('graphrag_nodes')].map(([id, data]) => [id, structuredClone(data)])),
-      graphrag_edges: new Map([...records('graphrag_edges')].map(([id, data]) => [id, structuredClone(data)])),
+      graphrag_nodes: new Map([...records('graphrag_nodes')].map(([id, data]) => [id, cloneData(data)])),
+      graphrag_edges: new Map([...records('graphrag_edges')].map(([id, data]) => [id, cloneData(data)])),
+      graphrag_deletions: new Map([...records('graphrag_deletions')].map(([id, data]) => [id, cloneData(data)])),
     };
     for (const operation of operations) {
       const target = staged[operation.ref.collectionName];
@@ -96,12 +107,12 @@ vi.mock('@google-cloud/firestore', async importOriginal => {
       if (operation.kind === 'update' && !target.has(operation.ref.id)) throw new Error('NOT_FOUND');
       if (operation.kind === 'delete') target.delete(operation.ref.id);
       else if (operation.kind === 'update') target.set(operation.ref.id, {
-        ...target.get(operation.ref.id), ...structuredClone(operation.data!),
+        ...target.get(operation.ref.id), ...cloneData(operation.data!),
       });
-      else target.set(operation.ref.id, structuredClone(operation.data!));
+      else target.set(operation.ref.id, cloneData(operation.data!));
     }
     // Publish both collections only after every operation has passed its precondition.
-    for (const name of ['graphrag_nodes', 'graphrag_edges'] as const) {
+    for (const name of ['graphrag_nodes', 'graphrag_edges', 'graphrag_deletions'] as const) {
       const target = records(name); target.clear();
       for (const [id, data] of staged[name]) target.set(id, data);
     }
@@ -110,13 +121,13 @@ vi.mock('@google-cloud/firestore', async importOriginal => {
     const operations: Operation[] = [];
     const writer = {
       create: vi.fn((ref: Reference, data: Record<string, any>) => {
-        operations.push({ kind: 'create', ref, data: structuredClone(data) }); return writer;
+        operations.push({ kind: 'create', ref, data: cloneData(data) }); return writer;
       }),
       set: vi.fn((ref: Reference, data: Record<string, any>) => {
-        operations.push({ kind: 'set', ref, data: structuredClone(data) }); return writer;
+        operations.push({ kind: 'set', ref, data: cloneData(data) }); return writer;
       }),
       update: vi.fn((ref: Reference, data: Record<string, any>) => {
-        operations.push({ kind: 'update', ref, data: structuredClone(data) }); return writer;
+        operations.push({ kind: 'update', ref, data: cloneData(data) }); return writer;
       }),
       delete: vi.fn((ref: Reference) => { operations.push({ kind: 'delete', ref }); return writer; }),
       commit: vi.fn(async () => { commit(operations); return []; }),
@@ -128,6 +139,7 @@ vi.mock('@google-cloud/firestore', async importOriginal => {
     collection(name: string) {
       records(name);
       return {
+        collectionName: name,
         doc: vi.fn((id: string) => {
           const ref: Reference = { collectionName: name as Reference['collectionName'], id };
           return { ...ref,
@@ -139,7 +151,7 @@ vi.mock('@google-cloud/firestore', async importOriginal => {
           };
         }),
         where: vi.fn(() => { throw new Error('Fixture query filtering is not implemented'); }),
-        get: vi.fn(async () => snapshot([...records(name).values()])),
+        get: vi.fn(async () => snapshot([...records(name).entries()])),
         add: vi.fn(() => { throw new Error('Fixture auto-generated document IDs are not implemented'); }),
       };
     }
@@ -149,7 +161,7 @@ vi.mock('@google-cloud/firestore', async importOriginal => {
         const { writer, operations } = stagedWriter();
         const transaction = { ...writer, get: vi.fn(async (ref: Reference) => {
           if (operations.length) throw new Error('Transaction reads must precede writes');
-          return documentSnapshot(ref);
+          return ref.id === undefined ? snapshot([...records(ref.collectionName).entries()]) : documentSnapshot(ref);
         }) };
         const result = await callback(transaction);
         return { result, operations };
@@ -230,17 +242,21 @@ describe('GraphRAGStore', () => {
     });
 
     it('should delete node from graph', async () => {
+      // This scenario explicitly admits reversible deletion; other54 stay in ordinary mode.
+      store = new GraphRAGStore({ softDeletion: { clock: () => new Date('2026-10-08T00:00:00Z') } });
+      await store.initialize();
       const node: GraphNode = {
-        id: 'test-node-3',
-        type: 'pattern',
-        label: 'To Delete',
-        properties: {},
-        connections: [],
+        id: 'test-node-3', type: 'pattern', label: 'To Delete', properties: {}, connections: [],
       };
       await store.addNode(node);
+      const storedBefore = structuredClone(firestoreFixture.documents.graphrag_nodes.get(node.id));
       await store.deleteNode('test-node-3');
       const retrieved = await store.getNode('test-node-3');
       expect(retrieved).toBeUndefined();
+      expect(firestoreFixture.documents.graphrag_nodes.get(node.id)).toEqual(storedBefore);
+      const reloaded = new GraphRAGStore({ softDeletion: { clock: () => new Date('2026-10-08T00:00:00Z') } });
+      await reloaded.initialize(); expect(reloaded.getNode(node.id)).toBeUndefined();
+      await reloaded.restoreNode(node.id); expect(reloaded.getNode(node.id)).toEqual(node);
     });
 
     it('should get all nodes of specific type', async () => {
@@ -289,17 +305,21 @@ describe('GraphRAGStore', () => {
     });
 
     it('should delete edge from graph', async () => {
+      store = new GraphRAGStore({ softDeletion: { clock: () => new Date('2026-10-08T00:00:00Z') } });
+      await store.initialize();
       const edge: GraphEdge = {
-        id: 'edge-3',
-        source: 'node-c',
-        target: 'node-d',
-        relationship: 'implements',
-        weight: 0.9,
+        id: 'edge-3', source: 'node-c', target: 'node-d', relationship: 'implements', weight: 0.9,
       };
       await store.addEdge(edge);
+      const connectionsBefore = store.getNeighbors(edge.source);
       await store.deleteEdge('edge-3');
       const retrieved = await store.getEdge('edge-3');
       expect(retrieved).toBeUndefined();
+      expect(firestoreFixture.documents.graphrag_edges.get(edge.id)).toEqual(edge);
+      expect(store.getNeighbors(edge.source)).toEqual(connectionsBefore);
+      const reloaded = new GraphRAGStore({ softDeletion: { clock: () => new Date('2026-10-08T00:00:00Z') } });
+      await reloaded.initialize(); expect(reloaded.getEdge(edge.id)).toBeUndefined();
+      await reloaded.restoreEdge(edge.id); expect(reloaded.getEdge(edge.id)).toEqual(edge);
     });
 
     it('should get all edges for a node', async () => {
@@ -853,12 +873,41 @@ describe('GraphRAGStore', () => {
     });
 
     it('should delete old patterns', async () => {
-      const cutoffDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
-      await store.deleteOldPatterns(cutoffDate);
+      // Illustrative explicit cutoff and IDs, never a default age policy or account scan.
+      const cutoffDate = new Date('2025-10-08T00:00:00Z');
+      const at = cutoffDate.getTime();
+      const makeRetentionPattern = (id: string, lastUsed: Date | undefined): PatternNode => ({
+        id, type: 'pattern', label: id, properties: {
+          pattern: id, agent: 'fixture', category: 'retention', effectiveness: 1,
+          timeSaved: 1, tags: [], usageCount: 0, lastUsed: lastUsed as Date,
+        }, connections: [], privacy: { isPublic: true },
+      });
+      const selected = [makeRetentionPattern('ret-old', new Date(at - 1)),
+        makeRetentionPattern('ret-at', new Date(at)), makeRetentionPattern('ret-new', new Date(at + 1))];
+      const invalid = makeRetentionPattern('ret-invalid', undefined); delete invalid.properties.lastUsed;
+      const outside = makeRetentionPattern('ret-outside', new Date(at - 1));
+      for (const record of [...selected, invalid, outside]) {
+        firestoreFixture.documents.graphrag_nodes.set(record.id, structuredClone(record));
+      }
+      store = new GraphRAGStore({ softDeletion: { clock: () => new Date('2026-10-08T00:00:00Z') } });
+      await store.initialize();
+      const originals = selected.map(record => structuredClone(firestoreFixture.documents.graphrag_nodes.get(record.id)));
+      const result = await store.deleteOldPatterns(cutoffDate, { ids: [...selected.map(record => record.id), invalid.id] });
+      expect(result.outcomes).toEqual([{ id: 'ret-old', outcome: 'masked' }, { id: 'ret-at', outcome: 'masked' },
+        { id: 'ret-new', outcome: 'retained-recent' }, { id: 'ret-invalid', outcome: 'retained-invalid-date' }]);
+      expect(store.getNode('ret-old')).toBeUndefined(); expect(store.getNode('ret-at')).toBeUndefined();
+      expect(store.getNode('ret-outside')).toEqual(outside); expect(store.getNode('ret-invalid')).toEqual(invalid);
+      expect(store.getNode('ret-new')).toEqual(selected[2]);
       const allPatterns = await store.getNodesByType('pattern') as PatternNode[];
-      allPatterns.forEach(pattern => {
+      const retainedSelected = allPatterns.filter(pattern => selected.some(record => record.id === pattern.id));
+      expect(retainedSelected.map(pattern => pattern.id)).toEqual(['ret-new']);
+      retainedSelected.forEach(pattern => {
         expect(pattern.properties.lastUsed.getTime()).toBeGreaterThan(cutoffDate.getTime());
       });
+      const reloaded = new GraphRAGStore({ softDeletion: { clock: () => new Date('2026-10-08T00:00:00Z') } });
+      await reloaded.initialize(); expect(reloaded.getNode('ret-old')).toBeUndefined(); expect(reloaded.getNode('ret-at')).toBeUndefined();
+      expect(selected.map(record => firestoreFixture.documents.graphrag_nodes.get(record.id))).toEqual(originals);
+      await reloaded.restoreNode('ret-old'); expect(reloaded.getNode('ret-old')).toEqual(selected[0]);
     });
   });
 });

@@ -323,6 +323,7 @@ describe('GraphRAGStore', () => {
       const properties = {
         pattern: 'React component with TypeScript', agent: 'james-frontend', category: 'ui',
         effectiveness: 0.9, timeSaved: 100, tags: ['components'], usageCount: 0,
+        privacy: { userId: 'fixture-user', isPublic: false },
       };
       const collection = vi.spyOn(store['firestore'], 'collection');
       const id = await store.addPattern(properties);
@@ -334,10 +335,12 @@ describe('GraphRAGStore', () => {
       expect(writtenDocuments.some(doc => vi.mocked(doc.set).mock.calls.some(([node]) =>
         node.id === id && node.type === 'pattern' && node.properties.pattern === properties.pattern
       ))).toBe(true);
-      const results = await store.query({ query: 'React' });
+      const results = await store.query({ query: 'React', userId: 'fixture-user' });
       expect(results.map(result => result.pattern.id)).toContain(id);
       const added = results.find(result => result.pattern.id === id)!;
-      expect(added.pattern.properties).toMatchObject(properties);
+      const { privacy, ...storedProperties } = properties;
+      expect(added.pattern.properties).toMatchObject(storedProperties);
+      expect(added.pattern.privacy).toEqual(privacy);
       expect(added.graphPath).toEqual(['tech_react', id]);
       expect(added.explanation).toContain('react');
       expect((await store.getStatistics()).nodesByType.pattern).toBe(9);

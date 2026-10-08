@@ -118,6 +118,9 @@ test('runner configs preserve all executable partitions without cross-collection
     assert(matches.includes('**/tests/e2e/**/*.{ts,js}'));
   }
   const jest = createRequire(path.join(root, 'package.json'))('./config/jest.config.cjs');
+  const discoveredJest = createRequire(path.join(root, 'package.json'))('./jest.config.cjs');
+  assert.equal(discoveredJest, jest);
+  assert(jest.projects.some(project => project.displayName?.name === 'UNIT'));
   assert.deepEqual(vitest.test.include, partition.byRunner.vitest);
   assert.deepEqual(JSON.parse(JSON.stringify(vitest.test.coverage.thresholds)), { statements: 80, branches: 80, functions: 80, lines: 80 });
   const jestFiles = jest.projects.flatMap(project => project.testMatch.map(file => file.replace('<rootDir>/', '')));
@@ -140,4 +143,21 @@ test('workflow dispatch is explicit and keeps Percy SDK/CLI and existing trigger
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
   assert(pkg.devDependencies['@percy/playwright']);
   assert.match(pkg.scripts['test:visual:percy'], /percy exec/);
+});
+
+test('integration workflow dispatch agrees with the runner partition for every matrix suite', () => {
+  const yaml = require('js-yaml');
+  const workflow = yaml.load(fs.readFileSync(path.join(root, '.github/workflows/test.yml'), 'utf8'));
+  const job = workflow.jobs['test-integration'];
+  const partition = collectRunnerPartition(root);
+  const vitestStep = job.steps.find(step => step.run?.startsWith('pnpm vitest run tests/integration/'));
+  const jestStep = job.steps.find(step => step.run?.includes('--runTestsByPath tests/integration/introspective-integration.test.ts'));
+  assert.equal(vitestStep.if, "matrix.suite != 'introspective-integration'");
+  assert.equal(jestStep.if, "matrix.suite == 'introspective-integration'");
+  assert.match(jestStep.run, /--config config\/jest\.config\.cjs --selectProjects INTEGRATION/);
+  for (const suite of job.strategy.matrix.suite) {
+    const file = `tests/integration/${suite}.test.ts`;
+    const runner = suite === 'introspective-integration' ? 'jest' : 'vitest';
+    assert(partition.byRunner[runner].includes(file), `${file} must run under ${runner}`);
+  }
 });

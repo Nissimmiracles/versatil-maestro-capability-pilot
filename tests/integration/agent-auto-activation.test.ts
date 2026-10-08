@@ -15,7 +15,7 @@
  * @version 1.0.0
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
 import { SubAgentSelector } from '../../src/agents/core/sub-agent-selector.js';
 import { TechStackDetector } from '../../src/agents/core/tech-stack-detector.js';
 import * as fs from 'fs/promises';
@@ -701,29 +701,23 @@ describe('Agent Auto-Activation Validation', () => {
       expect(duration).toBeLessThan(200);
     });
 
-    it('should cache tech stack detection results', async () => {
+    it('should reuse cached detection and rescan after explicit invalidation', async () => {
       await fs.writeFile(path.join(tempDir, 'go.mod'), 'module test');
-
-      // First call (cache miss)
-      const start1 = Date.now();
-      await SubAgentSelector.selectBackendSubAgent(
-        path.join(tempDir, 'main.go'),
-        'package main',
-        tempDir
-      );
-      const duration1 = Date.now() - start1;
-
-      // Second call (cache hit)
-      const start2 = Date.now();
-      await SubAgentSelector.selectBackendSubAgent(
-        path.join(tempDir, 'api.go'),
-        'package main',
-        tempDir
-      );
-      const duration2 = Date.now() - start2;
-
-      // Cache hit should be faster (or equal if both very fast)
-      expect(duration2).toBeLessThanOrEqual(duration1);
+      const detect = vi.spyOn(TechStackDetector, 'detectFromProject');
+      try {
+        const first = await SubAgentSelector.selectBackendSubAgent(path.join(tempDir, 'main.txt'), '', tempDir);
+        expect(first.subAgentId).toBe('marcus-go');
+        expect(detect).toHaveBeenCalledTimes(1);
+        const hit = await SubAgentSelector.selectBackendSubAgent(path.join(tempDir, 'api.txt'), '', tempDir);
+        expect(hit.subAgentId).toBe(first.subAgentId);
+        expect(detect).toHaveBeenCalledTimes(1);
+        SubAgentSelector.clearCache();
+        const fresh = await SubAgentSelector.selectBackendSubAgent(path.join(tempDir, 'server.txt'), '', tempDir);
+        expect(fresh.subAgentId).toBe(first.subAgentId);
+        expect(detect).toHaveBeenCalledTimes(2);
+      } finally {
+        detect.mockRestore();
+      }
     });
   });
 

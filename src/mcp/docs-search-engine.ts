@@ -477,7 +477,7 @@ export class DocsSearchEngine {
     }
 
     // 3. Block path traversal patterns
-    if (normalizedPath.includes('..') || normalizedPath.startsWith('/')) {
+    if (normalizedPath.includes('..') || path.isAbsolute(normalizedPath) || path.win32.isAbsolute(normalizedPath)) {
       throw new DocsSearchError(
         'Path traversal not allowed',
         DocsErrorCodes.PATH_TRAVERSAL_BLOCKED,

@@ -22,6 +22,7 @@ import {
   CommandResult,
 } from './helpers/test-helpers';
 import * as path from 'path';
+import { pathToFileURL } from 'node:url';
 import { readFileSync } from 'fs';
 const packageVersion = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')).version;
 
@@ -30,7 +31,7 @@ const fixturePath = path.join(process.cwd(), 'tests/integration/helpers/cli-offl
 const execShellCommand: typeof executeShellCommand = (command, options = {}) => executeShellCommand(command, {
   ...options,
   env: { ...process.env, ...testEnv.envVars, ...options.env, VERSATIL_TEST_HOME: testEnv.tempDir,
-    NODE_OPTIONS: `--import=${fixturePath}` },
+    NODE_OPTIONS: `--import=${pathToFileURL(fixturePath).href}` },
 });
 
 beforeEach(async () => {
